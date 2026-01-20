@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Edit Note with AI</title>
+<!-- Google Fonts & Icons -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#6650a5",
+              "primary-dark": "#513f84",
+              "background-light": "#f7f6f7",
+              "background-dark": "#17151d",
+              "surface-dark": "#232129",
+              "surface-light": "#ffffff",
+              "tertiary": "#ffd8e4", // Adding a tertiary color based on M3 specs usually pinkish for purple primary
+              "on-tertiary": "#31111d",
+            },
+            fontFamily: {
+              "display": ["Inter", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "2xl": "1.75rem", "full": "9999px"},
+            boxShadow: {
+                'fab': '0 4px 8px 3px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.3)',
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        /* Custom scrollbar for better aesthetics */
+        textarea::-webkit-scrollbar {
+            width: 8px;
+        }
+        textarea::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        textarea::-webkit-scrollbar-thumb {
+            background-color: rgba(156, 163, 175, 0.3);
+            border-radius: 20px;
+        }
+        
+        /* Hide scrollbar for clean UI but keep functionality */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        .material-symbols-filled {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            font-family: 'Material Symbols Outlined';
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-white h-screen w-full flex flex-col overflow-hidden selection:bg-primary/30 selection:text-primary">
+<!-- Status Bar Area Simulation (iOS safe area) -->
+<div class="h-12 w-full shrink-0 bg-background-light dark:bg-background-dark"></div>
+<!-- Top App Bar -->
+<header class="flex items-center justify-between px-4 py-2 bg-background-light dark:bg-background-dark shrink-0 z-10">
+<button class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-black/5 dark:hover:bg-white/10 active:scale-95 transition-all text-slate-900 dark:text-white">
+<span class="material-symbols-outlined">arrow_back_ios_new</span>
+</button>
+<h1 class="text-lg font-bold tracking-tight opacity-90">Edit Note</h1>
+<button class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-black/5 dark:hover:bg-white/10 active:scale-95 transition-all text-slate-900 dark:text-white">
+<span class="material-symbols-outlined">check</span>
+</button>
+</header>
+<!-- Main Content Editor -->
+<main class="flex-1 flex flex-col w-full max-w-2xl mx-auto relative overflow-hidden">
+<!-- Title Field -->
+<div class="px-5 pt-4 pb-2 shrink-0">
+<input class="w-full bg-transparent border-none p-0 text-3xl font-bold text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-600 focus:ring-0 focus:outline-none" placeholder="Title" type="text" value="Project Nebula"/>
+<div class="text-xs text-slate-400 dark:text-gray-500 mt-2 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">cloud_done</span>
+<span>Saved to Drive just now</span>
+</div>
+</div>
+<!-- Content Field -->
+<div class="flex-1 px-5 pb-32 relative">
+<textarea class="w-full h-full bg-transparent border-none p-0 text-lg leading-relaxed text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-gray-600 focus:ring-0 focus:outline-none resize-none" placeholder="Start typing your thoughts...">The integration of the on-device LLM needs to be seamless. We should focus on:
+1. Low latency response times (&lt;100ms)
+2. Offline capabilities for core summarization
+3. Privacy-first architecture
+
+Remember to check the Google Drive sync API for conflict resolution.
+
+Idea: Use a tertiary colored FAB for the AI trigger?</textarea>
+</div>
+<!-- Floating Action Button (FAB) -->
+<!-- Placed absolute relative to main container to float above content -->
+<div class="absolute bottom-16 right-5 z-20">
+<button class="group flex items-center justify-center w-14 h-14 rounded-2xl bg-primary hover:bg-primary-dark shadow-fab transition-all duration-300 active:scale-95">
+<span class="material-symbols-filled text-white text-2xl transition-transform group-hover:rotate-12">auto_awesome</span>
+</button>
+</div>
+</main>
+<!-- Keyboard Accessory View / Bottom Formatting Toolbar -->
+<div class="w-full bg-surface-light dark:bg-surface-dark border-t border-gray-200 dark:border-gray-800 shrink-0 pb-6 pt-2 px-2 z-20 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+<div class="max-w-2xl mx-auto flex items-center justify-between px-2">
+<!-- Formatting Tools -->
+<div class="flex items-center gap-1">
+<button class="p-2 rounded-lg text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 transition-colors">
+<span class="material-symbols-outlined">format_bold</span>
+</button>
+<button class="p-2 rounded-lg text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 transition-colors">
+<span class="material-symbols-outlined">format_italic</span>
+</button>
+<button class="p-2 rounded-lg text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 transition-colors">
+<span class="material-symbols-outlined">format_underlined</span>
+</button>
+<div class="w-px h-5 bg-gray-300 dark:bg-gray-700 mx-1"></div>
+<button class="p-2 rounded-lg text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 transition-colors">
+<span class="material-symbols-outlined">format_list_bulleted</span>
+</button>
+<button class="p-2 rounded-lg text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 transition-colors">
+<span class="material-symbols-outlined">image</span>
+</button>
+</div>
+<!-- Close Keyboard / Done -->
+<button class="text-sm font-semibold text-primary px-3 py-2 rounded-lg hover:bg-primary/10 transition-colors">
+                Done
+            </button>
+</div>
+</div>
+</body></html>

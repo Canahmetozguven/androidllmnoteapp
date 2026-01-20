@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Chat with Notes AI</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#6650a5",
+                        "primary-dark": "#53408a",
+                        "background-light": "#f7f6f7",
+                        "background-dark": "#17151d",
+                        "surface-dark": "#2f2d34",
+                        "surface-light": "#ffffff",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"],
+                        "sans": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "2xl": "2rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom scrollbar for webkit */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4a4a4a;
+            border-radius: 3px;
+        }
+        
+        /* Bouncing dots animation */
+        .typing-dot {
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display antialiased h-screen flex flex-col overflow-hidden text-slate-900 dark:text-white">
+<!-- Top App Bar -->
+<header class="flex items-center justify-between p-4 bg-background-light dark:bg-background-dark z-10 shrink-0">
+<button class="text-slate-900 dark:text-white flex items-center justify-center size-10 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<div class="flex flex-col items-center">
+<h2 class="text-lg font-bold leading-tight tracking-tight">Chat with Notes</h2>
+<span class="text-xs text-slate-500 dark:text-slate-400 font-medium">On-device AI • Online</span>
+</div>
+<button class="text-slate-900 dark:text-white flex items-center justify-center size-10 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</header>
+<!-- Chat Area -->
+<main class="flex-1 overflow-y-auto w-full p-4 space-y-6 scroll-smooth">
+<!-- Date Separator -->
+<div class="flex justify-center">
+<span class="text-xs font-medium text-slate-400 bg-black/5 dark:bg-white/5 px-3 py-1 rounded-full">Today</span>
+</div>
+<!-- User Message -->
+<div class="flex items-end gap-3 justify-end group">
+<div class="flex flex-col gap-1 items-end max-w-[80%]">
+<div class="bg-primary text-white rounded-2xl rounded-tr-sm px-4 py-3 shadow-sm">
+<p class="text-base font-normal leading-normal">What were the action items from Tuesday's design sync?</p>
+</div>
+<p class="text-slate-400 text-[11px] font-medium pr-1 opacity-0 group-hover:opacity-100 transition-opacity">10:42 AM</p>
+</div>
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-8 shrink-0 shadow-sm border border-white/10" data-alt="User profile avatar showing a smiling person" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCf7Li7GEcmRo0WhpMccmt2KGJsxMChYSNjXUR4gRxsXSvwh-Vw_UWp95NGh9mWM2s_gKKDQKmmN4sL8s4-tl0fc0qx6y6GkIP767W54vVRxRPJsSHoTVIhGvvgK4-Go-YDwDmY8CgYeT2cF2WuXfAUJOJo4c5YG-i4QPmRLyCZb1KECTih1IsfbI7OIVTjukYhA1bOPLw7-XGP1F7q91lw6w7uHmOH2ozwRW1lWwT2YPu5gwLl1jPyn1rVuzxJMF-rbub4fGAl");'>
+</div>
+</div>
+<!-- AI Message with Citation -->
+<div class="flex items-end gap-3 justify-start group">
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-8 shrink-0 shadow-sm bg-indigo-500 flex items-center justify-center" data-alt="AI Assistant avatar with abstract geometric shape">
+<span class="material-symbols-outlined text-white text-[18px]">smart_toy</span>
+</div>
+<div class="flex flex-col gap-2 items-start max-w-[85%]">
+<div class="bg-white dark:bg-surface-dark text-slate-800 dark:text-slate-100 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm border border-black/5 dark:border-white/5">
+<p class="text-base font-normal leading-relaxed">
+                        Here are the action items based on 'Design Sync - Oct 24':
+                        <br class="mb-2 block"/>
+                        1. Update the color palette to match the new brand guidelines.
+                        <br/>
+                        2. Review the login flow for edge cases.
+                    </p>
+</div>
+<!-- Citations / Chips -->
+<div class="flex flex-wrap gap-2">
+<button class="flex items-center gap-2 h-8 px-3 rounded-lg bg-surface-light dark:bg-surface-dark border border-black/5 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 transition-colors group/chip">
+<span class="material-symbols-outlined text-primary text-[16px]">description</span>
+<span class="text-xs font-medium text-slate-600 dark:text-slate-300">Design Sync - Oct 24</span>
+<span class="material-symbols-outlined text-slate-400 text-[14px] opacity-0 group-hover/chip:opacity-100 transition-opacity">open_in_new</span>
+</button>
+</div>
+<p class="text-slate-400 text-[11px] font-medium pl-1 opacity-0 group-hover:opacity-100 transition-opacity">10:42 AM</p>
+</div>
+</div>
+<!-- User Message 2 -->
+<div class="flex items-end gap-3 justify-end group">
+<div class="flex flex-col gap-1 items-end max-w-[80%]">
+<div class="bg-primary text-white rounded-2xl rounded-tr-sm px-4 py-3 shadow-sm">
+<p class="text-base font-normal leading-normal">Can you summarize the notes about the color palette?</p>
+</div>
+<p class="text-slate-400 text-[11px] font-medium pr-1 opacity-0 group-hover:opacity-100 transition-opacity">10:43 AM</p>
+</div>
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-8 shrink-0 shadow-sm border border-white/10" data-alt="User profile avatar showing a smiling person" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCPDkPToEpIBZVf_0MNx13DKgo_XZEqNoBg7cdXAuYemX_HjVmYo2XF83M4kkKm5VmrIEtsNdj32oz4ia3H4YOGYgm2pa_L5OPYnkHZkxPVTNlTKGsWKVUiG0LIcea_kX7-ARRB-TqvuFcV_vQ0yg2oaCNjUFuvCOtAK4Zz36dK_Xk7_B5PbBE_uZqw4-u5neLXflj4L1RrQSW7RKbt_-VsAbgeCYDIiOXUw0ztkW3Z6SoRX3k51bt5EjTQhA4JDAOYwW_YlGuf");'>
+</div>
+</div>
+<!-- AI Thinking State -->
+<div class="flex items-end gap-3 justify-start animate-pulse">
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-8 shrink-0 shadow-sm bg-indigo-500 flex items-center justify-center" data-alt="AI Assistant avatar with abstract geometric shape">
+<span class="material-symbols-outlined text-white text-[18px]">smart_toy</span>
+</div>
+<div class="flex flex-col gap-1 items-start">
+<div class="bg-white dark:bg-surface-dark text-slate-800 dark:text-slate-100 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm border border-black/5 dark:border-white/5 h-12 flex items-center gap-1">
+<div class="size-2 bg-slate-400 rounded-full typing-dot"></div>
+<div class="size-2 bg-slate-400 rounded-full typing-dot"></div>
+<div class="size-2 bg-slate-400 rounded-full typing-dot"></div>
+</div>
+<p class="text-slate-400 text-[11px] font-medium pl-1">Processing notes...</p>
+</div>
+</div>
+<!-- Spacer for scrolling -->
+<div class="h-2"></div>
+</main>
+<!-- Composer / Bottom Bar -->
+<footer class="p-4 bg-background-light dark:bg-background-dark shrink-0">
+<div class="relative flex items-center w-full">
+<input class="w-full bg-white dark:bg-surface-dark text-slate-900 dark:text-white placeholder-slate-500 rounded-xl border border-slate-200 dark:border-none py-3.5 pl-4 pr-12 text-base shadow-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" placeholder="Ask about your notes..." type="text"/>
+<div class="absolute right-2 flex items-center">
+<button class="size-9 flex items-center justify-center bg-primary hover:bg-primary-dark text-white rounded-lg transition-colors shadow-md">
+<span class="material-symbols-outlined text-[20px]">send</span>
+</button>
+</div>
+</div>
+<div class="text-center mt-2">
+<p class="text-[10px] text-slate-400 dark:text-slate-600">AI can make mistakes. Check important info.</p>
+</div>
+</footer>
+</body></html>

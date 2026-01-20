@@ -1,0 +1,26 @@
+# Gradle
+.gradle/
+build/
+app/build/
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+*.hprof
+
+# Local configuration
+local.properties
+
+# JNI build artifacts
+app/.cxx/
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Large files
+*.gguf
+*.bin
+
+# Temporary folders
+undefined/

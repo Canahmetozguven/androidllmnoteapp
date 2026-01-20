@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>My Notes List</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+            extend: {
+                colors: {
+                "primary": "#6650a5",
+                "background-light": "#f7f6f7",
+                "background-dark": "#17151d",
+                "surface-dark": "#25232b", 
+                "surface-light": "#ffffff",
+                },
+                fontFamily: {
+                "display": ["Inter", "sans-serif"]
+                },
+                borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "2xl": "2rem", "full": "9999px"},
+            },
+            },
+        }
+    </script>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings:
+            'FILL' 0,
+            'wght' 400,
+            'GRAD' 0,
+            'opsz' 24
+        }
+        .material-symbols-filled {
+            font-family: 'Material Symbols Outlined';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            -webkit-font-feature-settings: 'liga';
+            -webkit-font-smoothing: antialiased;
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-gray-900 flex justify-center items-center min-h-screen m-0 p-0 font-display">
+<!-- Phone Simulator Container -->
+<div class="relative flex h-full min-h-screen w-full max-w-md flex-col bg-background-light dark:bg-background-dark overflow-hidden shadow-2xl sm:rounded-3xl border-gray-800 sm:border-8 sm:h-[850px]">
+<!-- Status Bar Area (simulated) -->
+<div class="h-10 w-full shrink-0 bg-background-light dark:bg-background-dark z-20"></div>
+<!-- Top App Bar -->
+<header class="sticky top-0 z-10 flex items-center justify-between bg-background-light dark:bg-background-dark px-4 py-3 transition-colors duration-200">
+<h1 class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
+                My Notes
+            </h1>
+<div class="flex items-center gap-2">
+<!-- AI Chat Button -->
+<button class="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary transition-colors hover:bg-primary/20 active:scale-95">
+<span class="material-symbols-outlined">smart_toy</span>
+</button>
+<!-- Settings Button -->
+<button class="flex h-10 w-10 items-center justify-center rounded-full text-gray-600 dark:text-gray-300 transition-colors hover:bg-gray-200 dark:hover:bg-white/10 active:scale-95">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+</header>
+<!-- Search Bar (Optional but common in Notes apps) -->
+<div class="px-4 pb-2 pt-1 sticky top-[68px] z-10 bg-background-light dark:bg-background-dark">
+<div class="relative">
+<div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+<span class="material-symbols-outlined text-gray-500">search</span>
+</div>
+<input class="block w-full p-3 pl-10 text-sm text-gray-900 border border-transparent rounded-full bg-gray-200 dark:bg-surface-dark dark:text-white placeholder-gray-500 focus:ring-primary focus:border-primary dark:focus:ring-primary dark:focus:border-primary focus:bg-white dark:focus:bg-[#2f2c36] transition-all" placeholder="Search your notes..." type="text"/>
+</div>
+</div>
+<!-- Scrollable Content Area -->
+<main class="flex-1 overflow-y-auto px-4 pb-24 pt-2 space-y-3 scrollbar-hide">
+<!-- Note Card 1 -->
+<div class="group relative flex flex-col gap-2 rounded-2xl bg-white dark:bg-surface-dark p-4 shadow-sm transition-all hover:shadow-md active:scale-[0.99] cursor-pointer border border-gray-100 dark:border-white/5">
+<div class="flex justify-between items-start">
+<h3 class="text-lg font-bold leading-tight text-gray-900 dark:text-white">Project Alpha Ideas</h3>
+<!-- Backup Status -->
+<span class="material-symbols-filled text-green-400 text-[18px]" title="Synced">cloud_done</span>
+</div>
+<p class="text-sm font-normal leading-relaxed text-gray-600 dark:text-gray-400 line-clamp-2">
+                    Use the local LLM to summarize the meeting notes. Don't forget to sync with Drive and share the link with the design team before EOD.
+                </p>
+<div class="mt-1 flex items-center justify-between">
+<span class="text-xs font-medium text-primary dark:text-primary/80 bg-primary/10 dark:bg-primary/20 px-2 py-0.5 rounded-md">Work</span>
+<span class="text-xs text-gray-400 dark:text-gray-500">Today, 10:30 AM</span>
+</div>
+</div>
+<!-- Note Card 2 -->
+<div class="group relative flex flex-col gap-2 rounded-2xl bg-white dark:bg-surface-dark p-4 shadow-sm transition-all hover:shadow-md active:scale-[0.99] cursor-pointer border border-gray-100 dark:border-white/5">
+<div class="flex justify-between items-start">
+<h3 class="text-lg font-bold leading-tight text-gray-900 dark:text-white">Grocery List</h3>
+<span class="material-symbols-filled text-gray-500 text-[18px]" title="Pending Sync">cloud_off</span>
+</div>
+<p class="text-sm font-normal leading-relaxed text-gray-600 dark:text-gray-400 line-clamp-2">
+                    Milk, Eggs, Bread, Avocados, Coffee beans from the specialty store, and maybe some snacks for the movie night.
+                </p>
+<div class="mt-1 flex items-center justify-between">
+<span class="text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-white/10 px-2 py-0.5 rounded-md">Personal</span>
+<span class="text-xs text-gray-400 dark:text-gray-500">Yesterday</span>
+</div>
+</div>
+<!-- Note Card 3 -->
+<div class="group relative flex flex-col gap-2 rounded-2xl bg-white dark:bg-surface-dark p-4 shadow-sm transition-all hover:shadow-md active:scale-[0.99] cursor-pointer border border-gray-100 dark:border-white/5">
+<div class="flex justify-between items-start">
+<h3 class="text-lg font-bold leading-tight text-gray-900 dark:text-white">Meeting Minutes - Q4</h3>
+<span class="material-symbols-filled text-green-400 text-[18px]" title="Synced">cloud_done</span>
+</div>
+<p class="text-sm font-normal leading-relaxed text-gray-600 dark:text-gray-400 line-clamp-2">
+                    Action items discussed: 1. Update UI design for the mobile app, 2. Refactor backend API for better latency, 3. Schedule team building.
+                </p>
+<div class="mt-1 flex items-center justify-between">
+<span class="text-xs font-medium text-primary dark:text-primary/80 bg-primary/10 dark:bg-primary/20 px-2 py-0.5 rounded-md">Work</span>
+<span class="text-xs text-gray-400 dark:text-gray-500">Oct 24</span>
+</div>
+</div>
+<!-- Note Card 4 -->
+<div class="group relative flex flex-col gap-2 rounded-2xl bg-white dark:bg-surface-dark p-4 shadow-sm transition-all hover:shadow-md active:scale-[0.99] cursor-pointer border border-gray-100 dark:border-white/5">
+<div class="flex justify-between items-start">
+<h3 class="text-lg font-bold leading-tight text-gray-900 dark:text-white">Book Recommendations</h3>
+<span class="material-symbols-filled text-green-400 text-[18px]" title="Synced">cloud_done</span>
+</div>
+<p class="text-sm font-normal leading-relaxed text-gray-600 dark:text-gray-400 line-clamp-2">
+                    "The Design of Everyday Things", "Don't Make Me Think", "Clean Code". Need to check the local library.
+                </p>
+<div class="mt-1 flex items-center justify-between">
+<span class="text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-white/10 px-2 py-0.5 rounded-md">Reading</span>
+<span class="text-xs text-gray-400 dark:text-gray-500">Oct 20</span>
+</div>
+</div>
+<!-- Note Card 5 -->
+<div class="group relative flex flex-col gap-2 rounded-2xl bg-white dark:bg-surface-dark p-4 shadow-sm transition-all hover:shadow-md active:scale-[0.99] cursor-pointer border border-gray-100 dark:border-white/5">
+<div class="flex justify-between items-start">
+<h3 class="text-lg font-bold leading-tight text-gray-900 dark:text-white">App Ideas 2024</h3>
+<span class="material-symbols-filled text-green-400 text-[18px]" title="Synced">cloud_done</span>
+</div>
+<p class="text-sm font-normal leading-relaxed text-gray-600 dark:text-gray-400 line-clamp-2">
+                    Fitness tracker with social features, a plant watering reminder app, or a personal finance manager using AI.
+                </p>
+<div class="mt-1 flex items-center justify-between">
+<span class="text-xs font-medium text-primary dark:text-primary/80 bg-primary/10 dark:bg-primary/20 px-2 py-0.5 rounded-md">Ideas</span>
+<span class="text-xs text-gray-400 dark:text-gray-500">Oct 15</span>
+</div>
+</div>
+<!-- Spacer for FAB -->
+<div class="h-10"></div>
+</main>
+<!-- Floating Action Button (FAB) -->
+<div class="absolute bottom-6 right-6 z-30">
+<button class="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-white shadow-lg shadow-primary/40 transition-transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-background-dark">
+<span class="material-symbols-outlined text-[32px]">add</span>
+</button>
+</div>
+<!-- Simulated iOS Home Indicator -->
+<div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-gray-300 dark:bg-gray-600 rounded-full z-40 opacity-70"></div>
+</div>
+</body></html>
