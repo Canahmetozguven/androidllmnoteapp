@@ -3,6 +3,7 @@ package com.example.llmnotes.core.di
 import android.content.Context
 import androidx.room.Room
 import com.example.llmnotes.core.database.AppDatabase
+import com.example.llmnotes.core.database.ChatDao
 import com.example.llmnotes.core.database.NoteDao
 import dagger.Module
 import dagger.Provides
@@ -22,11 +23,18 @@ object DatabaseModule {
             context,
             AppDatabase::class.java,
             "llm_notes_db"
-        ).build()
+        )
+        .fallbackToDestructiveMigration()
+        .build()
     }
 
     @Provides
     fun provideNoteDao(database: AppDatabase): NoteDao {
         return database.noteDao()
+    }
+
+    @Provides
+    fun provideChatDao(database: AppDatabase): ChatDao {
+        return database.chatDao()
     }
 }

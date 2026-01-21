@@ -115,12 +115,27 @@ fun SettingsScreen(
             
             item { Spacer(modifier = Modifier.height(16.dp)) }
 
-            // AI Models Section
+            // Chat Models Section
             item {
-                SectionHeader(title = "AI MODELS")
+                SectionHeader(title = "CHAT MODELS")
             }
 
-            items(uiState) { model ->
+            items(uiState.chatModels) { model ->
+                ModelCard(
+                    model = model,
+                    onDownload = { viewModel.downloadModel(model.info) },
+                    onLoad = { viewModel.loadModel(model.info) }
+                )
+            }
+
+            item { Spacer(modifier = Modifier.height(16.dp)) }
+
+            // Embedding Models Section
+            item {
+                SectionHeader(title = "EMBEDDING MODELS")
+            }
+
+            items(uiState.embeddingModels) { model ->
                 ModelCard(
                     model = model,
                     onDownload = { viewModel.downloadModel(model.info) },
@@ -131,7 +146,7 @@ fun SettingsScreen(
             // Version Footer
             item {
                 Text(
-                    text = "App Version 1.0.0",
+                    text = "App Version 1.1.0",
                     style = MaterialTheme.typography.labelSmall,
                     color = SecondaryText.copy(alpha = 0.5f),
                     modifier = Modifier
@@ -265,7 +280,7 @@ fun ModelCard(
                         style = MaterialTheme.typography.titleMedium
                     )
                     Text(
-                        text = model.info.filename,
+                        text = "${model.info.description} • ${formatFileSize(model.info.sizeBytes)}",
                         style = MaterialTheme.typography.bodySmall,
                         color = SecondaryText
                     )
@@ -408,5 +423,13 @@ fun ModelCard(
                 }
             }
         }
+    }
+}
+
+private fun formatFileSize(bytes: Long): String {
+    return when {
+        bytes >= 1_000_000_000 -> "%.1fGB".format(bytes / 1_000_000_000.0)
+        bytes >= 1_000_000 -> "%.0fMB".format(bytes / 1_000_000.0)
+        else -> "%.0fKB".format(bytes / 1_000.0)
     }
 }

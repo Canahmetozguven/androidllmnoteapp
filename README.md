@@ -75,6 +75,16 @@ Detailed technical papers and setup guides are located in the `docs/` folder:
 ---
 
 ## ⚖ Troubleshooting
-- **Crash on "Load Model"**: Ensure you have uninstalled the previous version of the app to clear stale native library caches.
+
+### Common Issues
+- **Crash on "Load Model"**: Often caused by stale native libraries (`UnsatisfiedLinkError`). See critical fix below.
 - **No GPU Acceleration**: Check `adb logcat | grep LLAMA_CPP`. If you see "ErrorExtensionNotPresent", the emulator is falling back to CPU.
 - **Compilation Errors**: Ensure you are using NDK `26.1.10909125`. Newer or older versions may have conflicting Vulkan headers.
+
+### CRITICAL: Native Build Caching & Sync
+If you encounter persistent `UnsatisfiedLinkError` or `NoSuchMethodError` despite code changes, the build environment is likely stale.
+
+**Prevention & Fixes:**
+1.  **Explicit JNI Registration:** We use `RegisterNatives` in `JNI_OnLoad` to hardcode the mapping between Java and C++. This prevents name-mangling mismatches.
+2.  **Nuclear Clean:** Manually delete `app/build` and `.cxx` in **BOTH** Windows and WSL environments before rebuilding.
+3.  **Verify Sync:** Always confirm your C++ changes (`native-lib.cpp`) actually exist in the WSL file system before running the build script.

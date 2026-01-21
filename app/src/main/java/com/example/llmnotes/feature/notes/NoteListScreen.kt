@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Cloud
+import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.CloudDone
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Search
@@ -48,6 +49,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -56,6 +58,14 @@ import com.example.llmnotes.ui.theme.GreenSuccess
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+
+// Sync status enum for UI representation
+enum class SyncStatus {
+    SYNCED,      // cloud_done (green)
+    PENDING,     // cloud (gray)
+    OFFLINE,     // cloud_off (gray/faded)
+    SYNCING      // cloud (purple/primary)
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -213,13 +223,9 @@ fun NoteItem(
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.weight(1f)
                 )
-                // Sync status icon
-                Icon(
-                    imageVector = Icons.Default.CloudDone,
-                    contentDescription = "Synced",
-                    modifier = Modifier.size(18.dp),
-                    tint = GreenSuccess
-                )
+                // Sync status icon - defaults to SYNCED for now
+                // In a real implementation, this would come from note.syncStatus
+                SyncStatusIcon(syncStatus = SyncStatus.SYNCED)
             }
             
             Spacer(modifier = Modifier.height(8.dp))
@@ -239,6 +245,15 @@ fun NoteItem(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                // Tags
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    note.tags.take(2).forEach { tag ->
+                        TagChip(tag = tag)
+                    }
+                }
                 // Date
                 Text(
                     text = formatDate(note.updatedAt),
@@ -248,6 +263,67 @@ fun NoteItem(
             }
         }
     }
+}
+
+@Composable
+private fun TagChip(tag: String) {
+    val isAccent = tag.lowercase() in listOf("work", "ideas")
+    val backgroundColor = if (isAccent) {
+        MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+    } else {
+        MaterialTheme.colorScheme.surfaceVariant
+    }
+    val textColor = if (isAccent) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    }
+    
+    Surface(
+        shape = RoundedCornerShape(6.dp),
+        color = backgroundColor
+    ) {
+        Text(
+            text = tag,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Medium,
+            color = textColor,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+        )
+    }
+}
+
+@Composable
+private fun SyncStatusIcon(syncStatus: SyncStatus) {
+    val (icon, tint, description) = when (syncStatus) {
+        SyncStatus.SYNCED -> Triple(
+            Icons.Default.CloudDone, 
+            GreenSuccess, 
+            "Synced"
+        )
+        SyncStatus.PENDING -> Triple(
+            Icons.Default.Cloud, 
+            MaterialTheme.colorScheme.onSurfaceVariant, 
+            "Pending sync"
+        )
+        SyncStatus.OFFLINE -> Triple(
+            Icons.Default.CloudOff, 
+            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f), 
+            "Offline"
+        )
+        SyncStatus.SYNCING -> Triple(
+            Icons.Default.Cloud, 
+            MaterialTheme.colorScheme.primary, 
+            "Syncing"
+        )
+    }
+    
+    Icon(
+        imageVector = icon,
+        contentDescription = description,
+        modifier = Modifier.size(18.dp),
+        tint = tint
+    )
 }
 
 @Composable

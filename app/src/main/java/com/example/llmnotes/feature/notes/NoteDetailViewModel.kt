@@ -15,6 +15,13 @@ import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
 
+enum class AiAction {
+    AUTO_COMPLETE,
+    SUMMARIZE,
+    REWRITE,
+    BULLET_POINTS
+}
+
 @HiltViewModel
 class NoteDetailViewModel @Inject constructor(
     private val saveNoteUseCase: SaveNoteUseCase,
@@ -72,17 +79,34 @@ class NoteDetailViewModel @Inject constructor(
     }
 
     fun generateCompletion() {
+        performAiAction(AiAction.AUTO_COMPLETE)
+    }
+
+    fun performAiAction(action: AiAction) {
         viewModelScope.launch {
             val currentContent = _uiState.value.content
+            if (currentContent.isBlank()) return@launch
+
             _uiState.value = _uiState.value.copy(isGenerating = true)
             
             try {
-                // Mock prompt construction
-                val prompt = "Continue this text: $currentContent"
-                val completion = llmEngine.completion(prompt)
+                val prompt = when(action) {
+                    AiAction.SUMMARIZE -> "Summarize the following text:\n$currentContent"
+                    AiAction.REWRITE -> "Rewrite the following text to be more clear and concise:\n$currentContent"
+                    AiAction.BULLET_POINTS -> "Convert the following text into a bulleted list:\n$currentContent"
+                    AiAction.AUTO_COMPLETE -> "Continue this text:\n$currentContent"
+                }
+                
+                val result = llmEngine.completion(prompt)
+                
+                val newContent = if (action == AiAction.AUTO_COMPLETE) {
+                    currentContent + result
+                } else {
+                    currentContent + "\n\n--- AI ${action.name} ---\n" + result
+                }
                 
                 _uiState.value = _uiState.value.copy(
-                    content = currentContent + completion,
+                    content = newContent,
                     isGenerating = false
                 )
             } catch (e: Exception) {

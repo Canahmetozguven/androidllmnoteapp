@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.FormatItalic
 import androidx.compose.material.icons.filled.FormatListBulleted
 import androidx.compose.material.icons.filled.FormatUnderlined
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Title
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
@@ -51,6 +52,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.llmnotes.ui.theme.GreenSuccess
+import androidx.compose.foundation.clickable
+import androidx.compose.material.icons.filled.AutoFixHigh
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Summarize
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,6 +70,17 @@ fun NoteDetailScreen(
     viewModel: NoteDetailViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var showAiSheet by remember { mutableStateOf(false) }
+
+    if (showAiSheet) {
+        AiToolsBottomSheet(
+            onAction = { action ->
+                viewModel.performAiAction(action)
+                showAiSheet = false
+            },
+            onDismiss = { showAiSheet = false }
+        )
+    }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -95,7 +117,7 @@ fun NoteDetailScreen(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { viewModel.generateCompletion() },
+                onClick = { showAiSheet = true },
                 shape = RoundedCornerShape(16.dp),
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
@@ -244,7 +266,7 @@ private fun FormattingToolbar() {
                 )
                 
                 FormatButton(Icons.Default.FormatListBulleted, "List")
-                FormatButton(Icons.Default.Image, "Image")
+                FormatButton(Icons.Default.Title, "Header")
             }
             
             // Done button
