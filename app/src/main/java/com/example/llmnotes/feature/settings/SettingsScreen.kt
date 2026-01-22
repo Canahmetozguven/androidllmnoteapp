@@ -58,6 +58,13 @@ import com.example.llmnotes.ui.theme.GreenSuccess
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
 
+import androidx.compose.ui.platform.LocalContext
+import android.widget.Toast
+import androidx.compose.runtime.LaunchedEffect
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
@@ -65,12 +72,22 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+
+    LaunchedEffect(uiState.syncStatusMessage) {
+        uiState.syncStatusMessage?.let { message ->
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+            viewModel.clearSyncMessage()
+        }
+    }
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            // Handle sign in
+            viewModel.handleSignInResult(result.data)
+        } else {
+             android.util.Log.w("SettingsScreen", "Sign in result was not OK: ${result.resultCode}")
         }
     }
 
@@ -107,8 +124,16 @@ fun SettingsScreen(
             
             item {
                 CloudBackupCard(
+                    isConnected = uiState.isGoogleDriveConnected,
+                    userEmail = uiState.userEmail,
+                    isSyncing = uiState.isSyncing,
+                    lastSyncedTimestamp = uiState.lastSyncedTimestamp,
                     onConnect = {
-                        launcher.launch(viewModel.getSignInIntent())
+                        if (uiState.isGoogleDriveConnected) {
+                            viewModel.syncNotes()
+                        } else {
+                            launcher.launch(viewModel.getSignInIntent())
+                        }
                     }
                 )
             }
@@ -172,6 +197,10 @@ private fun SectionHeader(title: String) {
 
 @Composable
 private fun CloudBackupCard(
+    isConnected: Boolean,
+    userEmail: String?,
+    isSyncing: Boolean = false,
+    lastSyncedTimestamp: Long = 0L,
     onConnect: () -> Unit
 ) {
     Card(
@@ -198,13 +227,13 @@ private fun CloudBackupCard(
                 modifier = Modifier
                     .size(48.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
+                    .background(if (isConnected) GreenSuccess.copy(alpha = 0.1f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.Cloud,
+                    imageVector = if (isConnected) Icons.Default.CloudDone else Icons.Outlined.Cloud,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = if (isConnected) GreenSuccess else MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(28.dp)
                 )
             }
@@ -217,22 +246,60 @@ private fun CloudBackupCard(
                     text = "Google Drive",
                     style = MaterialTheme.typography.titleMedium
                 )
-                Text(
-                    text = "Last synced: Never",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = SecondaryText
-                )
+                if (isConnected) {
+                    Text(
+                        text = "Connected as ${userEmail ?: "Unknown"}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = GreenSuccess
+                    )
+                    if (lastSyncedTimestamp > 0) {
+                        val date = Date(lastSyncedTimestamp)
+                        val format = SimpleDateFormat("MMM d, h:mm a", Locale.getDefault())
+                        Text(
+                            text = "Last synced: ${format.format(date)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = SecondaryText
+                        )
+                    }
+                } else {
+                    Text(
+                        text = "Last synced: Never",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = SecondaryText
+                    )
+                }
             }
             
             // Connect Button
-            Button(
-                onClick = onConnect,
-                shape = RoundedCornerShape(20.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary
-                )
-            ) {
-                Text("Connect")
+            if (isConnected) {
+                Button(
+                    onClick = onConnect,
+                    shape = RoundedCornerShape(20.dp),
+                    enabled = !isSyncing,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary
+                    )
+                ) {
+                    if (isSyncing) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text("Sync Now")
+                    }
+                }
+            } else {
+                Button(
+                    onClick = onConnect,
+                    shape = RoundedCornerShape(20.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary
+                    )
+                ) {
+                    Text("Connect")
+                }
             }
         }
     }

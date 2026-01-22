@@ -11,9 +11,15 @@ import androidx.work.WorkManager
 import androidx.work.workDataOf
 import com.example.llmnotes.core.ai.LlmEngine
 import com.example.llmnotes.core.ai.ModelManager
+import com.example.llmnotes.core.ai.HardwareCapabilityProvider
 import com.example.llmnotes.core.network.DownloadWorker
 import com.example.llmnotes.core.preferences.AppPreferences
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
+import com.google.android.gms.common.api.ApiException
+import com.example.llmnotes.domain.repository.NoteRepository
+import kotlinx.coroutines.flow.first
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -47,6 +53,16 @@ enum class ModelType {
 
 val AVAILABLE_MODELS = listOf(
     ModelInfo(
+        id = "qwen2.5-3b-instruct",
+        name = "Qwen 2.5 3B Instruct",
+        url = "https://huggingface.co/Qwen/Qwen2.5-3B-Instruct-GGUF/resolve/main/qwen2.5-3b-instruct-q4_k_m.gguf",
+        filename = "qwen2.5-3b-instruct-q4_k_m.gguf",
+        configUrl = "https://huggingface.co/Qwen/Qwen2.5-3B-Instruct/resolve/main/tokenizer_config.json",
+        description = "Best for Bilingual RAG",
+        sizeBytes = 2_000_000_000L,
+        type = ModelType.CHAT
+    ),
+    ModelInfo(
         id = "deepseek-r1-distill-qwen-1.5b",
         name = "DeepSeek R1 Distill Qwen 1.5B",
         url = "https://huggingface.co/second-state/DeepSeek-R1-Distill-Qwen-1.5B-GGUF/resolve/main/DeepSeek-R1-Distill-Qwen-1.5B-Q4_K_M.gguf",
@@ -57,47 +73,51 @@ val AVAILABLE_MODELS = listOf(
         type = ModelType.CHAT
     ),
     ModelInfo(
-        id = "tinyllama", 
-        name = "TinyLlama 1.1B (Q4_K_M)", 
-        url = "https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf", 
-        filename = "tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf",
-        configUrl = "https://huggingface.co/TinyLlama/TinyLlama-1.1B-Chat-v1.0/resolve/main/tokenizer_config.json",
-        description = "Fast & Efficient",
-        sizeBytes = 669_000_000L,
+        id = "kumru-2b",
+        name = "Kumru 2B (Turkish)",
+        url = "https://huggingface.co/Koc-Lab/Kumru-2B-GGUF/resolve/main/kumru-2b-q4_k_m.gguf",
+        filename = "kumru-2b-q4_k_m.gguf",
+        description = "Native Turkish Specialist",
+        sizeBytes = 1_500_000_000L,
         type = ModelType.CHAT
     ),
     ModelInfo(
-        id = "phi2",
-        name = "Phi-2 (Q4_K_M)",
-        url = "https://huggingface.co/TheBloke/phi-2-GGUF/resolve/main/phi-2.Q4_K_M.gguf",
-        filename = "phi-2.Q4_K_M.gguf",
-        description = "High Accuracy",
-        sizeBytes = 1_800_000_000L,
+        id = "qwen2.5-1.5b-instruct",
+        name = "Qwen 2.5 1.5B Instruct",
+        url = "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q4_k_m.gguf",
+        filename = "qwen2.5-1.5b-instruct-q4_k_m.gguf",
+        description = "Low RAM Fallback",
+        sizeBytes = 980_000_000L,
         type = ModelType.CHAT
     ),
     ModelInfo(
-        id = "all-minilm-l6-v2",
-        name = "All-MiniLM-L6-v2",
-        url = "https://huggingface.co/second-state/All-MiniLM-L6-v2-Embedding-GGUF/resolve/main/all-MiniLM-L6-v2-ggml-model-f16.gguf",
-        filename = "all-MiniLM-L6-v2-ggml-model-f16.gguf",
-        description = "Fast Embedding (384 dim)",
-        sizeBytes = 45_000_000L,
+        id = "nomic-embed-text-v1.5",
+        name = "Nomic Embed v1.5",
+        url = "https://huggingface.co/nomic-ai/nomic-embed-text-v1.5-GGUF/resolve/main/nomic-embed-text-v1.5.Q8_0.gguf",
+        filename = "nomic-embed-text-v1.5.Q8_0.gguf",
+        description = "Matryoshka / High Accuracy",
+        sizeBytes = 137_000_000L,
         type = ModelType.EMBEDDING
     ),
     ModelInfo(
-        id = "bge-small-en-v1.5",
-        name = "BGE Small En v1.5",
-        url = "https://huggingface.co/second-state/BGE-Small-En-V1.5-GGUF/resolve/main/bge-small-en-v1.5-f16.gguf",
-        filename = "bge-small-en-v1.5-f16.gguf",
-        description = "High Quality Embedding",
-        sizeBytes = 67_000_000L,
+        id = "multilingual-e5-small",
+        name = "Multilingual E5 Small",
+        url = "https://huggingface.co/second-state/Multilingual-E5-Small-GGUF/resolve/main/multilingual-e5-small-q8_0.gguf",
+        filename = "multilingual-e5-small-q8_0.gguf",
+        description = "Lightweight Fallback",
+        sizeBytes = 120_000_000L,
         type = ModelType.EMBEDDING
     )
 )
 
 data class SettingsUiState(
     val chatModels: List<ModelUiModel> = emptyList(),
-    val embeddingModels: List<ModelUiModel> = emptyList()
+    val embeddingModels: List<ModelUiModel> = emptyList(),
+    val isGoogleDriveConnected: Boolean = false,
+    val userEmail: String? = null,
+    val isSyncing: Boolean = false,
+    val syncStatusMessage: String? = null,
+    val lastSyncedTimestamp: Long = 0L
 )
 
 @HiltViewModel
@@ -105,8 +125,11 @@ class SettingsViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val modelManager: ModelManager,
     private val llmEngine: LlmEngine,
+    private val hardwareCapabilityProvider: HardwareCapabilityProvider,
     private val googleSignInClient: GoogleSignInClient,
-    private val appPreferences: AppPreferences
+    private val appPreferences: AppPreferences,
+    private val driveRepository: com.example.llmnotes.core.data.repository.GoogleDriveRepository,
+    private val noteRepository: NoteRepository
 ) : ViewModel() {
 
     private val workManager = WorkManager.getInstance(context)
@@ -121,16 +144,93 @@ class SettingsViewModel @Inject constructor(
         return googleSignInClient.signInIntent
     }
 
-    private fun checkRamSufficiency(): Boolean {
-        val actManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-        val memInfo = ActivityManager.MemoryInfo()
-        actManager.getMemoryInfo(memInfo)
-        
-        val totalRamGb = memInfo.totalMem / (1024 * 1024 * 1024.0)
-        return totalRamGb >= 3.5 
+    fun handleSignInResult(intent: Intent?) {
+        try {
+            android.util.Log.d("SettingsViewModel", "Handling sign in result intent: $intent")
+            val task = GoogleSignIn.getSignedInAccountFromIntent(intent)
+            val account = task.getResult(ApiException::class.java)
+            android.util.Log.d("SettingsViewModel", "Sign in successful: ${account.email}")
+            onGoogleSignInSuccess(account)
+        } catch (e: ApiException) {
+            android.util.Log.e("SettingsViewModel", "Sign in failed code: ${e.statusCode}", e)
+            e.printStackTrace()
+        }
+    }
+
+    private fun checkGoogleSignInStatus() {
+        val account = GoogleSignIn.getLastSignedInAccount(context)
+        if (account != null) {
+            onGoogleSignInSuccess(account)
+        }
+    }
+
+    private fun onGoogleSignInSuccess(account: GoogleSignInAccount) {
+        _uiState.value = _uiState.value.copy(
+            isGoogleDriveConnected = true,
+            userEmail = account.email,
+            lastSyncedTimestamp = appPreferences.lastSyncTimestamp
+        )
+    }
+
+    fun syncNotes() {
+        if (_uiState.value.isSyncing) return
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isSyncing = true, syncStatusMessage = null)
+            
+            try {
+                val notes = noteRepository.getAllNotes().first()
+                if (notes.isEmpty()) {
+                    _uiState.value = _uiState.value.copy(isSyncing = false, syncStatusMessage = "No notes to sync")
+                    return@launch
+                }
+
+                val lastSync = appPreferences.lastSyncTimestamp
+                val notesToSync = notes.filter { it.updatedAt > lastSync }
+
+                if (notesToSync.isEmpty()) {
+                    _uiState.value = _uiState.value.copy(isSyncing = false, syncStatusMessage = "Already synced")
+                    return@launch
+                }
+
+                var successCount = 0
+                var failCount = 0
+                
+                notesToSync.forEach { note ->
+                    val fileName = "${note.title.ifEmpty { "Untitled" }}.txt"
+                    val content = "Title: ${note.title}\n\n${note.content}"
+                    
+                    val result = driveRepository.uploadFile(fileName, content)
+                    if (result != null) {
+                        successCount++
+                    } else {
+                        failCount++
+                    }
+                }
+                
+                if (failCount == 0) {
+                    val now = System.currentTimeMillis()
+                    appPreferences.lastSyncTimestamp = now
+                    _uiState.value = _uiState.value.copy(lastSyncedTimestamp = now)
+                }
+
+                val message = if (failCount == 0) "Synced $successCount notes" else "Synced $successCount, Failed $failCount"
+                android.util.Log.d("SettingsViewModel", message)
+                
+                _uiState.value = _uiState.value.copy(isSyncing = false, syncStatusMessage = message)
+            } catch (e: Exception) {
+                android.util.Log.e("SettingsViewModel", "Sync failed", e)
+                _uiState.value = _uiState.value.copy(isSyncing = false, syncStatusMessage = "Sync failed")
+            }
+        }
+    }
+
+    fun clearSyncMessage() {
+        _uiState.value = _uiState.value.copy(syncStatusMessage = null)
     }
 
     init {
+        checkGoogleSignInStatus()
         refreshModelStatus()
         
         viewModelScope.launch {
@@ -216,8 +316,23 @@ class SettingsViewModel @Inject constructor(
 
     fun loadModel(info: ModelInfo) {
         viewModelScope.launch {
-            if (!checkRamSufficiency()) {
-                // Warning logic...
+            // Hardware Checks
+            val totalRam = hardwareCapabilityProvider.getTotalRamGb()
+            val modelSizeGb = info.sizeBytes / (1024.0 * 1024.0 * 1024.0)
+            // Heuristic: Model size + 1.5GB for OS/App overhead
+            val requiredRam = modelSizeGb + 1.5 
+
+            if (totalRam < requiredRam) {
+                val msg = "Warning: Low RAM. Need %.1fGB, found %.1fGB. App may crash.".format(requiredRam, totalRam)
+                _uiState.value = _uiState.value.copy(syncStatusMessage = msg)
+                // If severely constrained, block (e.g. less than model size itself + minimal overhead)
+                if (totalRam < modelSizeGb + 0.5) {
+                    return@launch
+                }
+            }
+
+            if (!hardwareCapabilityProvider.isVulkanSupported()) {
+                 _uiState.value = _uiState.value.copy(syncStatusMessage = "Vulkan not supported. Using CPU (Slow).")
             }
 
             val isEmbedding = info.type == ModelType.EMBEDDING
@@ -247,6 +362,8 @@ class SettingsViewModel @Inject constructor(
                         modelManager.downloadConfig(info.configUrl, info.filename)
                     }
                 }
+            } else {
+                _uiState.value = _uiState.value.copy(syncStatusMessage = "Failed to load model: ${result.exceptionOrNull()?.message}")
             }
             
             updateLoadingState(info.id, false, isEmbedding, result.isSuccess)

@@ -15,6 +15,8 @@ import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
 
+import com.example.llmnotes.core.preferences.AppPreferences
+
 enum class AiAction {
     AUTO_COMPLETE,
     SUMMARIZE,
@@ -27,6 +29,7 @@ class NoteDetailViewModel @Inject constructor(
     private val saveNoteUseCase: SaveNoteUseCase,
     private val repository: NoteRepository, // Direct access for getById for simplicity, or use UseCase
     private val llmEngine: LlmEngine,
+    private val appPreferences: AppPreferences,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -45,10 +48,14 @@ class NoteDetailViewModel @Inject constructor(
         viewModelScope.launch {
             val note = repository.getNoteById(id)
             if (note != null) {
+                val lastSync = appPreferences.lastSyncTimestamp
+                val isSynced = note.updatedAt <= lastSync
+                
                 _uiState.value = _uiState.value.copy(
                     id = note.id,
                     title = note.title,
-                    content = note.content
+                    content = note.content,
+                    isSynced = isSynced
                 )
             }
         }
@@ -120,5 +127,6 @@ data class NoteDetailUiState(
     val id: String? = null,
     val title: String = "",
     val content: String = "",
-    val isGenerating: Boolean = false
+    val isGenerating: Boolean = false,
+    val isSynced: Boolean = false
 )

@@ -1,5 +1,6 @@
 package com.example.llmnotes.core.ai
 
+import android.app.ActivityManager
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
@@ -36,5 +37,12 @@ class DefaultHardwareCapabilityProvider @Inject constructor(
         } else {
             null
         }
+    }
+
+    override fun getTotalRamGb(): Double {
+        val actManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        val memInfo = ActivityManager.MemoryInfo()
+        actManager.getMemoryInfo(memInfo)
+        return memInfo.totalMem / (1024 * 1024 * 1024.0)
     }
 }

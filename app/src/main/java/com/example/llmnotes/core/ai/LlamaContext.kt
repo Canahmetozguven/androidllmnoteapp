@@ -2,8 +2,17 @@ package com.example.llmnotes.core.ai
 
 class LlamaContext {
     companion object {
+        var isLibraryLoaded = false
+            private set
+
         init {
-            System.loadLibrary("llm_notes_cpp")
+            try {
+                System.loadLibrary("llm_notes_cpp")
+                isLibraryLoaded = true
+            } catch (e: UnsatisfiedLinkError) {
+                android.util.Log.e("LlamaContext", "Failed to load native library: llm_notes_cpp", e)
+                isLibraryLoaded = false
+            }
         }
     }
 

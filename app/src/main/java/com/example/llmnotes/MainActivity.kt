@@ -38,7 +38,8 @@ class MainActivity : ComponentActivity() {
                     val navController = rememberNavController()
                     // Triggers auto-loading of models via init block
                     val mainViewModel: MainViewModel = hiltViewModel() 
-                    MainScreen(navController = navController)
+                    val startDestination = if (mainViewModel.isOnboardingCompleted) "notes" else "onboarding"
+                    MainScreen(navController = navController, startDestination = startDestination)
                 }
             }
         }
@@ -49,7 +50,10 @@ class MainActivity : ComponentActivity() {
 private val bottomNavRoutes = setOf("notes", "chat", "files")
 
 @Composable
-private fun MainScreen(navController: NavHostController) {
+private fun MainScreen(
+    navController: NavHostController,
+    startDestination: String
+) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     
@@ -79,7 +83,7 @@ private fun MainScreen(navController: NavHostController) {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = "onboarding",
+            startDestination = startDestination,
             modifier = if (showBottomNav) Modifier.padding(innerPadding) else Modifier
         ) {
             composable("onboarding") {

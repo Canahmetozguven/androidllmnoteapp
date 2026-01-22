@@ -12,13 +12,19 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+import com.example.llmnotes.core.preferences.AppPreferences
+
 @HiltViewModel
 class NoteListViewModel @Inject constructor(
-    private val getNotesUseCase: GetNotesUseCase
+    private val getNotesUseCase: GetNotesUseCase,
+    private val appPreferences: AppPreferences
 ) : ViewModel() {
 
     private val _notes = MutableStateFlow<List<Note>>(emptyList())
     val notes: StateFlow<List<Note>> = _notes.asStateFlow()
+    
+    val lastSyncTimestamp: Long
+        get() = appPreferences.lastSyncTimestamp
 
     init {
         viewModelScope.launch {

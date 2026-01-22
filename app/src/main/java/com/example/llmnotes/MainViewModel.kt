@@ -17,6 +17,9 @@ class MainViewModel @Inject constructor(
     private val modelManager: ModelManager
 ) : ViewModel() {
 
+    val isOnboardingCompleted: Boolean
+        get() = appPreferences.onboardingCompleted
+
     init {
         restoreModels()
     }

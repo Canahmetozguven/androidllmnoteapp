@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.FormatUnderlined
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Title
 import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.Cloud
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -186,15 +187,20 @@ fun NoteDetailScreen(
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    val isSynced = uiState.isSynced
+                    val icon = if (isSynced) Icons.Default.CloudDone else Icons.Outlined.Cloud
+                    val text = if (isSynced) "Saved to Drive" else "Saved to Device"
+                    val tint = if (isSynced) GreenSuccess else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+
                     Icon(
-                        imageVector = Icons.Default.CloudDone,
+                        imageVector = icon,
                         contentDescription = null,
                         modifier = Modifier.size(14.dp),
-                        tint = GreenSuccess
+                        tint = tint
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "Saved to Drive",
+                        text = text,
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

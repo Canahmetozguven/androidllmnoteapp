@@ -14,5 +14,5 @@ interface DriveRepository {
     fun isSignedIn(): Boolean
     suspend fun listFiles(): List<DriveFile>
     suspend fun downloadFile(fileId: String, mimeType: String): String?
-    // We can add upload later
+    suspend fun uploadFile(name: String, content: String): String?
 }

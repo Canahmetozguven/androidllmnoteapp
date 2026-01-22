@@ -78,6 +78,7 @@ fun NoteListScreen(
 ) {
     val notes by viewModel.notes.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
+    val lastSyncTimestamp = viewModel.lastSyncTimestamp
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -182,7 +183,11 @@ fun NoteListScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(notes) { note ->
-                        NoteItem(note = note, onClick = { onNoteClick(note.id) })
+                        NoteItem(
+                            note = note, 
+                            lastSyncTimestamp = lastSyncTimestamp,
+                            onClick = { onNoteClick(note.id) }
+                        )
                     }
                     // Bottom spacing for FAB
                     item { Spacer(modifier = Modifier.height(80.dp)) }
@@ -195,8 +200,12 @@ fun NoteListScreen(
 @Composable
 fun NoteItem(
     note: Note,
+    lastSyncTimestamp: Long,
     onClick: () -> Unit
 ) {
+    val isSynced = note.updatedAt <= lastSyncTimestamp
+    val syncStatus = if (isSynced) SyncStatus.SYNCED else SyncStatus.PENDING
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -223,9 +232,7 @@ fun NoteItem(
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.weight(1f)
                 )
-                // Sync status icon - defaults to SYNCED for now
-                // In a real implementation, this would come from note.syncStatus
-                SyncStatusIcon(syncStatus = SyncStatus.SYNCED)
+                SyncStatusIcon(syncStatus = syncStatus)
             }
             
             Spacer(modifier = Modifier.height(8.dp))

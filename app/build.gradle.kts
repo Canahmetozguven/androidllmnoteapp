@@ -1,8 +1,12 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
+    alias(libs.plugins.googleServices)
 }
 
 android {
@@ -13,8 +17,8 @@ android {
         applicationId = "com.example.llmnotes"
         minSdk = 26
         targetSdk = 34
-        versionCode = 2
-        versionName = "1.1"
+        versionCode = 3
+        versionName = "1.2"
 
         ndkVersion = "26.1.10909125"
 
@@ -27,6 +31,21 @@ android {
             useSupportLibrary = true
         }
     }
+    
+    signingConfigs {
+        create("release") {
+            val keystorePropertiesFile = file("keystore.properties")
+            if (keystorePropertiesFile.exists()) {
+                val props = Properties()
+                props.load(FileInputStream(keystorePropertiesFile))
+                storeFile = file(props["storeFile"] as String)
+                storePassword = props["storePassword"] as String
+                keyAlias = props["keyAlias"] as String
+                keyPassword = props["keyPassword"] as String
+            }
+        }
+    }
+
     externalNativeBuild {
         cmake {
             path("src/main/cpp/CMakeLists.txt")
@@ -38,6 +57,7 @@ android {
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {
@@ -76,6 +96,10 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material.icons.extended)
     
+    // Firebase
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
+
     // Navigation
     implementation(libs.androidx.navigation.compose)
 

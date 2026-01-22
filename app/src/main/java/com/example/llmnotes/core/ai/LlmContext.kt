@@ -22,14 +22,46 @@ interface LlmContext {
 class DefaultLlmContext @Inject constructor() : LlmContext {
     private val nativeContext = LlamaContext()
     
-    override fun loadModel(path: String, template: String?): Boolean = nativeContext.loadModelNative(path, template)
-    override fun loadEmbeddingModel(path: String): Boolean = nativeContext.loadEmbeddingModelNative(path)
-    override fun completion(prompt: String, callback: LlmCallback?): String = 
-        nativeContext.completion(prompt, callback ?: object : LlmCallback { override fun onToken(token: String) {} })
-    override fun stopCompletion() = nativeContext.stopCompletion()
-    override fun embed(text: String): FloatArray = nativeContext.embed(text)
-    override fun unload() = nativeContext.unload()
-    override fun isGpuEnabled(): Boolean = nativeContext.isGpuEnabled()
+    private fun isLibraryLoaded(): Boolean {
+        return LlamaContext.isLibraryLoaded
+    }
+    
+    override fun loadModel(path: String, template: String?): Boolean {
+        if (!isLibraryLoaded()) return false
+        return nativeContext.loadModelNative(path, template)
+    }
+
+    override fun loadEmbeddingModel(path: String): Boolean {
+        if (!isLibraryLoaded()) return false
+        return nativeContext.loadEmbeddingModelNative(path)
+    }
+
+    override fun completion(prompt: String, callback: LlmCallback?): String {
+        if (!isLibraryLoaded()) return "Error: Native library not loaded"
+        return nativeContext.completion(prompt, callback ?: object : LlmCallback { override fun onToken(token: String) {} })
+    }
+
+    override fun stopCompletion() {
+        if (isLibraryLoaded()) {
+            nativeContext.stopCompletion()
+        }
+    }
+
+    override fun embed(text: String): FloatArray {
+        if (!isLibraryLoaded()) return floatArrayOf()
+        return nativeContext.embed(text)
+    }
+
+    override fun unload() {
+        if (isLibraryLoaded()) {
+            nativeContext.unload()
+        }
+    }
+
+    override fun isGpuEnabled(): Boolean {
+        if (!isLibraryLoaded()) return false
+        return nativeContext.isGpuEnabled()
+    }
 }
 
 /**

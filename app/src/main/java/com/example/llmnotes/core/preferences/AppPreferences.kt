@@ -27,4 +27,12 @@ class AppPreferences @Inject constructor(
     var activeEmbeddingModelFilename: String?
         get() = prefs.getString("active_embedding_model_filename", null)
         set(value) = prefs.edit().putString("active_embedding_model_filename", value).apply()
+
+    var lastSyncTimestamp: Long
+        get() = prefs.getLong("last_sync_timestamp", 0L)
+        set(value) = prefs.edit().putLong("last_sync_timestamp", value).apply()
+
+    var onboardingCompleted: Boolean
+        get() = prefs.getBoolean("onboarding_completed", false)
+        set(value) = prefs.edit().putBoolean("onboarding_completed", value).apply()
 }

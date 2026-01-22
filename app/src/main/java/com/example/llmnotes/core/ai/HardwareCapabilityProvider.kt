@@ -17,4 +17,10 @@ interface HardwareCapabilityProvider {
      * @return GPU name string (e.g., "Adreno 730") or null if unavailable.
      */
     fun getGpuName(): String?
+
+    /**
+     * Get the total system RAM in Gigabytes.
+     * @return Total RAM in GB (e.g., 5.8).
+     */
+    fun getTotalRamGb(): Double
 }

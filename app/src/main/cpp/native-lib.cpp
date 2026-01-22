@@ -209,7 +209,7 @@ Java_com_example_llmnotes_core_ai_LlamaContext_completion(JNIEnv* env, jobject, 
 
     // Prepare messages for template
     std::vector<llama_chat_message> messages;
-    std::string system_content = "You are a helpful AI assistant integrated into a notes app. Use the provided context to answer questions accurately.\n\nIMPORTANT: You must wrap your internal reasoning and thought process inside <think> and </think> tags. The final answer should be outside these tags.";
+    std::string system_content = "You are a helpful AI assistant integrated into a notes app. Use the provided context to answer questions accurately.\n\nIMPORTANT: If the user asks in Turkish, answer in Turkish. You must wrap your internal reasoning and thought process inside <think> and </think> tags. The final answer should be outside these tags.";
     
     messages.push_back({"system", system_content.c_str()});
     messages.push_back({"user", user_prompt.c_str()});

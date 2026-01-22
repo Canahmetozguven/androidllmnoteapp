@@ -178,7 +178,10 @@ fun OnboardingScreen(
             
             // Primary Action - Get Started
             Button(
-                onClick = onFinish,
+                onClick = {
+                    viewModel.completeOnboarding()
+                    onFinish()
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
