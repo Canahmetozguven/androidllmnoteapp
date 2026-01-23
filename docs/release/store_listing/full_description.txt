@@ -1,0 +1,17 @@
+LLM Notes is a privacy-first note-taking application that brings the power of Large Language Models (LLM) directly to your Android device. 
+
+**Core Features:**
+*   **100% Offline AI**: Chat with your notes, ask questions, and get summaries without your data ever leaving your device.
+*   **Private & Secure**: All processing happens locally using on-device models. No servers, no tracking.
+*   **Hardware Accelerated**: Optimized for modern Android devices using Vulkan GPU acceleration for fast response times.
+*   **Vector Search (RAG)**: Intelligently retrieves relevant notes to answer your questions accurately.
+*   **Organized Notes**: Clean, Material 3 design for managing your thoughts, ideas, and tasks.
+*   **Optional Backup**: Securely sync your notes to your personal Google Drive (optional).
+
+**Technical Requirements:**
+*   Android 10+ (Android 12+ recommended)
+*   Device with Vulkan 1.1+ support
+*   Minimum 6GB RAM recommended for AI features
+
+**Privacy Promise:**
+We believe your thoughts belong to you. That's why LLM Notes is built to work completely offline. If you choose to use the cloud backup feature, your data is stored only in your personal Google Drive account. We never see your notes or chats.

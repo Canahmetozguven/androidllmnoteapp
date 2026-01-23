@@ -46,13 +46,13 @@ static void batch_add(llama_batch & batch, llama_token id, llama_pos pos, int32_
 
 // Forward declarations
 extern "C" {
-    JNIEXPORT jboolean JNICALL Java_com_example_llmnotes_core_ai_LlamaContext_loadModelNative(JNIEnv* env, jobject, jstring path, jstring template_str);
-    JNIEXPORT jboolean JNICALL Java_com_example_llmnotes_core_ai_LlamaContext_loadEmbeddingModelNative(JNIEnv* env, jobject, jstring path);
-    JNIEXPORT jstring JNICALL Java_com_example_llmnotes_core_ai_LlamaContext_completion(JNIEnv* env, jobject, jstring prompt, jobject callback);
-    JNIEXPORT void JNICALL Java_com_example_llmnotes_core_ai_LlamaContext_stopCompletion(JNIEnv* env, jobject);
-    JNIEXPORT jboolean JNICALL Java_com_example_llmnotes_core_ai_LlamaContext_isGpuEnabled(JNIEnv* env, jobject);
-    JNIEXPORT jfloatArray JNICALL Java_com_example_llmnotes_core_ai_LlamaContext_embed(JNIEnv* env, jobject, jstring text);
-    JNIEXPORT void JNICALL Java_com_example_llmnotes_core_ai_LlamaContext_unload(JNIEnv* env, jobject);
+    JNIEXPORT jboolean JNICALL Java_com_synapsenotes_ai_core_ai_LlamaContext_loadModelNative(JNIEnv* env, jobject, jstring path, jstring template_str);
+    JNIEXPORT jboolean JNICALL Java_com_synapsenotes_ai_core_ai_LlamaContext_loadEmbeddingModelNative(JNIEnv* env, jobject, jstring path);
+    JNIEXPORT jstring JNICALL Java_com_synapsenotes_ai_core_ai_LlamaContext_completion(JNIEnv* env, jobject, jstring prompt, jobject callback);
+    JNIEXPORT void JNICALL Java_com_synapsenotes_ai_core_ai_LlamaContext_stopCompletion(JNIEnv* env, jobject);
+    JNIEXPORT jboolean JNICALL Java_com_synapsenotes_ai_core_ai_LlamaContext_isGpuEnabled(JNIEnv* env, jobject);
+    JNIEXPORT jfloatArray JNICALL Java_com_synapsenotes_ai_core_ai_LlamaContext_embed(JNIEnv* env, jobject, jstring text);
+    JNIEXPORT void JNICALL Java_com_synapsenotes_ai_core_ai_LlamaContext_unload(JNIEnv* env, jobject);
 }
 
 extern "C" JNIEXPORT jint JNICALL
@@ -65,20 +65,20 @@ JNI_OnLoad(JavaVM* vm, void* reserved) {
     }
 
     // Register natives explicitly to avoid UnsatisfiedLinkError issues
-    jclass clazz = env->FindClass("com/example/llmnotes/core/ai/LlamaContext");
+    jclass clazz = env->FindClass("com/synapsenotes/ai/core/ai/LlamaContext");
     if (clazz == nullptr) {
         __android_log_print(ANDROID_LOG_ERROR, TAG, "Failed to find LlamaContext class");
         return JNI_ERR;
     }
 
     JNINativeMethod methods[] = {
-        {"loadModelNative", "(Ljava/lang/String;Ljava/lang/String;)Z", (void*)Java_com_example_llmnotes_core_ai_LlamaContext_loadModelNative},
-        {"loadEmbeddingModelNative", "(Ljava/lang/String;)Z", (void*)Java_com_example_llmnotes_core_ai_LlamaContext_loadEmbeddingModelNative},
-        {"completion", "(Ljava/lang/String;Lcom/example/llmnotes/core/ai/LlmCallback;)Ljava/lang/String;", (void*)Java_com_example_llmnotes_core_ai_LlamaContext_completion},
-        {"stopCompletion", "()V", (void*)Java_com_example_llmnotes_core_ai_LlamaContext_stopCompletion},
-        {"isGpuEnabled", "()Z", (void*)Java_com_example_llmnotes_core_ai_LlamaContext_isGpuEnabled},
-        {"embed", "(Ljava/lang/String;)[F", (void*)Java_com_example_llmnotes_core_ai_LlamaContext_embed},
-        {"unload", "()V", (void*)Java_com_example_llmnotes_core_ai_LlamaContext_unload}
+        {"loadModelNative", "(Ljava/lang/String;Ljava/lang/String;)Z", (void*)Java_com_synapsenotes_ai_core_ai_LlamaContext_loadModelNative},
+        {"loadEmbeddingModelNative", "(Ljava/lang/String;)Z", (void*)Java_com_synapsenotes_ai_core_ai_LlamaContext_loadEmbeddingModelNative},
+        {"completion", "(Ljava/lang/String;Lcom/synapsenotes/ai/core/ai/LlmCallback;)Ljava/lang/String;", (void*)Java_com_synapsenotes_ai_core_ai_LlamaContext_completion},
+        {"stopCompletion", "()V", (void*)Java_com_synapsenotes_ai_core_ai_LlamaContext_stopCompletion},
+        {"isGpuEnabled", "()Z", (void*)Java_com_synapsenotes_ai_core_ai_LlamaContext_isGpuEnabled},
+        {"embed", "(Ljava/lang/String;)[F", (void*)Java_com_synapsenotes_ai_core_ai_LlamaContext_embed},
+        {"unload", "()V", (void*)Java_com_synapsenotes_ai_core_ai_LlamaContext_unload}
     };
 
     if (env->RegisterNatives(clazz, methods, sizeof(methods) / sizeof(methods[0])) < 0) {
@@ -92,7 +92,7 @@ JNI_OnLoad(JavaVM* vm, void* reserved) {
 }
 
 extern "C" JNIEXPORT jboolean JNICALL
-Java_com_example_llmnotes_core_ai_LlamaContext_loadEmbeddingModelNative(JNIEnv* env, jobject, jstring path) {
+Java_com_synapsenotes_ai_core_ai_LlamaContext_loadEmbeddingModelNative(JNIEnv* env, jobject, jstring path) {
     const char* model_path = env->GetStringUTFChars(path, nullptr);
 
     if (g_context_embed) {
@@ -121,7 +121,8 @@ Java_com_example_llmnotes_core_ai_LlamaContext_loadEmbeddingModelNative(JNIEnv* 
 
     struct llama_context_params ctx_params = llama_context_default_params();
     ctx_params.embeddings = true; // IMPORTANT
-    ctx_params.n_batch = 2048; // Can be larger for embeddings
+    ctx_params.n_ctx = 2048;      // Ensure context is large enough for the batch
+    ctx_params.n_batch = 512;     // Reduce to 512 for better Vulkan stability on Samsung S22
     
     g_context_embed = llama_init_from_model(g_model_embed, ctx_params);
     if (!g_context_embed) {
@@ -135,7 +136,7 @@ Java_com_example_llmnotes_core_ai_LlamaContext_loadEmbeddingModelNative(JNIEnv* 
 }
 
 extern "C" JNIEXPORT jboolean JNICALL
-Java_com_example_llmnotes_core_ai_LlamaContext_loadModelNative(JNIEnv* env, jobject, jstring path, jstring template_str) {
+Java_com_synapsenotes_ai_core_ai_LlamaContext_loadModelNative(JNIEnv* env, jobject, jstring path, jstring template_str) {
     const char* model_path = env->GetStringUTFChars(path, nullptr);
     
     if (template_str != nullptr) {
@@ -158,6 +159,7 @@ Java_com_example_llmnotes_core_ai_LlamaContext_loadModelNative(JNIEnv* env, jobj
 
     struct llama_model_params model_params = llama_model_default_params();
     model_params.n_gpu_layers = -1; // Try GPU
+    // model_params.use_mmap = true; // Default is true, keep it true for low RAM
     
     __android_log_print(ANDROID_LOG_INFO, TAG, "Attempting to load chat model from %s...", model_path);
     g_model = llama_model_load_from_file(model_path, model_params);
@@ -175,8 +177,8 @@ Java_com_example_llmnotes_core_ai_LlamaContext_loadModelNative(JNIEnv* env, jobj
     if (!g_model) return JNI_FALSE;
 
     struct llama_context_params ctx_params = llama_context_default_params();
-    ctx_params.n_ctx = 4096; 
-    ctx_params.n_batch = 512;
+    ctx_params.n_ctx = 2048; // Reduce context size to 2048 for S22 stability
+    ctx_params.n_batch = 256; // Reduce batch size to 256 for S22 Vulkan stability
     
     g_context = llama_init_from_model(g_model, ctx_params);
     if (!g_context) {
@@ -189,13 +191,13 @@ Java_com_example_llmnotes_core_ai_LlamaContext_loadModelNative(JNIEnv* env, jobj
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_example_llmnotes_core_ai_LlamaContext_stopCompletion(JNIEnv* env, jobject) {
+Java_com_synapsenotes_ai_core_ai_LlamaContext_stopCompletion(JNIEnv* env, jobject) {
     g_stop_requested = true;
     __android_log_print(ANDROID_LOG_INFO, TAG, "Stop requested");
 }
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_example_llmnotes_core_ai_LlamaContext_completion(JNIEnv* env, jobject, jstring prompt, jobject callback) {
+Java_com_synapsenotes_ai_core_ai_LlamaContext_completion(JNIEnv* env, jobject, jstring prompt, jobject callback) {
     if (!g_context) return env->NewStringUTF("Error: Model not loaded");
     
     g_stop_requested = false;
@@ -360,12 +362,12 @@ Java_com_example_llmnotes_core_ai_LlamaContext_completion(JNIEnv* env, jobject, 
 }
 
 extern "C" JNIEXPORT jboolean JNICALL
-Java_com_example_llmnotes_core_ai_LlamaContext_isGpuEnabled(JNIEnv* env, jobject) {
+Java_com_synapsenotes_ai_core_ai_LlamaContext_isGpuEnabled(JNIEnv* env, jobject) {
     return g_gpu_enabled ? JNI_TRUE : JNI_FALSE;
 }
 
 extern "C" JNIEXPORT jfloatArray JNICALL
-Java_com_example_llmnotes_core_ai_LlamaContext_embed(JNIEnv* env, jobject, jstring text) {
+Java_com_synapsenotes_ai_core_ai_LlamaContext_embed(JNIEnv* env, jobject, jstring text) {
     if (!g_context_embed && !g_context) return nullptr;
     
     llama_context* ctx = g_context_embed ? g_context_embed : g_context;
@@ -427,7 +429,7 @@ Java_com_example_llmnotes_core_ai_LlamaContext_embed(JNIEnv* env, jobject, jstri
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_example_llmnotes_core_ai_LlamaContext_unload(JNIEnv* env, jobject) {
+Java_com_synapsenotes_ai_core_ai_LlamaContext_unload(JNIEnv* env, jobject) {
     if (g_context) {
         llama_free(g_context);
         g_context = nullptr;

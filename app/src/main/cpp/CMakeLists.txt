@@ -11,6 +11,9 @@ find_library(
 set(GGML_VULKAN ON CACHE BOOL "Enable Vulkan Backend" FORCE)
 set(GGML_VULKAN ON) # Force non-cache variable too
 
+# Include external Vulkan headers downloaded from Khronos
+include_directories(SYSTEM external)
+
 # Use absolute path to host toolchain for cross-compilation
 set(GGML_VULKAN_SHADERS_GEN_TOOLCHAIN "${CMAKE_CURRENT_SOURCE_DIR}/host-toolchain.cmake" CACHE FILEPATH "Host toolchain for vulkan-shaders-gen" FORCE)
 
@@ -26,21 +29,14 @@ endif()
 
 message(STATUS "Forcing Vulkan_GLSLC_EXECUTABLE to ${Vulkan_GLSLC_EXECUTABLE}")
 set(Vulkan_GLSLC_EXECUTABLE "${Vulkan_GLSLC_EXECUTABLE}" CACHE FILEPATH "Path to glslc" FORCE)
-set(Vulkan_FOUND ON CACHE BOOL "Vulkan Found" FORCE) # Try to force it if find_package fails
+set(Vulkan_FOUND ON CACHE BOOL "Vulkan Found" FORCE) 
 
 # Force static linking of backends (no DL)
 set(GGML_BACKEND_DL OFF CACHE BOOL "Backend DL" FORCE)
 
-# Force GGML_USE_VULKAN globally to ensure it's picked up by ggml-backend-reg.cpp
-# add_compile_definitions(GGML_USE_VULKAN) # Let build system handle this if DL is OFF
-# add_definitions(-DGGML_USE_VULKAN)
-
 # Disable OpenCL to avoid linker errors on x86_64 (incompatible library) and because we are using Vulkan
 set(GGML_OPENCL OFF CACHE BOOL "Disable OpenCL" FORCE)
 
-# set(CMAKE_MAKE_PROGRAM "C:/Users/canahmet/AppData/Local/Android/Sdk/cmake/3.22.1/bin/ninja.exe" CACHE FILEPATH "Path to Ninja" FORCE)
-
-# set(LLAMA_BUILD_COMMON ON)
 add_subdirectory(llama)
 
 add_library(

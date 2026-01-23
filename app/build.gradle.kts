@@ -10,15 +10,15 @@ plugins {
 }
 
 android {
-    namespace = "com.example.llmnotes"
-    compileSdk = 34
+    namespace = "com.synapsenotes.ai"
+    compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.llmnotes"
+        applicationId = "com.synapsenotes.ai"
         minSdk = 26
-        targetSdk = 34
-        versionCode = 3
-        versionName = "1.2"
+        targetSdk = 35
+        versionCode = 9
+        versionName = "1.8"
 
         ndkVersion = "26.1.10909125"
 
@@ -53,9 +53,18 @@ android {
         }
     }
 
+    defaultConfig {
+        externalNativeBuild {
+            cmake {
+                arguments += listOf("-DGGML_VULKAN=OFF", "-DVulkan_FOUND=OFF", "-DLLAMA_VULKAN=OFF")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             signingConfig = signingConfigs.getByName("release")
         }
@@ -69,6 +78,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.8" // Matches Kotlin 1.9.22 roughly, or check mapping. 

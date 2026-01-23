@@ -59,6 +59,32 @@ The project uses a hybrid WSL-Windows build process for native C++ components an
 - **Large Files**: Do not commit `.gguf` model files to Git (they are ignored via `.gitignore`).
 - **Native Stability**: Always implement CPU fallbacks in `loadModel` to prevent app crashes on incompatible hardware.
 
+## 🏗️ Build System Notes
+
+### Compile SDK 35
+The project targets **Android 15 (API 35)** (`compileSdk = 35`). 
+Since the project uses Android Gradle Plugin (AGP) 8.2.2 (which officially supports up to API 34), we explicitly suppress the compatibility warning in `gradle.properties`:
+```properties
+android.suppressUnsupportedCompileSdk=35
+```
+**Do not remove this property** unless upgrading AGP to 8.3+.
+
+### Why does the release build take 5+ minutes?
+The release build (`assembleRelease`) is significantly slower than debug builds due to:
+1.  **Native Cross-Compilation**: It compiles the massive `llama.cpp` library twice (once for `arm64-v8a`, once for `x86_64`) from scratch.
+2.  **Vulkan Shader Generation**: It builds and runs a custom `vulkan-shaders-gen` tool on the host to pre-compile SPIR-V shaders.
+3.  **R8 Optimization**: Full code shrinking, obfuscation, and optimization are enabled for release.
+4.  **WSL Overhead**: File synchronization and cross-OS process management add a small latency penalty.
+
+### Publishing
+To generate a signed Release APK and AAB (Bundle):
+1.  Ensure `keystore.properties` is present.
+2.  Run the publish script in WSL (handles sync + build):
+    ```bash
+    wsl bash -c "~/projects/android_note_app/publish.sh"
+    ```
+3.  Artifacts will be copied to `app/build/outputs/{apk,bundle}/release/`.
+
 ## ⚠️ Important Troubleshooting: Native Build Caching & Sync
 
 **Issue:** Persistent `UnsatisfiedLinkError` or `java.lang.NoSuchMethodError` when calling native functions, even after a rebuild.

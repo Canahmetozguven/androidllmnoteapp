@@ -1,37 +1,77 @@
-# Signing
-*.jks
-keystore.properties
+# Built application files
+*.apk
+*.aar
+*.ap_
+*.aab
 
-# Gradle
-.gradle/
+# Files for the ART/Dalvik VM
+*.dex
+
+# Java class files
+*.class
+
+# Generated files
+bin/
+gen/
+out/
 build/
 app/build/
+.gradle/
+.cxx/
+app/.cxx/
 
-# Android Studio / IntelliJ
+# Local configuration file (sdk.dir is shared by one of these)
+local.properties
+
+# Proguard events output
+proguard/
+app/proguard/
+
+# Log Files
+*.log
+
+# Android Studio Navigation editor temp files
+.navigation/
+
+# Android Studio captures folder
+captures/
+
+# IntelliJ / Android Studio
 .idea/
 *.iml
 *.hprof
+*.ipr
+*.iws
 
-# Local configuration
-local.properties
-
-# JNI build artifacts
-app/.cxx/
-
-# OS specific
+# MacOS
 .DS_Store
-Thumbs.db
 
-# Large files
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Large AI Model files
 *.gguf
 *.bin
 
-# Temporary folders
-undefined/
+# Keystore (Secrets)
+*.jks
+*.keystore
+keystore.properties
+# Allow the example file
+!keystore.properties.example
 
-# Release Artifacts
-app/release/
-
-# Firebase Configuration
+# Google Services (Secrets)
 google-services.json
 app/google-services.json
+app/google-services*.json
+
+# Release Artifacts (Binaries)
+release_artifacts/
+app/release/
+
+# Temporary / Scratch files
+files.txt
+files_to_process.txt
+undefined/
