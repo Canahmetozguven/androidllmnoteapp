@@ -4,5 +4,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [~] **Track: Implement and verify OpenCL backend support for hardware acceleration alongside Vulkan.**
+- [x] **Track: Implement and verify OpenCL backend support for hardware acceleration alongside Vulkan.**
   *Link: [./tracks/opencl_backend_20260126/](./tracks/opencl_backend_20260126/)*
