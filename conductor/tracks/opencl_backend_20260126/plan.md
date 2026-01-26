@@ -26,7 +26,7 @@
 - [x] Task: Update Hardware Dashboard. [02e100a]
     - [ ] Sub-task: Ensure the UI can display "OpenCL" as the active backend.
     - [ ] Sub-task: Verify T/s reporting works correctly with the OpenCL backend.
-- [ ] Task: Integration Test (Manual).
+- [x] Task: Integration Test (Manual). [4defb9e]
     - [ ] Sub-task: Force OpenCL backend (if possible via dev settings or code) and run a chat session.
     - [ ] Sub-task: Verify no crashes on model load or generation.
 - [ ] Task: Conductor - User Manual Verification 'UI & Verification' (Protocol in workflow.md)
