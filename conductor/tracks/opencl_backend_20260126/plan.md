@@ -4,7 +4,7 @@
 - [x] Task: Update `app/build.gradle.kts` to support OpenCL build flags. [91f1ba0]
     - [ ] Sub-task: Add `GGML_OPENCL=ON` and related flags (CLBLAST if needed) to the CMake arguments.
     - [ ] Sub-task: Ensure the NDK configuration allows for OpenCL headers/libraries linkage.
-- [ ] Task: Update `app/src/main/cpp/CMakeLists.txt` to link OpenCL libraries.
+- [x] Task: Update `app/src/main/cpp/CMakeLists.txt` to link OpenCL libraries. [f34d52d]
     - [ ] Sub-task: Locate or bundle OpenCL headers/stubs if not present in the NDK (usually requires `libOpenCL.so` stub).
     - [ ] Sub-task: Configure the `llama` target to link against OpenCL.
 - [ ] Task: Verify Native Build.
