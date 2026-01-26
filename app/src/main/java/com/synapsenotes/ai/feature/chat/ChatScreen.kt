@@ -104,7 +104,7 @@ fun ChatScreen(
     val selectedNotes by viewModel.selectedNotes.collectAsState()
     val allNotes by viewModel.allNotes.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
-    val isGpuEnabled by viewModel.isGpuEnabled.collectAsState()
+    val hardwareInfo by viewModel.hardwareInfo.collectAsState()
     var inputText by remember { mutableStateOf("") }
     
     var showMenu by remember { mutableStateOf(false) }
@@ -142,11 +142,11 @@ fun ChatScreen(
                         )
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                text = "On-device AI",
+                                text = if (hardwareInfo.isGpuAccelerationEnabled) "On-device AI (${hardwareInfo.backendName})" else "On-device AI",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                            if (isGpuEnabled) {
+                            if (hardwareInfo.isGpuAccelerationEnabled) {
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Box(
                                     modifier = Modifier
