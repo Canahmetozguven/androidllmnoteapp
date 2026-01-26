@@ -23,7 +23,7 @@
 - [ ] Task: Conductor - User Manual Verification 'Runtime Detection & Backend Selection' (Protocol in workflow.md)
 
 ## Phase 3: UI & Verification
-- [ ] Task: Update Hardware Dashboard.
+- [x] Task: Update Hardware Dashboard. [02e100a]
     - [ ] Sub-task: Ensure the UI can display "OpenCL" as the active backend.
     - [ ] Sub-task: Verify T/s reporting works correctly with the OpenCL backend.
 - [ ] Task: Integration Test (Manual).
