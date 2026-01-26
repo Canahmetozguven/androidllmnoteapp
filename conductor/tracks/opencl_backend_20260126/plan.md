@@ -1,6 +1,6 @@
 # Implementation Plan - OpenCL Backend Support
 
-## Phase 1: Build Configuration & Native Setup
+## Phase 1: Build Configuration & Native Setup [checkpoint: 230ced5]
 - [x] Task: Update `app/build.gradle.kts` to support OpenCL build flags. [91f1ba0]
     - [ ] Sub-task: Add `GGML_OPENCL=ON` and related flags (CLBLAST if needed) to the CMake arguments.
     - [ ] Sub-task: Ensure the NDK configuration allows for OpenCL headers/libraries linkage.
