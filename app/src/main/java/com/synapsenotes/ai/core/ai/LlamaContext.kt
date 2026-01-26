@@ -23,4 +23,5 @@ class LlamaContext {
     external fun embed(text: String): FloatArray
     external fun unload()
     external fun isGpuEnabled(): Boolean
+    external fun isOpenCLAvailable(): Boolean
 }

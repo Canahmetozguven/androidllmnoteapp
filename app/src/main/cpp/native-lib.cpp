@@ -7,6 +7,7 @@
 #include <atomic>
 #include <stdlib.h>
 #include <sys/system_properties.h>
+#include <dlfcn.h>
 #include "llama.h"
 
 #define TAG "LLM_JNI"
@@ -122,6 +123,7 @@ extern "C" {
     JNIEXPORT jstring JNICALL Java_com_synapsenotes_ai_core_ai_LlamaContext_completion(JNIEnv* env, jobject, jstring prompt, jobject callback);
     JNIEXPORT void JNICALL Java_com_synapsenotes_ai_core_ai_LlamaContext_stopCompletion(JNIEnv* env, jobject);
     JNIEXPORT jboolean JNICALL Java_com_synapsenotes_ai_core_ai_LlamaContext_isGpuEnabled(JNIEnv* env, jobject);
+    JNIEXPORT jboolean JNICALL Java_com_synapsenotes_ai_core_ai_LlamaContext_isOpenCLAvailable(JNIEnv* env, jobject);
     JNIEXPORT jfloatArray JNICALL Java_com_synapsenotes_ai_core_ai_LlamaContext_embed(JNIEnv* env, jobject, jstring text);
     JNIEXPORT void JNICALL Java_com_synapsenotes_ai_core_ai_LlamaContext_unload(JNIEnv* env, jobject);
 }
@@ -148,6 +150,7 @@ JNI_OnLoad(JavaVM* vm, void* reserved) {
         {"completion", "(Ljava/lang/String;Lcom/synapsenotes/ai/core/ai/LlmCallback;)Ljava/lang/String;", (void*)Java_com_synapsenotes_ai_core_ai_LlamaContext_completion},
         {"stopCompletion", "()V", (void*)Java_com_synapsenotes_ai_core_ai_LlamaContext_stopCompletion},
         {"isGpuEnabled", "()Z", (void*)Java_com_synapsenotes_ai_core_ai_LlamaContext_isGpuEnabled},
+        {"isOpenCLAvailable", "()Z", (void*)Java_com_synapsenotes_ai_core_ai_LlamaContext_isOpenCLAvailable},
         {"embed", "(Ljava/lang/String;)[F", (void*)Java_com_synapsenotes_ai_core_ai_LlamaContext_embed},
         {"unload", "()V", (void*)Java_com_synapsenotes_ai_core_ai_LlamaContext_unload}
     };
@@ -516,6 +519,35 @@ Java_com_synapsenotes_ai_core_ai_LlamaContext_completion(JNIEnv* env, jobject, j
 extern "C" JNIEXPORT jboolean JNICALL
 Java_com_synapsenotes_ai_core_ai_LlamaContext_isGpuEnabled(JNIEnv* env, jobject) {
     return g_gpu_enabled ? JNI_TRUE : JNI_FALSE;
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_synapsenotes_ai_core_ai_LlamaContext_isOpenCLAvailable(JNIEnv* env, jobject) {
+    // Try to load libOpenCL.so dynamically to check presence
+    void* handle = dlopen("libOpenCL.so", RTLD_NOW | RTLD_LOCAL);
+    if (handle) {
+        dlclose(handle);
+        return JNI_TRUE;
+    }
+    
+    // Fallback paths common on Android
+    const char* paths[] = {
+        "/system/vendor/lib64/libOpenCL.so",
+        "/system/lib64/libOpenCL.so",
+        "/vendor/lib64/libOpenCL.so",
+        "/system/vendor/lib/libOpenCL.so",
+        "/system/lib/libOpenCL.so"
+    };
+    
+    for (const char* path : paths) {
+         handle = dlopen(path, RTLD_NOW | RTLD_LOCAL);
+         if (handle) {
+             dlclose(handle);
+             return JNI_TRUE;
+         }
+    }
+    
+    return JNI_FALSE;
 }
 
 extern "C" JNIEXPORT jfloatArray JNICALL

@@ -14,6 +14,7 @@ interface LlmContext {
     fun embed(text: String): FloatArray
     fun unload()
     fun isGpuEnabled(): Boolean
+    fun isOpenCLAvailable(): Boolean
 }
 
 /**
@@ -61,5 +62,10 @@ class DefaultLlmContext @Inject constructor() : LlmContext {
     override fun isGpuEnabled(): Boolean {
         if (!isLibraryLoaded()) return false
         return nativeContext.isGpuEnabled()
+    }
+
+    override fun isOpenCLAvailable(): Boolean {
+        if (!isLibraryLoaded()) return false
+        return nativeContext.isOpenCLAvailable()
     }
 }
