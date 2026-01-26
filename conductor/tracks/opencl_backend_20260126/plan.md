@@ -18,7 +18,7 @@
 - [x] Task: Update `HardwareCapabilityProvider` logic. [b5819e7]
     - [ ] Sub-task: Modify `getBestBackend()` to prioritize Vulkan -> OpenCL -> CPU.
     - [ ] Sub-task: Add logic to respect any user overrides if implemented (checking `AppPreferences`).
-- [ ] Task: Unit Test Backend Selection.
+- [x] Task: Unit Test Backend Selection. [9e26edb]
     - [ ] Sub-task: Write tests for `HardwareCapabilityProvider` to verify correct selection order based on mocked availability.
 - [ ] Task: Conductor - User Manual Verification 'Runtime Detection & Backend Selection' (Protocol in workflow.md)
 
