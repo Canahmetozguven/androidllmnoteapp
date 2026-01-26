@@ -11,6 +11,9 @@ import com.google.api.client.http.ByteArrayContent
 import com.google.api.services.drive.Drive
 import com.google.api.services.drive.DriveScopes
 import com.google.api.services.drive.model.File
+import com.google.api.client.googleapis.services.AbstractGoogleClientRequest
+import com.google.api.client.googleapis.services.GoogleClientRequestInitializer
+import com.synapsenotes.ai.BuildConfig
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -28,9 +31,13 @@ class GoogleDriveRepository @Inject constructor(
         val account = GoogleSignIn.getLastSignedInAccount(context) ?: return null
         
         val credential = GoogleAccountCredential.usingOAuth2(
-            context, listOf(DriveScopes.DRIVE_FILE)
+            context, listOf(DriveScopes.DRIVE_FILE, DriveScopes.DRIVE_READONLY)
         )
         credential.selectedAccount = account.account
+
+        // API Key is NOT required when using OAuth2 (GoogleAccountCredential).
+        // Including it causes errors if the key restrictions (SHA-1/Package) don't match exactly.
+        // The OAuth token is sufficient for both Authentication and Authorization.
 
         return Drive.Builder(
             NetHttpTransport(),
@@ -62,7 +69,9 @@ class GoogleDriveRepository @Inject constructor(
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            emptyList()
+            // Log full error for debugging
+            android.util.Log.e("GoogleDriveRepository", "List files failed: ${e.javaClass.name}: ${e.message}", e)
+            throw e
         }
     }
 

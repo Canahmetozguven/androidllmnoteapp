@@ -75,3 +75,6 @@ app/release/
 files.txt
 files_to_process.txt
 undefined/
+
+.gemini/
+gha-creds-*.json

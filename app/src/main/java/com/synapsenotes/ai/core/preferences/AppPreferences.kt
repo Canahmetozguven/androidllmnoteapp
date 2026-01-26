@@ -35,4 +35,8 @@ class AppPreferences @Inject constructor(
     var onboardingCompleted: Boolean
         get() = prefs.getBoolean("onboarding_completed", false)
         set(value) = prefs.edit().putBoolean("onboarding_completed", value).apply()
+
+    var safeMode: Boolean
+        get() = prefs.getBoolean("safe_mode_enabled", false)
+        set(value) = prefs.edit().putBoolean("safe_mode_enabled", value).apply()
 }

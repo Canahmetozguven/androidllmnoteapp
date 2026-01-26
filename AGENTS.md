@@ -1,108 +1,81 @@
-# Agentic Development Guide - Android LLM Note App
+# PROJECT KNOWLEDGE BASE
 
-This repository contains an Android application integrated with `llama.cpp` for on-device LLM inference using Vulkan acceleration.
+**Generated:** 2026-01-23
+**Context:** Hybrid Android + Vulkan + WSL Build System
 
-## 🛠 Build & Test Commands
+## OVERVIEW
+Android application integrating `llama.cpp` for on-device LLM inference using Vulkan GPU acceleration.
+**Stack:** Kotlin (MVVM/Compose) + C++ (JNI/Vulkan) + WSL (Build Host).
 
-### General Android Build
-- **Assemble Debug APK**: `./gradlew assembleDebug`
-- **Clean Build**: `./gradlew clean assembleDebug`
-- **Lint**: `./gradlew lint`
-
-### Vulkan Accelerated Build (WSL Required)
-The project uses a hybrid WSL-Windows build process for native C++ components and Vulkan shader generation.
-- **Full Vulkan Build**: `wsl bash -c "./build_vulkan.sh"`
-- **Setup WSL Environment**: `wsl bash -c "./setup_android_sdk.sh"`
-
-### Testing
-- **Run all unit tests**: `./gradlew test`
-- **Run a single unit test**: `./gradlew testDebugUnitTest --tests "com.example.llmnotes.core.ai.LlmEngineTest"`
-- **Run instrumentation tests**: `./gradlew connectedCheck` (requires a connected device or emulator)
-
----
-
-## 🎨 Code Style Guidelines
-
-### Kotlin (Android)
-- **Architecture**: Follow Clean Architecture with MVVM. Layers: `core`, `domain`, `data`, `feature`, `ui`.
-- **Dependency Injection**: Use **Hilt**. Annotate ViewModels with `@HiltViewModel` and entry points with `@AndroidEntryPoint`.
-- **UI**: Use **Jetpack Compose**. Prefer stateless composables and state hoisting.
-- **Concurrency**: Use **Coroutines**. Use `viewModelScope` in ViewModels and `Dispatchers.IO` for disk/network/native operations.
-- **Naming**: 
-    - Classes: `PascalCase` (e.g., `NoteRepositoryImpl`).
-    - Functions/Variables: `camelCase` (e.g., `loadModel`).
-    - Constants: `SCREAMING_SNAKE_CASE` (e.g., `TAG`).
-- **Formatting**: Standard Kotlin style (4-space indentation). Group imports by package.
-
-### C++ (Native JNI)
-- **Bridge**: Follow strict JNI naming for exported functions: `Java_package_name_ClassName_methodName`.
-- **Memory Management**: Explicitly manage `llama_model*` and `llama_context*`. Ensure `llama_free` and `llama_model_free` are called in `unload`.
-- **Logging**: Use `#define TAG "TAG_NAME"` and `__android_log_print(LEVEL, TAG, format, ...)`.
-- **Error Handling**: Return `jboolean` (JNI_TRUE/JNI_FALSE) for success/failure or `jstring` containing an error message.
-- **Formatting**: Consistent with standard C++ (4-space indentation).
-
----
-
-## 🚀 Development Workflow
-
-1.  **UI/Logic Changes**: Modify Kotlin code in `app/src/main/java`.
-2.  **Native Changes**: Modify C++ code in `app/src/main/cpp`.
-3.  **Sync to WSL**: Since the build orchestration happens in WSL, ensure source changes are synced:
-    `wsl bash -c "cp -r /mnt/c/Users/<user>/.../app/src ~/projects/android_note_app/app/"`
-4.  **Rebuild**: Execute `./build_vulkan.sh` in WSL to generate shaders and compile the native library.
-5.  **Deploy**: Install the generated APK from `app/build/outputs/apk/debug/app-debug.apk` using `adb install -r`.
-
----
-
-## 🛡️ Safety & Security
-- **Secrets**: Never commit `local.properties` or any API keys.
-- **Large Files**: Do not commit `.gguf` model files to Git (they are ignored via `.gitignore`).
-- **Native Stability**: Always implement CPU fallbacks in `loadModel` to prevent app crashes on incompatible hardware.
-
-## 🏗️ Build System Notes
-
-### Compile SDK 35
-The project targets **Android 15 (API 35)** (`compileSdk = 35`). 
-Since the project uses Android Gradle Plugin (AGP) 8.2.2 (which officially supports up to API 34), we explicitly suppress the compatibility warning in `gradle.properties`:
-```properties
-android.suppressUnsupportedCompileSdk=35
+## STRUCTURE
 ```
-**Do not remove this property** unless upgrading AGP to 8.3+.
+.
+├── app/
+│   ├── src/main/java/.../ai/  # Android Code (Kotlin)
+│   └── src/main/cpp/          # Native Code (C++/Vulkan)
+│       └── llama/             # Vendored llama.cpp (Sub-project)
+├── docs/                      # Technical docs & task tracking
+├── build_vulkan.sh            # WSL-side build orchestrator
+└── setup_android_sdk.sh       # WSL environment setup
+```
 
-### Why does the release build take 5+ minutes?
-The release build (`assembleRelease`) is significantly slower than debug builds due to:
-1.  **Native Cross-Compilation**: It compiles the massive `llama.cpp` library twice (once for `arm64-v8a`, once for `x86_64`) from scratch.
-2.  **Vulkan Shader Generation**: It builds and runs a custom `vulkan-shaders-gen` tool on the host to pre-compile SPIR-V shaders.
-3.  **R8 Optimization**: Full code shrinking, obfuscation, and optimization are enabled for release.
-4.  **WSL Overhead**: File synchronization and cross-OS process management add a small latency penalty.
+## WHERE TO LOOK
+| Task | Location | Notes |
+|------|----------|-------|
+| **UI/Feature Logic** | `app/src/main/java/.../feature` | Jetpack Compose screens |
+| **Native Bridge** | `app/src/main/cpp/native-lib.cpp` | JNI `RegisterNatives` entry point |
+| **LLM Engine** | `app/src/main/java/.../core/ai` | Kotlin wrapper for JNI calls |
+| **Build Config** | `app/src/main/cpp/CMakeLists.txt` | Native build & Vulkan flags |
+| **Build Scripts** | `./build_vulkan.sh` | **MUST RUN IN WSL** |
 
-### Publishing
-To generate a signed Release APK and AAB (Bundle):
-1.  Ensure `keystore.properties` is present.
-2.  Run the publish script in WSL (handles sync + build):
-    ```bash
-    wsl bash -c "~/projects/android_note_app/publish.sh"
-    ```
-3.  Artifacts will be copied to `app/build/outputs/{apk,bundle}/release/`.
+## CRITICAL WORKFLOWS
+### 1. Hybrid Build (Windows + WSL)
+- **Edit**: Windows (Android Studio).
+- **Sync**: `wsl bash -c "cp -r ..."` (Windows → WSL).
+- **Build**: `wsl bash -c "./build_vulkan.sh"`.
+- **Deploy**: `adb install -r ...` (Windows).
 
-## ⚠️ Important Troubleshooting: Native Build Caching & Sync
+### 2. Native Safety
+- **JNI**: Use `RegisterNatives` in `JNI_OnLoad`. NEVER use `Java_pkg_name` conventions.
+- **Memory**: Explicitly call `llama_free` / `llama_model_free`.
+- **Sync**: Verify file presence in WSL before building to avoid `UnsatisfiedLinkError`.
 
-**Issue:** Persistent `UnsatisfiedLinkError` or `java.lang.NoSuchMethodError` when calling native functions, even after a rebuild.
+## CONVENTIONS
+- **Kotlin**: Clean Architecture (Core/Domain/Data/Feature). Hilt DI.
+- **C++**: Manual JNI registration. Explicit memory management.
+- **Git**: NO `.gguf` files. NO secrets. NO force push.
 
-**Root Cause:**
-1.  **Sync Failure:** The file synchronization command (`cp`) from Windows to WSL might silently fail (e.g., due to permission errors with `.git` directories or locked files), leaving the build environment with outdated source code.
-2.  **Aggressive Caching:** CMake and the Android build system (`.cxx`, `build/intermediates`) cache intermediate object files aggressively. If a function signature changes (or is renamed), the linker might link against stale objects, resulting in a binary that lacks the new symbols.
+## ANTI-PATTERNS (STRICT)
+- **DO NOT** build native code via Android Studio Gradle (it lacks WSL context).
+- **DO NOT** commit `.gguf` models.
+- **NEVER** use `Unsafe` or bypass Hilt for ViewModels.
+- **NEVER** run inference on Main Thread.
 
-**Prevention & Fixes:**
-1.  **Explicit JNI Registration:** Avoid relying on the `Java_package_name_ClassName_methodName` naming convention. Instead, use `RegisterNatives` in `JNI_OnLoad`. This explicitly maps Java methods to C++ functions at runtime, bypassing name-mangling fragility and providing immediate errors if something is wrong.
-    ```cpp
-    // Example in native-lib.cpp
-    JNINativeMethod methods[] = {
-        {"nativeMethodName", "()V", (void*)actualCppFunction},
-    };
-    env->RegisterNatives(clazz, methods, count);
-    ```
-2.  **Nuclear Clean:** If you suspect a native build issue, do not rely on `./gradlew clean`. You must manually delete the build artifacts in both environments:
-    - Windows: `rm -rf app/build app/.cxx`
-    - WSL: `rm -rf ~/projects/android_note_app/app/build`
-3.  **Verify Sync:** After running a sync command, verify the content of the file in WSL using `grep` or `cat` before building to ensure your changes actually made it across.
+## COMMANDS
+```bash
+# WSL ONLY
+./setup_android_sdk.sh       # First setup
+./build_vulkan.sh            # Full native rebuild
+./publish.sh                 # Release build
+
+# Windows
+./gradlew assembleDebug      # Java-only build (Native will fail if not pre-built)
+./gradlew ciTest             # Run ALL tests (requires emulator/device)
+./gradlew testDebugUnitTest  # Run JVM Unit Tests (Fast)
+```
+
+## TESTING & TDD
+This project follows Test-Driven Development (TDD).
+- **Unit Tests** (`app/src/test`): Use JUnit 5 + MockK/Mockito. For ViewModels, Repositories, UseCases.
+- **Instrumented Tests** (`app/src/androidTest`): Use JUnit 4. For Room DAOs, integration tests requiring Context.
+
+### TDD Workflow
+1. Write failing test in `src/test` (Unit) or `src/androidTest` (DB/UI).
+2. Implement feature/fix.
+3. Verify with `./gradlew ciTest`.
+
+### Conventions
+- **Naming**: `ClassNameTest`.
+- **Structure**: Arrange, Act, Assert.
+- **Coroutines**: Use `CoroutineTestExtension` (JUnit 5) or `runTest`.
+- **Mocking**: Prefer `MockK` for Kotlin, `Mockito` where legacy/java interop needed.

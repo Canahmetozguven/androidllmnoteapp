@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.navigationBarsPadding
 
 sealed class BottomNavItem(
     val route: String,
@@ -58,7 +59,7 @@ fun AppBottomNavBar(
     NavigationBar(
         containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
         contentColor = MaterialTheme.colorScheme.onSurface,
-        modifier = modifier
+        modifier = modifier.navigationBarsPadding()
     ) {
         items.forEach { item ->
             val isSelected = currentRoute == item.route

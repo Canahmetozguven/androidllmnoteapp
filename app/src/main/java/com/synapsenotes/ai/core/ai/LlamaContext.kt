@@ -16,7 +16,7 @@ class LlamaContext {
         }
     }
 
-    external fun loadModelNative(path: String, template: String?): Boolean
+    external fun loadModelNative(path: String, template: String?, nBatch: Int, nCtx: Int, useMmap: Boolean, backendId: Int): Boolean
     external fun loadEmbeddingModelNative(path: String): Boolean
     external fun completion(prompt: String, callback: LlmCallback): String
     external fun stopCompletion()

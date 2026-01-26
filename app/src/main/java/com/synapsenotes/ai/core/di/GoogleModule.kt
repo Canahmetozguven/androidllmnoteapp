@@ -21,7 +21,10 @@ object GoogleModule {
     fun provideGoogleSignInOptions(): GoogleSignInOptions {
         return GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestEmail()
-            .requestScopes(com.google.android.gms.common.api.Scope(DriveScopes.DRIVE_FILE))
+            .requestScopes(
+                com.google.android.gms.common.api.Scope(DriveScopes.DRIVE_FILE),
+                com.google.android.gms.common.api.Scope(DriveScopes.DRIVE_READONLY)
+            )
             .build()
     }
 

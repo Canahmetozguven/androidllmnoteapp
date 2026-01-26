@@ -19,12 +19,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Cloud
-import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.CloudDone
 import androidx.compose.material.icons.filled.CloudOff
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.Cloud
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -36,10 +38,15 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -58,8 +65,8 @@ import com.synapsenotes.ai.ui.theme.GreenSuccess
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import androidx.compose.foundation.layout.imePadding
 
-// Sync status enum for UI representation
 enum class SyncStatus {
     SYNCED,      // cloud_done (green)
     PENDING,     // cloud (gray)
@@ -79,9 +86,36 @@ fun NoteListScreen(
     val notes by viewModel.notes.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
     val lastSyncTimestamp = viewModel.lastSyncTimestamp
+    
+    var noteToDelete by remember { mutableStateOf<Note?>(null) }
+
+    if (noteToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { noteToDelete = null },
+            title = { Text("Delete Note") },
+            text = { Text("Are you sure you want to delete \"${noteToDelete?.title}\"?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        noteToDelete?.let { viewModel.deleteNote(it.id) }
+                        noteToDelete = null
+                    }
+                ) {
+                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { noteToDelete = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 
     Scaffold(
+        modifier = Modifier.imePadding(),
         containerColor = MaterialTheme.colorScheme.background,
+        // System bars handled by MainActivity, IME by modifier
         topBar = {
             TopAppBar(
                 title = { 
@@ -182,12 +216,51 @@ fun NoteListScreen(
                     ),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(notes) { note ->
-                        NoteItem(
-                            note = note, 
-                            lastSyncTimestamp = lastSyncTimestamp,
-                            onClick = { onNoteClick(note.id) }
+                    items(notes, key = { it.id }) { note ->
+                        val dismissState = rememberSwipeToDismissBoxState(
+                            confirmValueChange = {
+                                if (it == SwipeToDismissBoxValue.EndToStart) {
+                                    noteToDelete = note
+                                    // Don't dismiss yet, wait for confirmation
+                                    return@rememberSwipeToDismissBoxState false 
+                                }
+                                false
+                            }
                         )
+
+                        // If the note is selected for deletion, reset the swipe state if cancelled
+                        LaunchedEffect(noteToDelete) {
+                             if (noteToDelete == null) {
+                                 dismissState.reset()
+                             }
+                        }
+
+                        SwipeToDismissBox(
+                            state = dismissState,
+                            backgroundContent = {
+                                val color = MaterialTheme.colorScheme.errorContainer
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(color, RoundedCornerShape(16.dp))
+                                        .padding(horizontal = 20.dp),
+                                    contentAlignment = Alignment.CenterEnd
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Delete,
+                                        contentDescription = "Delete",
+                                        tint = MaterialTheme.colorScheme.onErrorContainer
+                                    )
+                                }
+                            },
+                            enableDismissFromStartToEnd = false
+                        ) {
+                            NoteItem(
+                                note = note, 
+                                lastSyncTimestamp = lastSyncTimestamp,
+                                onClick = { onNoteClick(note.id) }
+                            )
+                        }
                     }
                     // Bottom spacing for FAB
                     item { Spacer(modifier = Modifier.height(80.dp)) }

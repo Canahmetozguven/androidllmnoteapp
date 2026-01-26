@@ -18,6 +18,8 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.common.api.ApiException
+import com.google.api.services.drive.DriveScopes
+import com.google.android.gms.common.api.Scope
 import com.synapsenotes.ai.domain.repository.NoteRepository
 import kotlinx.coroutines.flow.first
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -129,10 +131,9 @@ class SettingsViewModel @Inject constructor(
     private val googleSignInClient: GoogleSignInClient,
     private val appPreferences: AppPreferences,
     private val driveRepository: com.synapsenotes.ai.core.data.repository.GoogleDriveRepository,
-    private val noteRepository: NoteRepository
+    private val noteRepository: NoteRepository,
+    private val workManager: WorkManager
 ) : ViewModel() {
-
-    private val workManager = WorkManager.getInstance(context)
 
     private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState: StateFlow<SettingsUiState> = _uiState
@@ -159,8 +160,21 @@ class SettingsViewModel @Inject constructor(
 
     private fun checkGoogleSignInStatus() {
         val account = GoogleSignIn.getLastSignedInAccount(context)
-        if (account != null) {
+        val hasPermissions = account != null && GoogleSignIn.hasPermissions(
+            account, 
+            Scope(DriveScopes.DRIVE_FILE), 
+            Scope(DriveScopes.DRIVE_READONLY)
+        )
+        
+        if (account != null && hasPermissions) {
             onGoogleSignInSuccess(account)
+        } else {
+             // If account exists but permissions are missing (e.g. scope upgrade),
+             // treat as disconnected so user can sign in again to grant them.
+             _uiState.value = _uiState.value.copy(
+                isGoogleDriveConnected = false,
+                userEmail = null
+            )
         }
     }
 
@@ -357,6 +371,9 @@ class SettingsViewModel @Inject constructor(
             }
             
             if (result.isSuccess) {
+                // Clear Safe Mode on successful manual load, assuming the model is stable
+                appPreferences.safeMode = false
+                
                 if (isEmbedding) {
                     activeEmbeddingModelId = info.id
                     appPreferences.activeEmbeddingModelId = info.id
@@ -373,6 +390,23 @@ class SettingsViewModel @Inject constructor(
                 }
             } else {
                 val errorMsg = result.exceptionOrNull()?.message ?: "Unknown error"
+                
+                // Detect corruption and auto-delete
+                if (errorMsg.contains("not within the file bounds") || 
+                    errorMsg.contains("corrupted") || 
+                    errorMsg.contains("incomplete")) {
+                    
+                    android.util.Log.e("SettingsViewModel", "Model corrupted, deleting: ${info.filename}")
+                    modelManager.deleteModel(info.filename)
+                    _uiState.value = _uiState.value.copy(
+                        syncStatusMessage = "Model file was corrupted and has been deleted. Please download it again."
+                    )
+                    // Refresh status to show 'Download' button again
+                    refreshModelStatus()
+                    updateLoadingState(info.id, false, isEmbedding, false)
+                    return@launch
+                }
+
                 _uiState.value = _uiState.value.copy(syncStatusMessage = "Failed to load model: $errorMsg")
                 
                 // Fallback attempt: disable GPU and retry

@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.synapsenotes.ai.core.ai.LlmEngine
 import com.synapsenotes.ai.domain.model.Note
 import com.synapsenotes.ai.domain.repository.NoteRepository
+import com.synapsenotes.ai.domain.usecase.DeleteNoteUseCase
 import com.synapsenotes.ai.domain.usecase.SaveNoteUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,6 +28,7 @@ enum class AiAction {
 @HiltViewModel
 class NoteDetailViewModel @Inject constructor(
     private val saveNoteUseCase: SaveNoteUseCase,
+    private val deleteNoteUseCase: DeleteNoteUseCase,
     private val repository: NoteRepository, // Direct access for getById for simplicity, or use UseCase
     private val llmEngine: LlmEngine,
     private val appPreferences: AppPreferences,
@@ -82,6 +84,13 @@ class NoteDetailViewModel @Inject constructor(
                 embedding = null
             )
             saveNoteUseCase(note)
+        }
+    }
+
+    fun deleteNote() {
+        val id = _uiState.value.id ?: return
+        viewModelScope.launch {
+            deleteNoteUseCase(id)
         }
     }
 

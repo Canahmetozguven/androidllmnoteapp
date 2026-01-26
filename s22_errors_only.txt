@@ -1,0 +1,272 @@
+--------- beginning of crash
+01-26 10:28:18.591 F/libc    (32353): Fatal signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x0 in tid 32527 (DefaultDispatch), pid 32353 (synapsenotes.ai)
+01-26 10:28:19.347 F/DEBUG   (32542): *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
+01-26 10:28:19.347 F/DEBUG   (32542): Build fingerprint: 'samsung/r0qxtur/r0q:16/BP2A.250605.031.A3/S901EXXSCGYL1:user/release-keys'
+01-26 10:28:19.347 F/DEBUG   (32542): Revision: '13'
+01-26 10:28:19.348 F/DEBUG   (32542): ABI: 'arm64'
+01-26 10:28:19.348 F/DEBUG   (32542): Processor: '5'
+01-26 10:28:19.348 F/DEBUG   (32542): Timestamp: 2026-01-26 10:28:18.708428157+0300
+01-26 10:28:19.348 F/DEBUG   (32542): Process uptime: 6s
+01-26 10:28:19.348 F/DEBUG   (32542): Cmdline: com.synapsenotes.ai
+01-26 10:28:19.348 F/DEBUG   (32542): pid: 32353, tid: 32527, name: DefaultDispatch  >>> com.synapsenotes.ai <<<
+01-26 10:28:19.348 F/DEBUG   (32542): uid: 10427
+01-26 10:28:19.348 F/DEBUG   (32542): tagged_addr_ctrl: 0000000000000001 (PR_TAGGED_ADDR_ENABLE)
+01-26 10:28:19.348 F/DEBUG   (32542): pac_enabled_keys: 000000000000000f (PR_PAC_APIAKEY, PR_PAC_APIBKEY, PR_PAC_APDAKEY, PR_PAC_APDBKEY)
+01-26 10:28:19.348 F/DEBUG   (32542): signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x0000000000000000
+01-26 10:28:19.348 F/DEBUG   (32542): Cause: null pointer dereference
+01-26 10:28:19.348 F/DEBUG   (32542):     x0  b400007a25c9d8b0  x1  000000773ebef9c0  x2  b4000079c5cb78c0  x3  0000000000000000
+01-26 10:28:19.348 F/DEBUG   (32542):     x4  0000000000000008  x5  00000000000cc000  x6  000000003ba06780  x7  000000003b9cc1eb
+01-26 10:28:19.348 F/DEBUG   (32542):     x8  b400007a15cc3880  x9  0000007ba53a8110  x10 000000003b9e8321  x11 b400007a75ddfae0
+01-26 10:28:19.348 F/DEBUG   (32542):     x12 0000000000008001  x13 0000007738953de4  x14 000000000000001e  x15 b400007985caa2f0
+01-26 10:28:19.348 F/DEBUG   (32542):     x16 0000000000000000  x17 0000007b86526570  x18 000000773dec4000  x19 b400007945c8d778
+01-26 10:28:19.348 F/DEBUG   (32542):     x20 b400007a05d54100  x21 b400007a05d54118  x22 0000000000000000  x23 000000773ebefe40
+01-26 10:28:19.348 F/DEBUG   (32542):     x24 000000773ebefbcc  x25 000000773ebefcd0  x26 b4000078e667e128  x27 0000000000000000
+01-26 10:28:19.348 F/DEBUG   (32542):     x28 0000000000000001  x29 000000773ebefde0
+01-26 10:28:19.348 F/DEBUG   (32542):     lr  00000077cf90b420  sp  000000773ebef870  pc  0000000000000000  pst 0000000080001400
+01-26 10:28:19.348 F/DEBUG   (32542): 31 total frames
+01-26 10:28:19.348 F/DEBUG   (32542): backtrace:
+01-26 10:28:19.348 F/DEBUG   (32542):       #00 pc 0000000000000000  <unknown>
+01-26 10:28:19.348 F/DEBUG   (32542):       #01 pc 0000000001caa41c  /data/app/~~nya85faO7F-fHcbnSdw1zA==/com.synapsenotes.ai-ElZKQVWSmkpAq_gmuEMGrg==/split_config.arm64_v8a.apk!libggml-vulkan.so (offset 0x183000) (BuildId: deb46c4bae563f4b0e035c0aa1cd15cc02d43530)
+01-26 10:28:19.348 F/DEBUG   (32542):       #02 pc 0000000001ca915c  /data/app/~~nya85faO7F-fHcbnSdw1zA==/com.synapsenotes.ai-ElZKQVWSmkpAq_gmuEMGrg==/split_config.arm64_v8a.apk!libggml-vulkan.so (offset 0x183000) (BuildId: deb46c4bae563f4b0e035c0aa1cd15cc02d43530)
+01-26 10:28:19.348 F/DEBUG   (32542):       #03 pc 0000000001ca8edc  /data/app/~~nya85faO7F-fHcbnSdw1zA==/com.synapsenotes.ai-ElZKQVWSmkpAq_gmuEMGrg==/split_config.arm64_v8a.apk!libggml-vulkan.so (offset 0x183000) (BuildId: deb46c4bae563f4b0e035c0aa1cd15cc02d43530)
+01-26 10:28:19.348 F/DEBUG   (32542):       #04 pc 000000000006c624  /data/app/~~nya85faO7F-fHcbnSdw1zA==/com.synapsenotes.ai-ElZKQVWSmkpAq_gmuEMGrg==/split_config.arm64_v8a.apk!libggml-base.so (offset 0x1000) (BuildId: 3984eb9b83bb78fee7b6db00d3a6520323823007)
+01-26 10:28:19.348 F/DEBUG   (32542):       #05 pc 000000000006b82c  /data/app/~~nya85faO7F-fHcbnSdw1zA==/com.synapsenotes.ai-ElZKQVWSmkpAq_gmuEMGrg==/split_config.arm64_v8a.apk!libggml-base.so (offset 0x1000) (BuildId: 3984eb9b83bb78fee7b6db00d3a6520323823007)
+01-26 10:28:19.348 F/DEBUG   (32542):       #06 pc 000000000006b934  /data/app/~~nya85faO7F-fHcbnSdw1zA==/com.synapsenotes.ai-ElZKQVWSmkpAq_gmuEMGrg==/split_config.arm64_v8a.apk!libggml-base.so (offset 0x1000) (ggml_backend_alloc_ctx_tensors_from_buft+40) (BuildId: 3984eb9b83bb78fee7b6db00d3a6520323823007)
+01-26 10:28:19.348 F/DEBUG   (32542):       #07 pc 000000000016a744  /data/app/~~nya85faO7F-fHcbnSdw1zA==/com.synapsenotes.ai-ElZKQVWSmkpAq_gmuEMGrg==/split_config.arm64_v8a.apk!libllama.so (offset 0x1ef0000) (llama_model::load_tensors(llama_model_loader&)+175260) (BuildId: 3abaec2e3a93367ec832efdaf8de1c34097eb7c0)
+01-26 10:28:19.348 F/DEBUG   (32542):       #08 pc 00000000000c2958  /data/app/~~nya85faO7F-fHcbnSdw1zA==/com.synapsenotes.ai-ElZKQVWSmkpAq_gmuEMGrg==/split_config.arm64_v8a.apk!libllama.so (offset 0x1ef0000) (BuildId: 3abaec2e3a93367ec832efdaf8de1c34097eb7c0)
+01-26 10:28:19.348 F/DEBUG   (32542):       #09 pc 00000000000c1fe4  /data/app/~~nya85faO7F-fHcbnSdw1zA==/com.synapsenotes.ai-ElZKQVWSmkpAq_gmuEMGrg==/split_config.arm64_v8a.apk!libllama.so (offset 0x1ef0000) (llama_model_load_from_file+184) (BuildId: 3abaec2e3a93367ec832efdaf8de1c34097eb7c0)
+01-26 10:28:19.348 F/DEBUG   (32542):       #10 pc 00000000000072f4  /data/app/~~nya85faO7F-fHcbnSdw1zA==/com.synapsenotes.ai-ElZKQVWSmkpAq_gmuEMGrg==/split_config.arm64_v8a.apk!libllm_notes_cpp.so (offset 0x20ff000) (Java_com_synapsenotes_ai_core_ai_LlamaContext_loadModelNative+700) (BuildId: 80a67d4aa5111ae4462181d3fb0439ef75c810ad)
+01-26 10:28:19.348 F/DEBUG   (32542):       #11 pc 0000000000ddd4ec  /data/misc/apexdata/com.android.art/dalvik-cache/arm64/boot.oat (art_jni_trampoline+140)
+01-26 10:28:19.348 F/DEBUG   (32542):       #12 pc 000000000068aa48  /apex/com.android.art/lib64/libart.so (nterp_helper+5848) (BuildId: eb4ec0f1d1c7267591d83fa87cb36390)
+01-26 10:28:19.348 F/DEBUG   (32542):       #13 pc 00000000002c96ae  /data/app/~~nya85faO7F-fHcbnSdw1zA==/com.synapsenotes.ai-ElZKQVWSmkpAq_gmuEMGrg==/base.apk (offset 0x4000) (com.synapsenotes.ai.core.ai.DefaultLlmContext.loadModel+58)
+01-26 10:28:19.348 F/DEBUG   (32542):       #14 pc 000000000068bef4  /apex/com.android.art/lib64/libart.so (nterp_helper+11140) (BuildId: eb4ec0f1d1c7267591d83fa87cb36390)
+01-26 10:28:19.348 F/DEBUG   (32542):       #15 pc 00000000002ca6a8  /data/app/~~nya85faO7F-fHcbnSdw1zA==/com.synapsenotes.ai-ElZKQVWSmkpAq_gmuEMGrg==/base.apk (offset 0x4000) (com.synapsenotes.ai.core.ai.LlmEngine$loadModel$2.invokeSuspend+344)
+01-26 10:28:19.348 F/DEBUG   (32542):       #16 pc 000000000068a2c4  /apex/com.android.art/lib64/libart.so (nterp_helper+3924) (BuildId: eb4ec0f1d1c7267591d83fa87cb36390)
+01-26 10:28:19.348 F/DEBUG   (32542):       #17 pc 00000000002ea620  /data/app/~~nya85faO7F-fHcbnSdw1zA==/com.synapsenotes.ai-ElZKQVWSmkpAq_gmuEMGrg==/base.apk (offset 0x4000) (r8.a.resumeWith+16)
+01-26 10:28:19.348 F/DEBUG   (32542):       #18 pc 00000000001c3fc8  /data/app/~~nya85faO7F-fHcbnSdw1zA==/com.synapsenotes.ai-ElZKQVWSmkpAq_gmuEMGrg==/oat/arm64/base.odex (h9.g0.run+1192)
+01-26 10:28:19.348 F/DEBUG   (32542):       #19 pc 000000000068b190  /apex/com.android.art/lib64/libart.so (nterp_helper+7712) (BuildId: eb4ec0f1d1c7267591d83fa87cb36390)
+01-26 10:28:19.348 F/DEBUG   (32542):       #20 pc 00000000002ad050  /data/app/~~nya85faO7F-fHcbnSdw1zA==/com.synapsenotes.ai-ElZKQVWSmkpAq_gmuEMGrg==/base.apk (offset 0x4000) (y5.j.run+24)
+01-26 10:28:19.348 F/DEBUG   (32542):       #21 pc 000000000068b0e4  /apex/com.android.art/lib64/libart.so (nterp_helper+7540) (BuildId: eb4ec0f1d1c7267591d83fa87cb36390)
+01-26 10:28:19.348 F/DEBUG   (32542):       #22 pc 0000000000306a34  /data/app/~~nya85faO7F-fHcbnSdw1zA==/com.synapsenotes.ai-ElZKQVWSmkpAq_gmuEMGrg==/base.apk (offset 0x4000) (n9.i.run+4)
+01-26 10:28:19.348 F/DEBUG   (32542):       #23 pc 000000000068b0e4  /apex/com.android.art/lib64/libart.so (nterp_helper+7540) (BuildId: eb4ec0f1d1c7267591d83fa87cb36390)
+01-26 10:28:19.348 F/DEBUG   (32542):       #24 pc 00000000003058fe  /data/app/~~nya85faO7F-fHcbnSdw1zA==/com.synapsenotes.ai-ElZKQVWSmkpAq_gmuEMGrg==/base.apk (offset 0x4000) (n9.a.run+182)
+01-26 10:28:19.348 F/DEBUG   (32542):       #25 pc 0000000000317194  /apex/com.android.art/lib64/libart.so (art_quick_invoke_stub+612) (BuildId: eb4ec0f1d1c7267591d83fa87cb36390)
+01-26 10:28:19.348 F/DEBUG   (32542):       #26 pc 0000000000302838  /apex/com.android.art/lib64/libart.so (art::ArtMethod::Invoke(art::Thread*, unsigned int*, unsigned int, art::JValue*, char const*)+216) (BuildId: eb4ec0f1d1c7267591d83fa87cb36390)
+01-26 10:28:19.348 F/DEBUG   (32542):       #27 pc 00000000004c8298  /apex/com.android.art/lib64/libart.so (art::Thread::CreateCallback(void*)+932) (BuildId: eb4ec0f1d1c7267591d83fa87cb36390)
+01-26 10:28:19.348 F/DEBUG   (32542):       #28 pc 00000000004c7ee4  /apex/com.android.art/lib64/libart.so (art::Thread::CreateCallbackWithUffdGc(void*)+8) (BuildId: eb4ec0f1d1c7267591d83fa87cb36390)
+01-26 10:28:19.348 F/DEBUG   (32542):       #29 pc 0000000000080fa4  /apex/com.android.runtime/lib64/bionic/libc.so (__pthread_start(void*)+184) (BuildId: e59f6db702cf4b200d6a6f0e384072ab)
+01-26 10:28:19.348 F/DEBUG   (32542):       #30 pc 0000000000073760  /apex/com.android.runtime/lib64/bionic/libc.so (__start_thread+68) (BuildId: e59f6db702cf4b200d6a6f0e384072ab)
+01-26 10:28:28.622 F/libc    (32605): Fatal signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x0 in tid 411 (DefaultDispatch), pid 32605 (synapsenotes.ai)
+01-26 10:28:28.827 F/DEBUG   (  482): *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
+01-26 10:28:28.827 F/DEBUG   (  482): Build fingerprint: 'samsung/r0qxtur/r0q:16/BP2A.250605.031.A3/S901EXXSCGYL1:user/release-keys'
+01-26 10:28:28.827 F/DEBUG   (  482): Revision: '13'
+01-26 10:28:28.827 F/DEBUG   (  482): ABI: 'arm64'
+01-26 10:28:28.827 F/DEBUG   (  482): Processor: '4'
+01-26 10:28:28.827 F/DEBUG   (  482): Timestamp: 2026-01-26 10:28:28.709604664+0300
+01-26 10:28:28.827 F/DEBUG   (  482): Process uptime: 9s
+01-26 10:28:28.827 F/DEBUG   (  482): Cmdline: com.synapsenotes.ai
+01-26 10:28:28.827 F/DEBUG   (  482): pid: 32605, tid: 411, name: DefaultDispatch  >>> com.synapsenotes.ai <<<
+01-26 10:28:28.827 F/DEBUG   (  482): uid: 10427
+01-26 10:28:28.827 F/DEBUG   (  482): tagged_addr_ctrl: 0000000000000001 (PR_TAGGED_ADDR_ENABLE)
+01-26 10:28:28.827 F/DEBUG   (  482): pac_enabled_keys: 000000000000000f (PR_PAC_APIAKEY, PR_PAC_APIBKEY, PR_PAC_APDAKEY, PR_PAC_APDBKEY)
+01-26 10:28:28.827 F/DEBUG   (  482): signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x0000000000000000
+01-26 10:28:28.827 F/DEBUG   (  482): Cause: null pointer dereference
+01-26 10:28:28.827 F/DEBUG   (  482):     x0  b400007a25c9ed50  x1  000000773ce4fc30  x2  b4000079c5cbadf0  x3  0000000000000000
+01-26 10:28:28.827 F/DEBUG   (  482):     x4  0000000000000000  x5  000000773ce4fc30  x6  000000003ba06780  x7  000000003b9cc1eb
+01-26 10:28:28.827 F/DEBUG   (  482):     x8  b400007a15cb6bd0  x9  0000007ba53a8110  x10 000000003b9e8321  x11 b400007a75ddcb70
+01-26 10:28:28.827 F/DEBUG   (  482):     x12 0000000000004001  x13 0000007737d5ede4  x14 000000000000001e  x15 b400007985c96110
+01-26 10:28:28.827 F/DEBUG   (  482):     x16 0000000000000000  x17 0000007b86526570  x18 000000773bdf8000  x19 b400007945c8a838
+01-26 10:28:28.827 F/DEBUG   (  482):     x20 b400007a05d64110  x21 b400007a05d64128  x22 0000000000000000  x23 000000773ce500b0
+01-26 10:28:28.827 F/DEBUG   (  482):     x24 000000773ce4fe3c  x25 000000773ce4ff40  x26 00000077d1b750d8  x27 0000000000000000
+01-26 10:28:28.827 F/DEBUG   (  482):     x28 0000000000000000  x29 000000773ce50050
+01-26 10:28:28.828 F/DEBUG   (  482):     lr  00000077d1ad1420  sp  000000773ce4fae0  pc  0000000000000000  pst 0000000080001400
+01-26 10:28:28.828 F/DEBUG   (  482): 29 total frames
+01-26 10:28:28.828 F/DEBUG   (  482): backtrace:
+01-26 10:28:28.828 F/DEBUG   (  482):       #00 pc 0000000000000000  <unknown>
+01-26 10:28:28.828 F/DEBUG   (  482):       #01 pc 0000000001caa41c  /data/app/~~nya85faO7F-fHcbnSdw1zA==/com.synapsenotes.ai-ElZKQVWSmkpAq_gmuEMGrg==/split_config.arm64_v8a.apk!libggml-vulkan.so (offset 0x183000) (BuildId: deb46c4bae563f4b0e035c0aa1cd15cc02d43530)
+01-26 10:28:28.828 F/DEBUG   (  482):       #02 pc 0000000001c53078  /data/app/~~nya85faO7F-fHcbnSdw1zA==/com.synapsenotes.ai-ElZKQVWSmkpAq_gmuEMGrg==/split_config.arm64_v8a.apk!libggml-vulkan.so (offset 0x183000) (BuildId: deb46c4bae563f4b0e035c0aa1cd15cc02d43530)
+01-26 10:28:28.828 F/DEBUG   (  482):       #03 pc 000000000006c624  /data/app/~~nya85faO7F-fHcbnSdw1zA==/com.synapsenotes.ai-ElZKQVWSmkpAq_gmuEMGrg==/split_config.arm64_v8a.apk!libggml-base.so (offset 0x1000) (BuildId: 3984eb9b83bb78fee7b6db00d3a6520323823007)
+01-26 10:28:28.828 F/DEBUG   (  482):       #04 pc 000000000006b82c  /data/app/~~nya85faO7F-fHcbnSdw1zA==/com.synapsenotes.ai-ElZKQVWSmkpAq_gmuEMGrg==/split_config.arm64_v8a.apk!libggml-base.so (offset 0x1000) (BuildId: 3984eb9b83bb78fee7b6db00d3a6520323823007)
+01-26 10:28:28.828 F/DEBUG   (  482):       #05 pc 000000000006b934  /data/app/~~nya85faO7F-fHcbnSdw1zA==/com.synapsenotes.ai-ElZKQVWSmkpAq_gmuEMGrg==/split_config.arm64_v8a.apk!libggml-base.so (offset 0x1000) (ggml_backend_alloc_ctx_tensors_from_buft+40) (BuildId: 3984eb9b83bb78fee7b6db00d3a6520323823007)
+01-26 10:28:28.828 F/DEBUG   (  482):       #06 pc 000000000016a744  /data/app/~~nya85faO7F-fHcbnSdw1zA==/com.synapsenotes.ai-ElZKQVWSmkpAq_gmuEMGrg==/split_config.arm64_v8a.apk!libllama.so (offset 0x1ef0000) (llama_model::load_tensors(llama_model_loader&)+175260) (BuildId: 3abaec2e3a93367ec832efdaf8de1c34097eb7c0)
+01-26 10:28:28.828 F/DEBUG   (  482):       #07 pc 00000000000c2958  /data/app/~~nya85faO7F-fHcbnSdw1zA==/com.synapsenotes.ai-ElZKQVWSmkpAq_gmuEMGrg==/split_config.arm64_v8a.apk!libllama.so (offset 0x1ef0000) (BuildId: 3abaec2e3a93367ec832efdaf8de1c34097eb7c0)
+01-26 10:28:28.828 F/DEBUG   (  482):       #08 pc 00000000000c1fe4  /data/app/~~nya85faO7F-fHcbnSdw1zA==/com.synapsenotes.ai-ElZKQVWSmkpAq_gmuEMGrg==/split_config.arm64_v8a.apk!libllama.so (offset 0x1ef0000) (llama_model_load_from_file+184) (BuildId: 3abaec2e3a93367ec832efdaf8de1c34097eb7c0)
+01-26 10:28:28.828 F/DEBUG   (  482):       #09 pc 00000000000074fc  /data/app/~~nya85faO7F-fHcbnSdw1zA==/com.synapsenotes.ai-ElZKQVWSmkpAq_gmuEMGrg==/split_config.arm64_v8a.apk!libllm_notes_cpp.so (offset 0x20ff000) (Java_com_synapsenotes_ai_core_ai_LlamaContext_loadEmbeddingModelNative+200) (BuildId: 80a67d4aa5111ae4462181d3fb0439ef75c810ad)
+01-26 10:28:28.828 F/DEBUG   (  482):       #10 pc 0000000000dd0a9c  /data/misc/apexdata/com.android.art/dalvik-cache/arm64/boot.oat (art_jni_trampoline+124)
+01-26 10:28:28.828 F/DEBUG   (  482):       #11 pc 000000000068a320  /apex/com.android.art/lib64/libart.so (nterp_helper+4016) (BuildId: eb4ec0f1d1c7267591d83fa87cb36390)
+01-26 10:28:28.828 F/DEBUG   (  482):       #12 pc 00000000002c965a  /data/app/~~nya85faO7F-fHcbnSdw1zA==/com.synapsenotes.ai-ElZKQVWSmkpAq_gmuEMGrg==/base.apk (offset 0x4000) (com.synapsenotes.ai.core.ai.DefaultLlmContext.loadEmbeddingModel+30)
+01-26 10:28:28.828 F/DEBUG   (  482):       #13 pc 000000000068b0e4  /apex/com.android.art/lib64/libart.so (nterp_helper+7540) (BuildId: eb4ec0f1d1c7267591d83fa87cb36390)
+01-26 10:28:28.828 F/DEBUG   (  482):       #14 pc 00000000002ca3c8  /data/app/~~nya85faO7F-fHcbnSdw1zA==/com.synapsenotes.ai-ElZKQVWSmkpAq_gmuEMGrg==/base.apk (offset 0x4000) (com.synapsenotes.ai.core.ai.LlmEngine$loadEmbeddingModel$2.invokeSuspend+144)
+01-26 10:28:28.828 F/DEBUG   (  482):       #15 pc 00000000020032a8  /memfd:jit-cache (deleted) (offset 0x2000000) (r8.a.resumeWith+232)
+01-26 10:28:28.828 F/DEBUG   (  482):       #16 pc 00000000001c3fc8  /data/app/~~nya85faO7F-fHcbnSdw1zA==/com.synapsenotes.ai-ElZKQVWSmkpAq_gmuEMGrg==/oat/arm64/base.odex (h9.g0.run+1192)
+01-26 10:28:28.828 F/DEBUG   (  482):       #17 pc 000000000068b190  /apex/com.android.art/lib64/libart.so (nterp_helper+7712) (BuildId: eb4ec0f1d1c7267591d83fa87cb36390)
+01-26 10:28:28.828 F/DEBUG   (  482):       #18 pc 00000000002ad050  /data/app/~~nya85faO7F-fHcbnSdw1zA==/com.synapsenotes.ai-ElZKQVWSmkpAq_gmuEMGrg==/base.apk (offset 0x4000) (y5.j.run+24)
+01-26 10:28:28.828 F/DEBUG   (  482):       #19 pc 000000000068b0e4  /apex/com.android.art/lib64/libart.so (nterp_helper+7540) (BuildId: eb4ec0f1d1c7267591d83fa87cb36390)
+01-26 10:28:28.828 F/DEBUG   (  482):       #20 pc 0000000000306a34  /data/app/~~nya85faO7F-fHcbnSdw1zA==/com.synapsenotes.ai-ElZKQVWSmkpAq_gmuEMGrg==/base.apk (offset 0x4000) (n9.i.run+4)
+01-26 10:28:28.828 F/DEBUG   (  482):       #21 pc 000000000068b0e4  /apex/com.android.art/lib64/libart.so (nterp_helper+7540) (BuildId: eb4ec0f1d1c7267591d83fa87cb36390)
+01-26 10:28:28.828 F/DEBUG   (  482):       #22 pc 00000000003058fe  /data/app/~~nya85faO7F-fHcbnSdw1zA==/com.synapsenotes.ai-ElZKQVWSmkpAq_gmuEMGrg==/base.apk (offset 0x4000) (n9.a.run+182)
+01-26 10:28:28.828 F/DEBUG   (  482):       #23 pc 0000000000317194  /apex/com.android.art/lib64/libart.so (art_quick_invoke_stub+612) (BuildId: eb4ec0f1d1c7267591d83fa87cb36390)
+01-26 10:28:28.828 F/DEBUG   (  482):       #24 pc 0000000000302838  /apex/com.android.art/lib64/libart.so (art::ArtMethod::Invoke(art::Thread*, unsigned int*, unsigned int, art::JValue*, char const*)+216) (BuildId: eb4ec0f1d1c7267591d83fa87cb36390)
+01-26 10:28:28.828 F/DEBUG   (  482):       #25 pc 00000000004c8298  /apex/com.android.art/lib64/libart.so (art::Thread::CreateCallback(void*)+932) (BuildId: eb4ec0f1d1c7267591d83fa87cb36390)
+01-26 10:28:28.828 F/DEBUG   (  482):       #26 pc 00000000004c7ee4  /apex/com.android.art/lib64/libart.so (art::Thread::CreateCallbackWithUffdGc(void*)+8) (BuildId: eb4ec0f1d1c7267591d83fa87cb36390)
+01-26 10:28:28.828 F/DEBUG   (  482):       #27 pc 0000000000080fa4  /apex/com.android.runtime/lib64/bionic/libc.so (__pthread_start(void*)+184) (BuildId: e59f6db702cf4b200d6a6f0e384072ab)
+01-26 10:28:28.828 F/DEBUG   (  482):       #28 pc 0000000000073760  /apex/com.android.runtime/lib64/bionic/libc.so (__start_thread+68) (BuildId: e59f6db702cf4b200d6a6f0e384072ab)
+01-26 10:30:24.988 F/libc    ( 5826): Fatal signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x0 in tid 7371 (DefaultDispatch), pid 5826 (synapsenotes.ai)
+01-26 10:30:25.883 F/DEBUG   ( 7543): *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
+01-26 10:30:25.884 F/DEBUG   ( 7543): Build fingerprint: 'samsung/r0qxtur/r0q:16/BP2A.250605.031.A3/S901EXXSCGYL1:user/release-keys'
+01-26 10:30:25.884 F/DEBUG   ( 7543): Revision: '13'
+01-26 10:30:25.884 F/DEBUG   ( 7543): ABI: 'arm64'
+01-26 10:30:25.884 F/DEBUG   ( 7543): Processor: '7'
+01-26 10:30:25.884 F/DEBUG   ( 7543): Timestamp: 2026-01-26 10:30:25.087221025+0300
+01-26 10:30:25.884 F/DEBUG   ( 7543): Process uptime: 59s
+01-26 10:30:25.884 F/DEBUG   ( 7543): Cmdline: com.synapsenotes.ai
+01-26 10:30:25.884 F/DEBUG   ( 7543): pid: 5826, tid: 7371, name: DefaultDispatch  >>> com.synapsenotes.ai <<<
+01-26 10:30:25.884 F/DEBUG   ( 7543): uid: 10428
+01-26 10:30:25.884 F/DEBUG   ( 7543): tagged_addr_ctrl: 0000000000000001 (PR_TAGGED_ADDR_ENABLE)
+01-26 10:30:25.884 F/DEBUG   ( 7543): pac_enabled_keys: 000000000000000f (PR_PAC_APIAKEY, PR_PAC_APIBKEY, PR_PAC_APDAKEY, PR_PAC_APDBKEY)
+01-26 10:30:25.884 F/DEBUG   ( 7543): signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x0000000000000000
+01-26 10:30:25.884 F/DEBUG   ( 7543): Cause: null pointer dereference
+01-26 10:30:25.884 F/DEBUG   ( 7543):     x0  b400007a25ca7ed0  x1  000000773dff9e40  x2  b4000079c5cad490  x3  0000000000000000
+01-26 10:30:25.884 F/DEBUG   ( 7543):     x4  0000000000000000  x5  000000773dff9e40  x6  000000003ba06780  x7  000000003b9cc1eb
+01-26 10:30:25.884 F/DEBUG   ( 7543):     x8  b400007a15cc3050  x9  0000007ba53a8110  x10 000000003b9e8321  x11 b400007a75eb4e10
+01-26 10:30:25.884 F/DEBUG   ( 7543):     x12 0000000000004001  x13 000000772d35dde4  x14 000000000000001e  x15 b400007985ca48d0
+01-26 10:30:25.884 F/DEBUG   ( 7543):     x16 0000000000000000  x17 0000007b86526570  x18 0000007734f64000  x19 b400007945c86a18
+01-26 10:30:25.884 F/DEBUG   ( 7543):     x20 b400007a05de4190  x21 b400007a05de41a8  x22 0000000000000000  x23 000000773dffa2c0
+01-26 10:30:25.884 F/DEBUG   ( 7543):     x24 000000773dffa04c  x25 000000773dffa150  x26 00000077dcd5e0d8  x27 0000000000000000
+01-26 10:30:25.884 F/DEBUG   ( 7543):     x28 0000000000000000  x29 000000773dffa260
+01-26 10:30:25.884 F/DEBUG   ( 7543):     lr  00000077dccba420  sp  000000773dff9cf0  pc  0000000000000000  pst 0000000080001400
+01-26 10:30:25.884 F/DEBUG   ( 7543): 26 total frames
+01-26 10:30:25.884 F/DEBUG   ( 7543): backtrace:
+01-26 10:30:25.884 F/DEBUG   ( 7543):       #00 pc 0000000000000000  <unknown>
+01-26 10:30:25.884 F/DEBUG   ( 7543):       #01 pc 0000000001caa41c  /data/app/~~83QmHORu-29zxAp68G596Q==/com.synapsenotes.ai-gSK8sYB2brCr_1O2ZzVWPg==/split_config.arm64_v8a.apk!libggml-vulkan.so (offset 0x183000) (BuildId: deb46c4bae563f4b0e035c0aa1cd15cc02d43530)
+01-26 10:30:25.884 F/DEBUG   ( 7543):       #02 pc 0000000001c53078  /data/app/~~83QmHORu-29zxAp68G596Q==/com.synapsenotes.ai-gSK8sYB2brCr_1O2ZzVWPg==/split_config.arm64_v8a.apk!libggml-vulkan.so (offset 0x183000) (BuildId: deb46c4bae563f4b0e035c0aa1cd15cc02d43530)
+01-26 10:30:25.884 F/DEBUG   ( 7543):       #03 pc 000000000006c624  /data/app/~~83QmHORu-29zxAp68G596Q==/com.synapsenotes.ai-gSK8sYB2brCr_1O2ZzVWPg==/split_config.arm64_v8a.apk!libggml-base.so (offset 0x1000) (BuildId: 3984eb9b83bb78fee7b6db00d3a6520323823007)
+01-26 10:30:25.884 F/DEBUG   ( 7543):       #04 pc 000000000006b82c  /data/app/~~83QmHORu-29zxAp68G596Q==/com.synapsenotes.ai-gSK8sYB2brCr_1O2ZzVWPg==/split_config.arm64_v8a.apk!libggml-base.so (offset 0x1000) (BuildId: 3984eb9b83bb78fee7b6db00d3a6520323823007)
+01-26 10:30:25.884 F/DEBUG   ( 7543):       #05 pc 000000000006b934  /data/app/~~83QmHORu-29zxAp68G596Q==/com.synapsenotes.ai-gSK8sYB2brCr_1O2ZzVWPg==/split_config.arm64_v8a.apk!libggml-base.so (offset 0x1000) (ggml_backend_alloc_ctx_tensors_from_buft+40) (BuildId: 3984eb9b83bb78fee7b6db00d3a6520323823007)
+01-26 10:30:25.884 F/DEBUG   ( 7543):       #06 pc 000000000016a744  /data/app/~~83QmHORu-29zxAp68G596Q==/com.synapsenotes.ai-gSK8sYB2brCr_1O2ZzVWPg==/split_config.arm64_v8a.apk!libllama.so (offset 0x1ef0000) (llama_model::load_tensors(llama_model_loader&)+175260) (BuildId: 3abaec2e3a93367ec832efdaf8de1c34097eb7c0)
+01-26 10:30:25.884 F/DEBUG   ( 7543):       #07 pc 00000000000c2958  /data/app/~~83QmHORu-29zxAp68G596Q==/com.synapsenotes.ai-gSK8sYB2brCr_1O2ZzVWPg==/split_config.arm64_v8a.apk!libllama.so (offset 0x1ef0000) (BuildId: 3abaec2e3a93367ec832efdaf8de1c34097eb7c0)
+01-26 10:30:25.884 F/DEBUG   ( 7543):       #08 pc 00000000000c1fe4  /data/app/~~83QmHORu-29zxAp68G596Q==/com.synapsenotes.ai-gSK8sYB2brCr_1O2ZzVWPg==/split_config.arm64_v8a.apk!libllama.so (offset 0x1ef0000) (llama_model_load_from_file+184) (BuildId: 3abaec2e3a93367ec832efdaf8de1c34097eb7c0)
+01-26 10:30:25.884 F/DEBUG   ( 7543):       #09 pc 00000000000074fc  /data/app/~~83QmHORu-29zxAp68G596Q==/com.synapsenotes.ai-gSK8sYB2brCr_1O2ZzVWPg==/split_config.arm64_v8a.apk!libllm_notes_cpp.so (offset 0x20ff000) (Java_com_synapsenotes_ai_core_ai_LlamaContext_loadEmbeddingModelNative+200) (BuildId: 80a67d4aa5111ae4462181d3fb0439ef75c810ad)
+01-26 10:30:25.884 F/DEBUG   ( 7543):       #10 pc 0000000000dd0a9c  /data/misc/apexdata/com.android.art/dalvik-cache/arm64/boot.oat (art_jni_trampoline+124)
+01-26 10:30:25.884 F/DEBUG   ( 7543):       #11 pc 000000000068a320  /apex/com.android.art/lib64/libart.so (nterp_helper+4016) (BuildId: eb4ec0f1d1c7267591d83fa87cb36390)
+01-26 10:30:25.884 F/DEBUG   ( 7543):       #12 pc 00000000002c965a  /data/app/~~83QmHORu-29zxAp68G596Q==/com.synapsenotes.ai-gSK8sYB2brCr_1O2ZzVWPg==/base.apk (offset 0x4000) (com.synapsenotes.ai.core.ai.DefaultLlmContext.loadEmbeddingModel+30)
+01-26 10:30:25.884 F/DEBUG   ( 7543):       #13 pc 000000000068b0e4  /apex/com.android.art/lib64/libart.so (nterp_helper+7540) (BuildId: eb4ec0f1d1c7267591d83fa87cb36390)
+01-26 10:30:25.884 F/DEBUG   ( 7543):       #14 pc 00000000002ca3c8  /data/app/~~83QmHORu-29zxAp68G596Q==/com.synapsenotes.ai-gSK8sYB2brCr_1O2ZzVWPg==/base.apk (offset 0x4000) (com.synapsenotes.ai.core.ai.LlmEngine$loadEmbeddingModel$2.invokeSuspend+144)
+01-26 10:30:25.884 F/DEBUG   ( 7543):       #15 pc 0000000002118d80  /memfd:jit-cache (deleted) (offset 0x2000000) (r8.a.resumeWith+160)
+01-26 10:30:25.884 F/DEBUG   ( 7543):       #16 pc 000000000211d78c  /memfd:jit-cache (deleted) (offset 0x2000000) (h9.g0.run+1948)
+01-26 10:30:25.884 F/DEBUG   ( 7543):       #17 pc 00000000020c4b80  /memfd:jit-cache (deleted) (offset 0x2000000) (y5.j.run+256)
+01-26 10:30:25.884 F/DEBUG   ( 7543):       #18 pc 00000000020ddf60  /memfd:jit-cache (deleted) (offset 0x2000000) (n9.i.run+112)
+01-26 10:30:25.884 F/DEBUG   ( 7543):       #19 pc 00000000020a8ee4  /memfd:jit-cache (deleted) (offset 0x2000000) (n9.a.run+2292)
+01-26 10:30:25.884 F/DEBUG   ( 7543):       #20 pc 0000000000317194  /apex/com.android.art/lib64/libart.so (art_quick_invoke_stub+612) (BuildId: eb4ec0f1d1c7267591d83fa87cb36390)
+01-26 10:30:25.884 F/DEBUG   ( 7543):       #21 pc 0000000000302838  /apex/com.android.art/lib64/libart.so (art::ArtMethod::Invoke(art::Thread*, unsigned int*, unsigned int, art::JValue*, char const*)+216) (BuildId: eb4ec0f1d1c7267591d83fa87cb36390)
+01-26 10:30:25.884 F/DEBUG   ( 7543):       #22 pc 00000000004c8298  /apex/com.android.art/lib64/libart.so (art::Thread::CreateCallback(void*)+932) (BuildId: eb4ec0f1d1c7267591d83fa87cb36390)
+01-26 10:30:25.884 F/DEBUG   ( 7543):       #23 pc 00000000004c7ee4  /apex/com.android.art/lib64/libart.so (art::Thread::CreateCallbackWithUffdGc(void*)+8) (BuildId: eb4ec0f1d1c7267591d83fa87cb36390)
+01-26 10:30:25.884 F/DEBUG   ( 7543):       #24 pc 0000000000080fa4  /apex/com.android.runtime/lib64/bionic/libc.so (__pthread_start(void*)+184) (BuildId: e59f6db702cf4b200d6a6f0e384072ab)
+01-26 10:30:25.884 F/DEBUG   ( 7543):       #25 pc 0000000000073760  /apex/com.android.runtime/lib64/bionic/libc.so (__start_thread+68) (BuildId: e59f6db702cf4b200d6a6f0e384072ab)
+01-26 10:31:07.048 F/libc    ( 7565): Fatal signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x0 in tid 7653 (DefaultDispatch), pid 7565 (synapsenotes.ai)
+01-26 10:31:07.459 F/DEBUG   ( 8614): *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
+01-26 10:31:07.459 F/DEBUG   ( 8614): Build fingerprint: 'samsung/r0qxtur/r0q:16/BP2A.250605.031.A3/S901EXXSCGYL1:user/release-keys'
+01-26 10:31:07.459 F/DEBUG   ( 8614): Revision: '13'
+01-26 10:31:07.459 F/DEBUG   ( 8614): ABI: 'arm64'
+01-26 10:31:07.459 F/DEBUG   ( 8614): Processor: '7'
+01-26 10:31:07.459 F/DEBUG   ( 8614): Timestamp: 2026-01-26 10:31:07.164607051+0300
+01-26 10:31:07.459 F/DEBUG   ( 8614): Process uptime: 42s
+01-26 10:31:07.459 F/DEBUG   ( 8614): Cmdline: com.synapsenotes.ai
+01-26 10:31:07.459 F/DEBUG   ( 8614): pid: 7565, tid: 7653, name: DefaultDispatch  >>> com.synapsenotes.ai <<<
+01-26 10:31:07.459 F/DEBUG   ( 8614): uid: 10428
+01-26 10:31:07.459 F/DEBUG   ( 8614): tagged_addr_ctrl: 0000000000000001 (PR_TAGGED_ADDR_ENABLE)
+01-26 10:31:07.459 F/DEBUG   ( 8614): pac_enabled_keys: 000000000000000f (PR_PAC_APIAKEY, PR_PAC_APIBKEY, PR_PAC_APDAKEY, PR_PAC_APDBKEY)
+01-26 10:31:07.459 F/DEBUG   ( 8614): signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x0000000000000000
+01-26 10:31:07.459 F/DEBUG   ( 8614): Cause: null pointer dereference
+01-26 10:31:07.459 F/DEBUG   ( 8614):     x0  b400007a25c9fb10  x1  00000077d4632dc0  x2  b4000079c5cd1b50  x3  0000000000000000
+01-26 10:31:07.459 F/DEBUG   ( 8614):     x4  0000000000000000  x5  00000077d4632dc0  x6  000000003ba06780  x7  000000003b9cc1eb
+01-26 10:31:07.459 F/DEBUG   ( 8614):     x8  b400007a15cf1960  x9  0000007ba53a8110  x10 000000003b9e8321  x11 b400007a75ee1e40
+01-26 10:31:07.459 F/DEBUG   ( 8614):     x12 0000000000004001  x13 0000007727d4cde4  x14 000000000000001e  x15 b400007985cb23b0
+01-26 10:31:07.459 F/DEBUG   ( 8614):     x16 0000000000000000  x17 0000007b86526570  x18 00000077d3930000  x19 b400007945c89b88
+01-26 10:31:07.459 F/DEBUG   ( 8614):     x20 b400007a05db4160  x21 b400007a05db4178  x22 0000000000000000  x23 00000077d4633240
+01-26 10:31:07.459 F/DEBUG   ( 8614):     x24 00000077d4632fcc  x25 00000077d46330d0  x26 00000077c49f80d8  x27 0000000000000000
+01-26 10:31:07.459 F/DEBUG   ( 8614):     x28 0000000000000000  x29 00000077d46331e0
+01-26 10:31:07.459 F/DEBUG   ( 8614):     lr  00000077c4954420  sp  00000077d4632c70  pc  0000000000000000  pst 0000000080001400
+01-26 10:31:07.459 F/DEBUG   ( 8614): 26 total frames
+01-26 10:31:07.459 F/DEBUG   ( 8614): backtrace:
+01-26 10:31:07.459 F/DEBUG   ( 8614):       #00 pc 0000000000000000  <unknown>
+01-26 10:31:07.459 F/DEBUG   ( 8614):       #01 pc 0000000001caa41c  /data/app/~~83QmHORu-29zxAp68G596Q==/com.synapsenotes.ai-gSK8sYB2brCr_1O2ZzVWPg==/split_config.arm64_v8a.apk!libggml-vulkan.so (offset 0x183000) (BuildId: deb46c4bae563f4b0e035c0aa1cd15cc02d43530)
+01-26 10:31:07.459 F/DEBUG   ( 8614):       #02 pc 0000000001c53078  /data/app/~~83QmHORu-29zxAp68G596Q==/com.synapsenotes.ai-gSK8sYB2brCr_1O2ZzVWPg==/split_config.arm64_v8a.apk!libggml-vulkan.so (offset 0x183000) (BuildId: deb46c4bae563f4b0e035c0aa1cd15cc02d43530)
+01-26 10:31:07.459 F/DEBUG   ( 8614):       #03 pc 000000000006c624  /data/app/~~83QmHORu-29zxAp68G596Q==/com.synapsenotes.ai-gSK8sYB2brCr_1O2ZzVWPg==/split_config.arm64_v8a.apk!libggml-base.so (offset 0x1000) (BuildId: 3984eb9b83bb78fee7b6db00d3a6520323823007)
+01-26 10:31:07.459 F/DEBUG   ( 8614):       #04 pc 000000000006b82c  /data/app/~~83QmHORu-29zxAp68G596Q==/com.synapsenotes.ai-gSK8sYB2brCr_1O2ZzVWPg==/split_config.arm64_v8a.apk!libggml-base.so (offset 0x1000) (BuildId: 3984eb9b83bb78fee7b6db00d3a6520323823007)
+01-26 10:31:07.459 F/DEBUG   ( 8614):       #05 pc 000000000006b934  /data/app/~~83QmHORu-29zxAp68G596Q==/com.synapsenotes.ai-gSK8sYB2brCr_1O2ZzVWPg==/split_config.arm64_v8a.apk!libggml-base.so (offset 0x1000) (ggml_backend_alloc_ctx_tensors_from_buft+40) (BuildId: 3984eb9b83bb78fee7b6db00d3a6520323823007)
+01-26 10:31:07.459 F/DEBUG   ( 8614):       #06 pc 000000000016a744  /data/app/~~83QmHORu-29zxAp68G596Q==/com.synapsenotes.ai-gSK8sYB2brCr_1O2ZzVWPg==/split_config.arm64_v8a.apk!libllama.so (offset 0x1ef0000) (llama_model::load_tensors(llama_model_loader&)+175260) (BuildId: 3abaec2e3a93367ec832efdaf8de1c34097eb7c0)
+01-26 10:31:07.459 F/DEBUG   ( 8614):       #07 pc 00000000000c2958  /data/app/~~83QmHORu-29zxAp68G596Q==/com.synapsenotes.ai-gSK8sYB2brCr_1O2ZzVWPg==/split_config.arm64_v8a.apk!libllama.so (offset 0x1ef0000) (BuildId: 3abaec2e3a93367ec832efdaf8de1c34097eb7c0)
+01-26 10:31:07.459 F/DEBUG   ( 8614):       #08 pc 00000000000c1fe4  /data/app/~~83QmHORu-29zxAp68G596Q==/com.synapsenotes.ai-gSK8sYB2brCr_1O2ZzVWPg==/split_config.arm64_v8a.apk!libllama.so (offset 0x1ef0000) (llama_model_load_from_file+184) (BuildId: 3abaec2e3a93367ec832efdaf8de1c34097eb7c0)
+01-26 10:31:07.459 F/DEBUG   ( 8614):       #09 pc 00000000000074fc  /data/app/~~83QmHORu-29zxAp68G596Q==/com.synapsenotes.ai-gSK8sYB2brCr_1O2ZzVWPg==/split_config.arm64_v8a.apk!libllm_notes_cpp.so (offset 0x20ff000) (Java_com_synapsenotes_ai_core_ai_LlamaContext_loadEmbeddingModelNative+200) (BuildId: 80a67d4aa5111ae4462181d3fb0439ef75c810ad)
+01-26 10:31:07.459 F/DEBUG   ( 8614):       #10 pc 0000000000dd0a9c  /data/misc/apexdata/com.android.art/dalvik-cache/arm64/boot.oat (art_jni_trampoline+124)
+01-26 10:31:07.459 F/DEBUG   ( 8614):       #11 pc 000000000068a320  /apex/com.android.art/lib64/libart.so (nterp_helper+4016) (BuildId: eb4ec0f1d1c7267591d83fa87cb36390)
+01-26 10:31:07.459 F/DEBUG   ( 8614):       #12 pc 00000000002c965a  /data/app/~~83QmHORu-29zxAp68G596Q==/com.synapsenotes.ai-gSK8sYB2brCr_1O2ZzVWPg==/base.apk (offset 0x4000) (com.synapsenotes.ai.core.ai.DefaultLlmContext.loadEmbeddingModel+30)
+01-26 10:31:07.459 F/DEBUG   ( 8614):       #13 pc 000000000068b0e4  /apex/com.android.art/lib64/libart.so (nterp_helper+7540) (BuildId: eb4ec0f1d1c7267591d83fa87cb36390)
+01-26 10:31:07.459 F/DEBUG   ( 8614):       #14 pc 00000000002ca3c8  /data/app/~~83QmHORu-29zxAp68G596Q==/com.synapsenotes.ai-gSK8sYB2brCr_1O2ZzVWPg==/base.apk (offset 0x4000) (com.synapsenotes.ai.core.ai.LlmEngine$loadEmbeddingModel$2.invokeSuspend+144)
+01-26 10:31:07.459 F/DEBUG   ( 8614):       #15 pc 000000000201a9f8  /memfd:jit-cache (deleted) (offset 0x2000000) (r8.a.resumeWith+232)
+01-26 10:31:07.459 F/DEBUG   ( 8614):       #16 pc 0000000002006c8c  /memfd:jit-cache (deleted) (offset 0x2000000) (h9.g0.run+1356)
+01-26 10:31:07.459 F/DEBUG   ( 8614):       #17 pc 000000000201bf20  /memfd:jit-cache (deleted) (offset 0x2000000) (y5.j.run+256)
+01-26 10:31:07.459 F/DEBUG   ( 8614):       #18 pc 0000000002027d20  /memfd:jit-cache (deleted) (offset 0x2000000) (n9.i.run+112)
+01-26 10:31:07.459 F/DEBUG   ( 8614):       #19 pc 000000000200b284  /memfd:jit-cache (deleted) (offset 0x2000000) (n9.a.run+2340)
+01-26 10:31:07.459 F/DEBUG   ( 8614):       #20 pc 0000000000317194  /apex/com.android.art/lib64/libart.so (art_quick_invoke_stub+612) (BuildId: eb4ec0f1d1c7267591d83fa87cb36390)
+01-26 10:31:07.459 F/DEBUG   ( 8614):       #21 pc 0000000000302838  /apex/com.android.art/lib64/libart.so (art::ArtMethod::Invoke(art::Thread*, unsigned int*, unsigned int, art::JValue*, char const*)+216) (BuildId: eb4ec0f1d1c7267591d83fa87cb36390)
+01-26 10:31:07.459 F/DEBUG   ( 8614):       #22 pc 00000000004c8298  /apex/com.android.art/lib64/libart.so (art::Thread::CreateCallback(void*)+932) (BuildId: eb4ec0f1d1c7267591d83fa87cb36390)
+01-26 10:31:07.459 F/DEBUG   ( 8614):       #23 pc 00000000004c7ee4  /apex/com.android.art/lib64/libart.so (art::Thread::CreateCallbackWithUffdGc(void*)+8) (BuildId: eb4ec0f1d1c7267591d83fa87cb36390)
+01-26 10:31:07.459 F/DEBUG   ( 8614):       #24 pc 0000000000080fa4  /apex/com.android.runtime/lib64/bionic/libc.so (__pthread_start(void*)+184) (BuildId: e59f6db702cf4b200d6a6f0e384072ab)
+01-26 10:31:07.459 F/DEBUG   ( 8614):       #25 pc 0000000000073760  /apex/com.android.runtime/lib64/bionic/libc.so (__start_thread+68) (BuildId: e59f6db702cf4b200d6a6f0e384072ab)
+01-26 11:01:52.978 F/libc    ( 8726): Fatal signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x0 in tid 8940 (DefaultDispatch), pid 8726 (synapsenotes.ai)
+01-26 11:01:53.647 F/DEBUG   (15453): *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
+01-26 11:01:53.647 F/DEBUG   (15453): Build fingerprint: 'samsung/r0qxtur/r0q:16/BP2A.250605.031.A3/S901EXXSCGYL1:user/release-keys'
+01-26 11:01:53.647 F/DEBUG   (15453): Revision: '13'
+01-26 11:01:53.647 F/DEBUG   (15453): ABI: 'arm64'
+01-26 11:01:53.647 F/DEBUG   (15453): Processor: '7'
+01-26 11:01:53.647 F/DEBUG   (15453): Timestamp: 2026-01-26 11:01:53.066508691+0300
+01-26 11:01:53.647 F/DEBUG   (15453): Process uptime: 1845s
+01-26 11:01:53.647 F/DEBUG   (15453): Cmdline: com.synapsenotes.ai
+01-26 11:01:53.647 F/DEBUG   (15453): pid: 8726, tid: 8940, name: DefaultDispatch  >>> com.synapsenotes.ai <<<
+01-26 11:01:53.647 F/DEBUG   (15453): uid: 10428
+01-26 11:01:53.647 F/DEBUG   (15453): tagged_addr_ctrl: 0000000000000001 (PR_TAGGED_ADDR_ENABLE)
+01-26 11:01:53.647 F/DEBUG   (15453): pac_enabled_keys: 000000000000000f (PR_PAC_APIAKEY, PR_PAC_APIBKEY, PR_PAC_APDAKEY, PR_PAC_APDBKEY)
+01-26 11:01:53.647 F/DEBUG   (15453): signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x0000000000000000
+01-26 11:01:53.647 F/DEBUG   (15453): Cause: null pointer dereference
+01-26 11:01:53.647 F/DEBUG   (15453):     x0  b400007a25ca1af0  x1  00000077e605bc30  x2  b4000079c5cce3d0  x3  0000000000000000
+01-26 11:01:53.648 F/DEBUG   (15453):     x4  0000000000000000  x5  00000077e605bc30  x6  000000003ba06780  x7  000000003b9cc1eb
+01-26 11:01:53.648 F/DEBUG   (15453):     x8  b400007a15ce9e90  x9  0000007ba53a8110  x10 000000003b9e8321  x11 b400007a75ee5650
+01-26 11:01:53.648 F/DEBUG   (15453):     x12 0000000000004001  x13 000000772e359de4  x14 000000000000001e  x15 b400007985cdce10
+01-26 11:01:53.648 F/DEBUG   (15453):     x16 0000000000000000  x17 0000007b86526570  x18 00000077e4284000  x19 b400007945c8eb28
+01-26 11:01:53.648 F/DEBUG   (15453):     x20 b400007a05d94140  x21 b400007a05d94158  x22 0000000000000000  x23 00000077e605c0b0
+01-26 11:01:53.648 F/DEBUG   (15453):     x24 00000077e605be3c  x25 00000077e605bf40  x26 00000077d0bf10d8  x27 0000000000000000
+01-26 11:01:53.648 F/DEBUG   (15453):     x28 0000000000000000  x29 00000077e605c050
+01-26 11:01:53.648 F/DEBUG   (15453):     lr  00000077d0b4d420  sp  00000077e605bae0  pc  0000000000000000  pst 0000000080001400
+01-26 11:01:53.648 F/DEBUG   (15453): 29 total frames
+01-26 11:01:53.648 F/DEBUG   (15453): backtrace:
+01-26 11:01:53.648 F/DEBUG   (15453):       #00 pc 0000000000000000  <unknown>
+01-26 11:01:53.648 F/DEBUG   (15453):       #01 pc 0000000001caa41c  /data/app/~~83QmHORu-29zxAp68G596Q==/com.synapsenotes.ai-gSK8sYB2brCr_1O2ZzVWPg==/split_config.arm64_v8a.apk!libggml-vulkan.so (offset 0x183000) (BuildId: deb46c4bae563f4b0e035c0aa1cd15cc02d43530)
+01-26 11:01:53.648 F/DEBUG   (15453):       #02 pc 0000000001c53078  /data/app/~~83QmHORu-29zxAp68G596Q==/com.synapsenotes.ai-gSK8sYB2brCr_1O2ZzVWPg==/split_config.arm64_v8a.apk!libggml-vulkan.so (offset 0x183000) (BuildId: deb46c4bae563f4b0e035c0aa1cd15cc02d43530)
+01-26 11:01:53.648 F/DEBUG   (15453):       #03 pc 000000000006c624  /data/app/~~83QmHORu-29zxAp68G596Q==/com.synapsenotes.ai-gSK8sYB2brCr_1O2ZzVWPg==/split_config.arm64_v8a.apk!libggml-base.so (offset 0x1000) (BuildId: 3984eb9b83bb78fee7b6db00d3a6520323823007)
+01-26 11:01:53.648 F/DEBUG   (15453):       #04 pc 000000000006b82c  /data/app/~~83QmHORu-29zxAp68G596Q==/com.synapsenotes.ai-gSK8sYB2brCr_1O2ZzVWPg==/split_config.arm64_v8a.apk!libggml-base.so (offset 0x1000) (BuildId: 3984eb9b83bb78fee7b6db00d3a6520323823007)
+01-26 11:01:53.648 F/DEBUG   (15453):       #05 pc 000000000006b934  /data/app/~~83QmHORu-29zxAp68G596Q==/com.synapsenotes.ai-gSK8sYB2brCr_1O2ZzVWPg==/split_config.arm64_v8a.apk!libggml-base.so (offset 0x1000) (ggml_backend_alloc_ctx_tensors_from_buft+40) (BuildId: 3984eb9b83bb78fee7b6db00d3a6520323823007)
+01-26 11:01:53.648 F/DEBUG   (15453):       #06 pc 000000000016a744  /data/app/~~83QmHORu-29zxAp68G596Q==/com.synapsenotes.ai-gSK8sYB2brCr_1O2ZzVWPg==/split_config.arm64_v8a.apk!libllama.so (offset 0x1ef0000) (llama_model::load_tensors(llama_model_loader&)+175260) (BuildId: 3abaec2e3a93367ec832efdaf8de1c34097eb7c0)
+01-26 11:01:53.648 F/DEBUG   (15453):       #07 pc 00000000000c2958  /data/app/~~83QmHORu-29zxAp68G596Q==/com.synapsenotes.ai-gSK8sYB2brCr_1O2ZzVWPg==/split_config.arm64_v8a.apk!libllama.so (offset 0x1ef0000) (BuildId: 3abaec2e3a93367ec832efdaf8de1c34097eb7c0)
+01-26 11:01:53.648 F/DEBUG   (15453):       #08 pc 00000000000c1fe4  /data/app/~~83QmHORu-29zxAp68G596Q==/com.synapsenotes.ai-gSK8sYB2brCr_1O2ZzVWPg==/split_config.arm64_v8a.apk!libllama.so (offset 0x1ef0000) (llama_model_load_from_file+184) (BuildId: 3abaec2e3a93367ec832efdaf8de1c34097eb7c0)
+01-26 11:01:53.648 F/DEBUG   (15453):       #09 pc 00000000000074fc  /data/app/~~83QmHORu-29zxAp68G596Q==/com.synapsenotes.ai-gSK8sYB2brCr_1O2ZzVWPg==/split_config.arm64_v8a.apk!libllm_notes_cpp.so (offset 0x20ff000) (Java_com_synapsenotes_ai_core_ai_LlamaContext_loadEmbeddingModelNative+200) (BuildId: 80a67d4aa5111ae4462181d3fb0439ef75c810ad)
+01-26 11:01:53.648 F/DEBUG   (15453):       #10 pc 0000000000dd0a9c  /data/misc/apexdata/com.android.art/dalvik-cache/arm64/boot.oat (art_jni_trampoline+124)
+01-26 11:01:53.648 F/DEBUG   (15453):       #11 pc 000000000068a320  /apex/com.android.art/lib64/libart.so (nterp_helper+4016) (BuildId: eb4ec0f1d1c7267591d83fa87cb36390)
+01-26 11:01:53.648 F/DEBUG   (15453):       #12 pc 00000000002c965a  /data/app/~~83QmHORu-29zxAp68G596Q==/com.synapsenotes.ai-gSK8sYB2brCr_1O2ZzVWPg==/base.apk (offset 0x4000) (com.synapsenotes.ai.core.ai.DefaultLlmContext.loadEmbeddingModel+30)
+01-26 11:01:53.648 F/DEBUG   (15453):       #13 pc 000000000068b0e4  /apex/com.android.art/lib64/libart.so (nterp_helper+7540) (BuildId: eb4ec0f1d1c7267591d83fa87cb36390)
+01-26 11:01:53.648 F/DEBUG   (15453):       #14 pc 00000000002ca3c8  /data/app/~~83QmHORu-29zxAp68G596Q==/com.synapsenotes.ai-gSK8sYB2brCr_1O2ZzVWPg==/base.apk (offset 0x4000) (com.synapsenotes.ai.core.ai.LlmEngine$loadEmbeddingModel$2.invokeSuspend+144)
+01-26 11:01:53.648 F/DEBUG   (15453):       #15 pc 000000000202f138  /memfd:jit-cache (deleted) (offset 0x2000000) (r8.a.resumeWith+232)
+01-26 11:01:53.648 F/DEBUG   (15453):       #16 pc 0000000002011f5c  /memfd:jit-cache (deleted) (offset 0x2000000) (h9.g0.run+1356)
+01-26 11:01:53.648 F/DEBUG   (15453):       #17 pc 000000000068b190  /apex/com.android.art/lib64/libart.so (nterp_helper+7712) (BuildId: eb4ec0f1d1c7267591d83fa87cb36390)
+01-26 11:01:53.648 F/DEBUG   (15453):       #18 pc 00000000002ad050  /data/app/~~83QmHORu-29zxAp68G596Q==/com.synapsenotes.ai-gSK8sYB2brCr_1O2ZzVWPg==/base.apk (offset 0x4000) (y5.j.run+24)
+01-26 11:01:53.648 F/DEBUG   (15453):       #19 pc 000000000068b0e4  /apex/com.android.art/lib64/libart.so (nterp_helper+7540) (BuildId: eb4ec0f1d1c7267591d83fa87cb36390)
+01-26 11:01:53.648 F/DEBUG   (15453):       #20 pc 0000000000306a34  /data/app/~~83QmHORu-29zxAp68G596Q==/com.synapsenotes.ai-gSK8sYB2brCr_1O2ZzVWPg==/base.apk (offset 0x4000) (n9.i.run+4)
+01-26 11:01:53.648 F/DEBUG   (15453):       #21 pc 000000000068b0e4  /apex/com.android.art/lib64/libart.so (nterp_helper+7540) (BuildId: eb4ec0f1d1c7267591d83fa87cb36390)
+01-26 11:01:53.648 F/DEBUG   (15453):       #22 pc 00000000003058fe  /data/app/~~83QmHORu-29zxAp68G596Q==/com.synapsenotes.ai-gSK8sYB2brCr_1O2ZzVWPg==/base.apk (offset 0x4000) (n9.a.run+182)
+01-26 11:01:53.648 F/DEBUG   (15453):       #23 pc 0000000000317194  /apex/com.android.art/lib64/libart.so (art_quick_invoke_stub+612) (BuildId: eb4ec0f1d1c7267591d83fa87cb36390)
+01-26 11:01:53.648 F/DEBUG   (15453):       #24 pc 0000000000302838  /apex/com.android.art/lib64/libart.so (art::ArtMethod::Invoke(art::Thread*, unsigned int*, unsigned int, art::JValue*, char const*)+216) (BuildId: eb4ec0f1d1c7267591d83fa87cb36390)
+01-26 11:01:53.648 F/DEBUG   (15453):       #25 pc 00000000004c8298  /apex/com.android.art/lib64/libart.so (art::Thread::CreateCallback(void*)+932) (BuildId: eb4ec0f1d1c7267591d83fa87cb36390)
+01-26 11:01:53.648 F/DEBUG   (15453):       #26 pc 00000000004c7ee4  /apex/com.android.art/lib64/libart.so (art::Thread::CreateCallbackWithUffdGc(void*)+8) (BuildId: eb4ec0f1d1c7267591d83fa87cb36390)
+01-26 11:01:53.648 F/DEBUG   (15453):       #27 pc 0000000000080fa4  /apex/com.android.runtime/lib64/bionic/libc.so (__pthread_start(void*)+184) (BuildId: e59f6db702cf4b200d6a6f0e384072ab)
+01-26 11:01:53.648 F/DEBUG   (15453):       #28 pc 0000000000073760  /apex/com.android.runtime/lib64/bionic/libc.so (__start_thread+68) (BuildId: e59f6db702cf4b200d6a6f0e384072ab)

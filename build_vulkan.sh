@@ -9,7 +9,7 @@ export ANDROID_SDK_ROOT=$ANDROID_HOME
 export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin
 export PATH=$PATH:$ANDROID_HOME/platform-tools
 
-PROJECT_DIR="$HOME/projects/android_note_app"
+PROJECT_DIR="$(pwd)"
 LLAMA_DIR="$PROJECT_DIR/app/src/main/cpp/llama"
 
 echo "=== Step 1: Build vulkan-shaders-gen for Host ==="
@@ -47,7 +47,7 @@ echo "=== Step 2: Build Android APK ==="
 cd "$PROJECT_DIR"
 rm -rf app/.cxx  # Clear CMake cache to pick up new config
 
-./gradlew :app:assembleDebug -Dorg.gradle.java.home=/usr/lib/jvm/java-17-openjdk-amd64
+./gradlew :app:assembleDebug -PuseVulkan=true -Dorg.gradle.java.home=/usr/lib/jvm/java-17-openjdk-amd64
 
 echo ""
 echo "=== Build Complete ==="

@@ -30,10 +30,13 @@ class LlmEngine @Inject constructor(
      */
     fun getHardwareInfo(): HardwareInfo {
         val vulkanSupported = hardwareCapabilityProvider.isVulkanSupported()
+        val preferred = hardwareCapabilityProvider.getPreferredBackend()
+        val gpuEnabled = isGpuEnabled()
+        
         return HardwareInfo(
-            isGpuAccelerationEnabled = isGpuEnabled(),
-            backendName = if (isGpuEnabled()) "Vulkan" else "CPU",
-            gpuName = if (vulkanSupported) hardwareCapabilityProvider.getGpuName() else null
+            isGpuAccelerationEnabled = gpuEnabled,
+            backendName = if (gpuEnabled) preferred.name else "CPU",
+            gpuName = if (vulkanSupported && gpuEnabled) hardwareCapabilityProvider.getGpuName() else null
         )
     }
 
@@ -46,14 +49,18 @@ class LlmEngine @Inject constructor(
                 isLoaded = false
             }
 
-            // Log hardware info when loading model
-            val hwInfo = getHardwareInfo()
-            Log.i(TAG, "Loading model with backend: ${hwInfo.backendName}, GPU: ${hwInfo.gpuName ?: "N/A"}")
+            val preferredBackend = hardwareCapabilityProvider.getPreferredBackend()
+            Log.i(TAG, "Loading model with preferred backend: ${preferredBackend.name}")
 
-            val success = llmContext.loadModel(path, template)
+            val nBatch = hardwareCapabilityProvider.getRecommendedBatchSize()
+            val nCtx = hardwareCapabilityProvider.getRecommendedContextSize()
+            val useMmap = hardwareCapabilityProvider.isMmapSafe()
+
+            val success = llmContext.loadModel(path, template, nBatch, nCtx, useMmap, preferredBackend)
             if (success) {
                 isLoaded = true
-                Log.i(TAG, "Model loaded successfully with ${hwInfo.backendName} acceleration")
+                val hwInfo = getHardwareInfo()
+                Log.i(TAG, "Model loaded successfully. Active Backend: ${hwInfo.backendName}. Batch: $nBatch, Ctx: $nCtx, Mmap: $useMmap")
                 Result.success(true)
             } else {
                 Result.failure(Exception("Failed to load model at $path"))

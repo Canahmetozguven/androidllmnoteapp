@@ -5,9 +5,80 @@
 #include <sstream>
 #include <cmath>
 #include <atomic>
+#include <stdlib.h>
+#include <sys/system_properties.h>
 #include "llama.h"
 
 #define TAG "LLM_JNI"
+
+// Hardware detection and automatic backend selection
+static std::string get_system_property(const char* key) {
+    char value[PROP_VALUE_MAX] = {0};
+    __system_property_get(key, value);
+    return std::string(value);
+}
+
+enum GPUVendor {
+    GPU_ADRENO,      // Qualcomm
+    GPU_MALI,        // ARM
+    GPU_POWERVR,     // Imagination
+    GPU_UNKNOWN
+};
+
+static GPUVendor detect_gpu_vendor() {
+    // Try to read GPU info from system properties
+    std::string gpu_model = get_system_property("ro.hardware.vulkan");
+    std::string soc = get_system_property("ro.board.platform");
+    std::string hardware = get_system_property("ro.hardware");
+    
+    // Check for Adreno (Qualcomm Snapdragon)
+    if (soc.find("msm") != std::string::npos || 
+        soc.find("sm") != std::string::npos ||
+        soc.find("sdm") != std::string::npos ||
+        hardware.find("qcom") != std::string::npos) {
+        __android_log_print(ANDROID_LOG_INFO, TAG, "Detected GPU: Adreno (Qualcomm)");
+        return GPU_ADRENO;
+    }
+    
+    // Check for Mali (Samsung Exynos, MediaTek)
+    if (soc.find("exynos") != std::string::npos ||
+        soc.find("mt") != std::string::npos ||
+        hardware.find("exynos") != std::string::npos) {
+        __android_log_print(ANDROID_LOG_INFO, TAG, "Detected GPU: Mali (ARM)");
+        return GPU_MALI;
+    }
+    
+    __android_log_print(ANDROID_LOG_WARN, TAG, "Unknown GPU vendor (soc: %s, hw: %s)", soc.c_str(), hardware.c_str());
+    return GPU_UNKNOWN;
+}
+
+// Determine best backend based on hardware
+static int auto_select_backend() {
+    GPUVendor gpu = detect_gpu_vendor();
+    std::string device = get_system_property("ro.product.device");
+    std::string model = get_system_property("ro.product.model");
+    
+    // Known problematic devices - force CPU
+    if (model.find("SM-S901") != std::string::npos || device.find("r0q") != std::string::npos) {
+        __android_log_print(ANDROID_LOG_WARN, TAG, "S22 detected - forcing CPU due to Vulkan driver issues");
+        return 0; // CPU
+    }
+    
+    // GPU-based selection
+    if (gpu == GPU_ADRENO) {
+        // Adreno: OpenCL is most stable
+        __android_log_print(ANDROID_LOG_INFO, TAG, "Auto-selected: OpenCL (best for Adreno)");
+        return 2; // OpenCL
+    } else if (gpu == GPU_MALI) {
+        // Mali: OpenCL generally better than Vulkan on mobile
+        __android_log_print(ANDROID_LOG_INFO, TAG, "Auto-selected: OpenCL (best for Mali)");
+        return 2; // OpenCL
+    } else {
+        // Unknown GPU: Try OpenCL first as it's generally safer
+        __android_log_print(ANDROID_LOG_INFO, TAG, "Auto-selected: OpenCL (default for unknown GPU)");
+        return 2; // OpenCL
+    }
+}
 
 // Global state
 llama_model* g_model = nullptr;
@@ -46,7 +117,7 @@ static void batch_add(llama_batch & batch, llama_token id, llama_pos pos, int32_
 
 // Forward declarations
 extern "C" {
-    JNIEXPORT jboolean JNICALL Java_com_synapsenotes_ai_core_ai_LlamaContext_loadModelNative(JNIEnv* env, jobject, jstring path, jstring template_str);
+    JNIEXPORT jboolean JNICALL Java_com_synapsenotes_ai_core_ai_LlamaContext_loadModelNative(JNIEnv* env, jobject, jstring path, jstring template_str, jint n_batch, jint n_ctx, jboolean use_mmap, jint backend_id);
     JNIEXPORT jboolean JNICALL Java_com_synapsenotes_ai_core_ai_LlamaContext_loadEmbeddingModelNative(JNIEnv* env, jobject, jstring path);
     JNIEXPORT jstring JNICALL Java_com_synapsenotes_ai_core_ai_LlamaContext_completion(JNIEnv* env, jobject, jstring prompt, jobject callback);
     JNIEXPORT void JNICALL Java_com_synapsenotes_ai_core_ai_LlamaContext_stopCompletion(JNIEnv* env, jobject);
@@ -72,7 +143,7 @@ JNI_OnLoad(JavaVM* vm, void* reserved) {
     }
 
     JNINativeMethod methods[] = {
-        {"loadModelNative", "(Ljava/lang/String;Ljava/lang/String;)Z", (void*)Java_com_synapsenotes_ai_core_ai_LlamaContext_loadModelNative},
+        {"loadModelNative", "(Ljava/lang/String;Ljava/lang/String;IIZI)Z", (void*)Java_com_synapsenotes_ai_core_ai_LlamaContext_loadModelNative},
         {"loadEmbeddingModelNative", "(Ljava/lang/String;)Z", (void*)Java_com_synapsenotes_ai_core_ai_LlamaContext_loadEmbeddingModelNative},
         {"completion", "(Ljava/lang/String;Lcom/synapsenotes/ai/core/ai/LlmCallback;)Ljava/lang/String;", (void*)Java_com_synapsenotes_ai_core_ai_LlamaContext_completion},
         {"stopCompletion", "()V", (void*)Java_com_synapsenotes_ai_core_ai_LlamaContext_stopCompletion},
@@ -105,24 +176,45 @@ Java_com_synapsenotes_ai_core_ai_LlamaContext_loadEmbeddingModelNative(JNIEnv* e
     }
 
     struct llama_model_params model_params = llama_model_default_params();
-    model_params.n_gpu_layers = -1; // Offload all layers to GPU (Vulkan)
+    model_params.use_mmap = false;
+    model_params.n_gpu_layers = -1; // Try GPU first
     
-    __android_log_print(ANDROID_LOG_INFO, TAG, "Attempting to load embedding model from %s...", model_path);
+    __android_log_print(ANDROID_LOG_INFO, TAG, "Loading embedding model with smart fallback: OpenCL → Vulkan → CPU");
+    
+    // Try OpenCL first (most stable)
+    unsetenv("GGML_VULKAN_DISABLE");
+    unsetenv("GGML_OPENCL_DISABLE");
+    setenv("GGML_VULKAN_DISABLE", "1", 1);
     g_model_embed = llama_model_load_from_file(model_path, model_params);
-
+    
     if (!g_model_embed) {
+        // Try Vulkan
+        __android_log_print(ANDROID_LOG_WARN, TAG, "OpenCL failed, trying Vulkan for embedding model...");
+        unsetenv("GGML_VULKAN_DISABLE");
+        setenv("GGML_OPENCL_DISABLE", "1", 1);
+        g_model_embed = llama_model_load_from_file(model_path, model_params);
+    }
+    
+    if (!g_model_embed) {
+        // CPU fallback
+        __android_log_print(ANDROID_LOG_WARN, TAG, "GPU failed, using CPU for embedding model...");
         model_params.n_gpu_layers = 0;
+        setenv("GGML_VULKAN_DISABLE", "1", 1);
+        setenv("GGML_OPENCL_DISABLE", "1", 1);
         g_model_embed = llama_model_load_from_file(model_path, model_params);
     }
 
     env->ReleaseStringUTFChars(path, model_path);
 
-    if (!g_model_embed) return JNI_FALSE;
+    if (!g_model_embed) {
+        __android_log_print(ANDROID_LOG_ERROR, TAG, "Failed to load embedding model with all backends");
+        return JNI_FALSE;
+    }
 
     struct llama_context_params ctx_params = llama_context_default_params();
-    ctx_params.embeddings = true; // IMPORTANT
-    ctx_params.n_ctx = 2048;      // Ensure context is large enough for the batch
-    ctx_params.n_batch = 512;     // Reduce to 512 for better Vulkan stability on Samsung S22
+    ctx_params.embeddings = true;
+    ctx_params.n_ctx = 2048;
+    ctx_params.n_batch = 512;
     
     g_context_embed = llama_init_from_model(g_model_embed, ctx_params);
     if (!g_context_embed) {
@@ -136,7 +228,7 @@ Java_com_synapsenotes_ai_core_ai_LlamaContext_loadEmbeddingModelNative(JNIEnv* e
 }
 
 extern "C" JNIEXPORT jboolean JNICALL
-Java_com_synapsenotes_ai_core_ai_LlamaContext_loadModelNative(JNIEnv* env, jobject, jstring path, jstring template_str) {
+Java_com_synapsenotes_ai_core_ai_LlamaContext_loadModelNative(JNIEnv* env, jobject, jstring path, jstring template_str, jint n_batch, jint n_ctx, jboolean use_mmap, jint backend_id) {
     const char* model_path = env->GetStringUTFChars(path, nullptr);
     
     if (template_str != nullptr) {
@@ -158,27 +250,84 @@ Java_com_synapsenotes_ai_core_ai_LlamaContext_loadModelNative(JNIEnv* env, jobje
     }
 
     struct llama_model_params model_params = llama_model_default_params();
-    model_params.n_gpu_layers = -1; // Try GPU
-    // model_params.use_mmap = true; // Default is true, keep it true for low RAM
+    model_params.use_mmap = (bool)use_mmap;
+    model_params.n_gpu_layers = -1; // Enable GPU
     
-    __android_log_print(ANDROID_LOG_INFO, TAG, "Attempting to load chat model from %s...", model_path);
-    g_model = llama_model_load_from_file(model_path, model_params);
-    g_gpu_enabled = (g_model != nullptr);
-
-    if (!g_model) {
-        __android_log_print(ANDROID_LOG_WARN, TAG, "Failed to load chat model with GPU, falling back to CPU...");
-        model_params.n_gpu_layers = 0;
-        g_model = llama_model_load_from_file(model_path, model_params);
-        g_gpu_enabled = false;
+    // Auto-detect best backend based on hardware
+    int auto_backend = auto_select_backend();
+    __android_log_print(ANDROID_LOG_INFO, TAG, 
+        "Auto-detected backend: %d (user requested: %d) - Using auto-detected", auto_backend, backend_id);
+    
+    // Track which backends we've tried
+    bool tried_opencl = false;
+    bool tried_vulkan = false;
+    bool tried_cpu = false;
+    
+    // Helper lambda to try a specific backend
+    auto try_backend = [&](int backend_type) -> bool {
+        if (backend_type == 0 && !tried_cpu) { // CPU
+            tried_cpu = true;
+            __android_log_print(ANDROID_LOG_INFO, TAG, "Trying CPU backend...");
+            model_params.n_gpu_layers = 0;
+            setenv("GGML_VULKAN_DISABLE", "1", 1);
+            setenv("GGML_OPENCL_DISABLE", "1", 1);
+            g_model = llama_model_load_from_file(model_path, model_params);
+            if (g_model) {
+                __android_log_print(ANDROID_LOG_INFO, TAG, "✓ CPU backend loaded successfully");
+                g_gpu_enabled = false;
+                return true;
+            }
+        } else if (backend_type == 1 && !tried_vulkan) { // VULKAN
+            tried_vulkan = true;
+            __android_log_print(ANDROID_LOG_INFO, TAG, "Trying Vulkan backend...");
+            model_params.n_gpu_layers = -1;
+            unsetenv("GGML_VULKAN_DISABLE");
+            setenv("GGML_OPENCL_DISABLE", "1", 1);
+            g_model = llama_model_load_from_file(model_path, model_params);
+            if (g_model) {
+                __android_log_print(ANDROID_LOG_INFO, TAG, "✓ Vulkan backend loaded successfully");
+                g_gpu_enabled = true;
+                return true;
+            }
+        } else if (backend_type == 2 && !tried_opencl) { // OPENCL
+            tried_opencl = true;
+            __android_log_print(ANDROID_LOG_INFO, TAG, "Trying OpenCL backend...");
+            model_params.n_gpu_layers = -1;
+            setenv("GGML_VULKAN_DISABLE", "1", 1);
+            unsetenv("GGML_OPENCL_DISABLE");
+            g_model = llama_model_load_from_file(model_path, model_params);
+            if (g_model) {
+                __android_log_print(ANDROID_LOG_INFO, TAG, "✓ OpenCL backend loaded successfully");
+                g_gpu_enabled = true;
+                return true;
+            }
+        }
+        return false;
+    };
+    
+    // Step 1: Try auto-detected backend first
+    if (!try_backend(auto_backend)) {
+        __android_log_print(ANDROID_LOG_WARN, TAG, "Auto-detected backend failed, trying fallbacks...");
+        
+        // Step 2: Fallback priority order (skip what we already tried)
+        // Priority: OpenCL → Vulkan → CPU
+        if (!try_backend(2)) {  // OpenCL
+            if (!try_backend(1)) {  // Vulkan
+                try_backend(0);  // CPU
+            }
+        }
     }
 
     env->ReleaseStringUTFChars(path, model_path);
 
-    if (!g_model) return JNI_FALSE;
+    if (!g_model) {
+        __android_log_print(ANDROID_LOG_ERROR, TAG, "Failed to load model with all backends");
+        return JNI_FALSE;
+    }
 
     struct llama_context_params ctx_params = llama_context_default_params();
-    ctx_params.n_ctx = 2048; // Reduce context size to 2048 for S22 stability
-    ctx_params.n_batch = 256; // Reduce batch size to 256 for S22 Vulkan stability
+    ctx_params.n_ctx = n_ctx; 
+    ctx_params.n_batch = n_batch;
     
     g_context = llama_init_from_model(g_model, ctx_params);
     if (!g_context) {
@@ -271,9 +420,12 @@ Java_com_synapsenotes_ai_core_ai_LlamaContext_completion(JNIEnv* env, jobject, j
 
     llama_batch batch = llama_batch_init(2048, 0, 1);
 
-    for (int i = 0; i < n_tokens; i += 512) {
+    // Dynamic batch size from context
+    const int32_t n_batch = llama_n_batch(g_context);
+
+    for (int i = 0; i < n_tokens; i += n_batch) {
         int n_chunk = n_tokens - i;
-        if (n_chunk > 512) n_chunk = 512;
+        if (n_chunk > n_batch) n_chunk = n_batch;
         
         batch.n_tokens = 0;
         for (int j = 0; j < n_chunk; j++) {
@@ -401,7 +553,7 @@ Java_com_synapsenotes_ai_core_ai_LlamaContext_embed(JNIEnv* env, jobject, jstrin
         return nullptr;
     }
 
-    int32_t n_embd = llama_n_embd(model);
+    int32_t n_embd = llama_model_n_embd(model);
     float* embeddings = llama_get_embeddings_seq(ctx, 0); // seq_id 0
     
     if (!embeddings) {

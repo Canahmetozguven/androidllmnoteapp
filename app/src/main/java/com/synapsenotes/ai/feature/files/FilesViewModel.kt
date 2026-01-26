@@ -46,8 +46,17 @@ class FilesViewModel @Inject constructor(
     fun loadFiles() {
         viewModelScope.launch {
             _isLoading.value = true
-            _files.value = driveRepository.listFiles()
-            _isLoading.value = false
+            _importMessage.value = null // Clear previous errors
+            try {
+                _files.value = driveRepository.listFiles()
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _files.value = emptyList()
+                val errorMsg = e.toString() // Capture full exception type (e.g. UserRecoverableAuthException)
+                _importMessage.value = "Drive Error: $errorMsg"
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
     

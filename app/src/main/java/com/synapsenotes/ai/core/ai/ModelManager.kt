@@ -59,4 +59,13 @@ class ModelManager @Inject constructor(
     fun getAvailableModels(): List<File> {
         return modelsDir.listFiles()?.filter { it.name.endsWith(".gguf") }?.toList() ?: emptyList()
     }
+
+    fun deleteModel(modelName: String): Boolean {
+        val file = File(modelsDir, modelName)
+        return if (file.exists()) {
+            file.delete()
+        } else {
+            false
+        }
+    }
 }

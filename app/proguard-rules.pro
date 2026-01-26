@@ -24,3 +24,12 @@
 
 # Markdown rendering
 -dontwarn com.mikepenz.markdown.**
+
+# Google Drive API / reflection rules
+-keep class com.google.api.client.** { *; }
+-keep class com.google.api.services.drive.** { *; }
+-keep class com.google.api.client.json.gson.** { *; }
+-keepattributes Signature, RuntimeVisibleAnnotations, AnnotationDefault
+-dontwarn com.google.api.client.**
+-dontwarn com.google.j2objc.annotations.**
+-dontwarn javax.annotation.**

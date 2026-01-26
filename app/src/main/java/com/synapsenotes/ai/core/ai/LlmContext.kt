@@ -7,7 +7,7 @@ import javax.inject.Inject
  * Abstracts the native LlamaContext for testability.
  */
 interface LlmContext {
-    fun loadModel(path: String, template: String? = null): Boolean
+    fun loadModel(path: String, template: String? = null, nBatch: Int = 512, nCtx: Int = 2048, useMmap: Boolean = true, backendType: BackendType): Boolean
     fun loadEmbeddingModel(path: String): Boolean
     fun completion(prompt: String, callback: LlmCallback? = null): String
     fun stopCompletion()
@@ -26,9 +26,9 @@ class DefaultLlmContext @Inject constructor() : LlmContext {
         return LlamaContext.isLibraryLoaded
     }
     
-    override fun loadModel(path: String, template: String?): Boolean {
+    override fun loadModel(path: String, template: String?, nBatch: Int, nCtx: Int, useMmap: Boolean, backendType: BackendType): Boolean {
         if (!isLibraryLoaded()) return false
-        return nativeContext.loadModelNative(path, template)
+        return nativeContext.loadModelNative(path, template, nBatch, nCtx, useMmap, backendType.ordinal)
     }
 
     override fun loadEmbeddingModel(path: String): Boolean {
