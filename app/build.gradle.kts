@@ -1,5 +1,9 @@
 import java.util.Properties
 import java.io.FileInputStream
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.TimeZone
+import java.util.Calendar
 
 plugins {
     alias(libs.plugins.androidApplication)
@@ -9,6 +13,19 @@ plugins {
     alias(libs.plugins.googleServices)
 }
 
+// Auto-generated Version Code: Minute-based logic to fit Integer.MAX_VALUE
+// Strategy: 2026000000 + Minutes_Since_Start_Of_2026
+val calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+val year = 2026
+val startOfYear = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+startOfYear.set(year, 0, 1, 0, 0, 0) // Jan 1, 2026 00:00:00
+
+val diffMillis = calendar.timeInMillis - startOfYear.timeInMillis
+val minutesSinceStart = (diffMillis / 60000).toInt()
+
+val baseVersion = 2026000000
+val autoVersionCode = baseVersion + minutesSinceStart
+
 android {
     namespace = "com.synapsenotes.ai"
     compileSdk = 35
@@ -17,10 +34,21 @@ android {
         applicationId = "com.synapsenotes.ai"
         minSdk = 26
         targetSdk = 35
-        versionCode = 9
-        versionName = "1.8"
+        
+        // Load API Key from local.properties
+        val localProperties = Properties()
+        val localPropertiesFile = rootProject.file("local.properties")
+        if (localPropertiesFile.exists()) {
+            localProperties.load(FileInputStream(localPropertiesFile))
+        }
+        val googleDriveApiKey = localProperties.getProperty("GOOGLE_DRIVE_API_KEY") ?: ""
+        buildConfigField("String", "GOOGLE_DRIVE_API_KEY", "\"$googleDriveApiKey\"")
+
+        versionCode = autoVersionCode
+        versionName = "1.9.7"
 
         ndkVersion = "26.1.10909125"
+
 
         ndk {
             abiFilters += listOf("arm64-v8a", "x86_64")
@@ -32,6 +60,12 @@ android {
         }
     }
     
+    testOptions {
+        unitTests.all {
+            it.useJUnitPlatform()
+        }
+    }
+
     signingConfigs {
         create("release") {
             val keystorePropertiesFile = file("keystore.properties")
@@ -56,7 +90,30 @@ android {
     defaultConfig {
         externalNativeBuild {
             cmake {
-                arguments += listOf("-DGGML_VULKAN=OFF", "-DVulkan_FOUND=OFF", "-DLLAMA_VULKAN=OFF")
+                // FORCE VULKAN: Always enable Vulkan for GPU acceleration on supported devices
+                // We default to ON to prevent CPU-only fallbacks that crash on large models (S22 OOM)
+                val useVulkan = project.findProperty("useVulkan") != "false" 
+                if (useVulkan) {
+                    arguments += listOf(
+                        "-DGGML_VULKAN=ON", "-DVulkan_FOUND=ON", "-DLLAMA_VULKAN=ON"
+                    )
+                } else {
+                    arguments += listOf(
+                        "-DGGML_VULKAN=OFF", "-DVulkan_FOUND=OFF", "-DLLAMA_VULKAN=OFF"
+                    )
+                }
+
+                // ENABLE OPENCL: Secondary backend for Adreno/Mali
+                val useOpenCL = project.findProperty("useOpenCL") != "false"
+                if (useOpenCL) {
+                    arguments += listOf(
+                        "-DGGML_OPENCL=ON", "-DGGML_OPENCL_USE_ADRENO_KERNELS=ON", "-DGGML_OPENCL_EMBED_KERNELS=ON"
+                    )
+                } else {
+                    arguments += listOf(
+                        "-DGGML_OPENCL=OFF"
+                    )
+                }
             }
         }
     }
@@ -146,10 +203,35 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation("io.mockk:mockk:1.13.9")
+    
+    // JUnit 5
+    testImplementation(libs.junit.jupiter.api)
+    testRuntimeOnly(libs.junit.jupiter.engine)
+    testRuntimeOnly(libs.junit.vintage.engine) // For JUnit 4 support
+    
+    // Mockito
+    testImplementation(libs.mockito.core)
+    testImplementation(libs.mockito.kotlin)
+    
+    // Turbine
+    testImplementation(libs.turbine)
+
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+}
+
+tasks.register("ciTest") {
+    description = "Runs all unit and instrumented tests for CI"
+    group = "verification"
+    
+    // Run unit tests
+    dependsOn("testDebugUnitTest")
+    
+    // Run instrumented tests (requires emulator/device)
+    // defined in a way that doesn't fail configuration if task doesn't exist (though it should)
+    dependsOn("connectedDebugAndroidTest")
 }
