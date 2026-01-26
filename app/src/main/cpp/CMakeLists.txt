@@ -7,9 +7,9 @@ find_library(
         log
 )
 
-# Enable Vulkan for GPU acceleration
-set(GGML_VULKAN ON CACHE BOOL "Enable Vulkan Backend" FORCE)
-set(GGML_VULKAN ON) # Force non-cache variable too
+# Enable Vulkan for GPU acceleration - Default ON but can be overridden
+option(GGML_VULKAN "Enable Vulkan Backend" ON)
+option(LLAMA_VULKAN "Enable Vulkan Backend" ON)
 
 # Include external Vulkan headers downloaded from Khronos
 include_directories(SYSTEM external)
@@ -34,8 +34,27 @@ set(Vulkan_FOUND ON CACHE BOOL "Vulkan Found" FORCE)
 # Force static linking of backends (no DL)
 set(GGML_BACKEND_DL OFF CACHE BOOL "Backend DL" FORCE)
 
-# Disable OpenCL to avoid linker errors on x86_64 (incompatible library) and because we are using Vulkan
-set(GGML_OPENCL OFF CACHE BOOL "Disable OpenCL" FORCE)
+# Enable OpenCL for Adreno stability - Default ON but can be overridden
+option(GGML_OPENCL "Enable OpenCL Backend" ON)
+option(GGML_OPENCL_USE_ADRENO_KERNELS "Use Adreno optimized kernels" ON)
+option(GGML_OPENCL_EMBED_KERNELS "Embed OpenCL kernels" ON)
+
+# Find OpenCL on Android (often in /system/lib64/libOpenCL.so or /vendor/lib64/libOpenCL.so)
+# We use a stub or direct link for build time.
+find_library(OpenCL_LIBRARY OpenCL)
+if (NOT OpenCL_LIBRARY)
+    # Common locations on Android devices
+    find_library(OpenCL_LIBRARY NAMES OpenCL PATHS /system/lib64 /system/lib /vendor/lib64 /vendor/lib)
+endif()
+
+if (OpenCL_LIBRARY)
+    set(OpenCL_FOUND ON)
+    set(OpenCL_LIBRARIES ${OpenCL_LIBRARY})
+    # Headers are usually in common locations or under llama/ggml/include/CL
+    include_directories(SYSTEM llama/ggml/src/ggml-opencl)
+endif()
+
+# Disable OpenMP if needed (sometimes conflicts with complex GPU setups), but keep it for now.
 
 add_subdirectory(llama)
 
