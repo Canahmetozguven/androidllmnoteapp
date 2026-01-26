@@ -22,7 +22,7 @@
     - [ ] Sub-task: Write tests for `HardwareCapabilityProvider` to verify correct selection order based on mocked availability.
 - [ ] Task: Conductor - User Manual Verification 'Runtime Detection & Backend Selection' (Protocol in workflow.md)
 
-## Phase 3: UI & Verification
+## Phase 3: UI & Verification [checkpoint: 60d7e19]
 - [x] Task: Update Hardware Dashboard. [02e100a]
     - [ ] Sub-task: Ensure the UI can display "OpenCL" as the active backend.
     - [ ] Sub-task: Verify T/s reporting works correctly with the OpenCL backend.
