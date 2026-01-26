@@ -12,7 +12,7 @@
 - [ ] Task: Conductor - User Manual Verification 'Build Configuration & Native Setup' (Protocol in workflow.md)
 
 ## Phase 2: Runtime Detection & Backend Selection
-- [ ] Task: Implement OpenCL availability check in JNI.
+- [x] Task: Implement OpenCL availability check in JNI. [f8a764f]
     - [ ] Sub-task: Create a native method `isOpenCLAvailable()` in `native-lib.cpp` that attempts to load `libOpenCL.so` or query platforms.
     - [ ] Sub-task: Expose this method to Kotlin via `LlamaContext` or `HardwareCapabilityProvider`.
 - [ ] Task: Update `HardwareCapabilityProvider` logic.
