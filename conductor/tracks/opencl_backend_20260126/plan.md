@@ -15,7 +15,7 @@
 - [x] Task: Implement OpenCL availability check in JNI. [f8a764f]
     - [ ] Sub-task: Create a native method `isOpenCLAvailable()` in `native-lib.cpp` that attempts to load `libOpenCL.so` or query platforms.
     - [ ] Sub-task: Expose this method to Kotlin via `LlamaContext` or `HardwareCapabilityProvider`.
-- [ ] Task: Update `HardwareCapabilityProvider` logic.
+- [x] Task: Update `HardwareCapabilityProvider` logic. [b5819e7]
     - [ ] Sub-task: Modify `getBestBackend()` to prioritize Vulkan -> OpenCL -> CPU.
     - [ ] Sub-task: Add logic to respect any user overrides if implemented (checking `AppPreferences`).
 - [ ] Task: Unit Test Backend Selection.
