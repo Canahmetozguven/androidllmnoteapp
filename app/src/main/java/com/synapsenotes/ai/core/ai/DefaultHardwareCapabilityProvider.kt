@@ -19,6 +19,8 @@ open class DefaultHardwareCapabilityProvider @Inject constructor(
 ) : HardwareCapabilityProvider {
 
     protected open fun getSdkInt(): Int = Build.VERSION.SDK_INT
+    protected open fun getModel(): String = Build.MODEL ?: ""
+    protected open fun getHardware(): String = Build.HARDWARE ?: ""
 
     override fun isVulkanSupported(): Boolean {
         val pm = context.packageManager
@@ -57,8 +59,8 @@ open class DefaultHardwareCapabilityProvider @Inject constructor(
     }
 
     override fun getRecommendedBatchSize(): Int {
-        val hardware = (Build.HARDWARE ?: "").lowercase()
-        val model = (Build.MODEL ?: "").lowercase()
+        val hardware = getHardware().lowercase()
+        val model = getModel().lowercase()
         
         // S22 Ultra (Snapdragon 8 Gen 1 / Adreno 730) has severe Vulkan driver bugs with large batches.
         // GitHub issues confirm batch sizes > 32 cause immediate DeviceLostError.
@@ -83,8 +85,8 @@ open class DefaultHardwareCapabilityProvider @Inject constructor(
     }
 
     override fun isMmapSafe(): Boolean {
-        val hardware = (Build.HARDWARE ?: "").lowercase()
-        val model = (Build.MODEL ?: "").lowercase()
+        val hardware = getHardware().lowercase()
+        val model = getModel().lowercase()
         
         // S22 Ultra / S23 (Snapdragon 8 Gen 1/2) often crash with mmap enabled + Vulkan
         val isSnapdragon = hardware.contains("sm8450") || hardware.contains("qcom")
@@ -125,8 +127,8 @@ open class DefaultHardwareCapabilityProvider @Inject constructor(
     }
 
     private fun detectBestBackend(): BackendType {
-        val hardware = (Build.HARDWARE ?: "").lowercase()
-        val model = (Build.MODEL ?: "").lowercase()
+        val hardware = getHardware().lowercase()
+        val model = getModel().lowercase()
 
         // S22 Ultra (Adreno 730) / Snapdragon 8 Gen 1 Blacklist
         // Vulkan is extremely unstable on these devices despite being "supported".
