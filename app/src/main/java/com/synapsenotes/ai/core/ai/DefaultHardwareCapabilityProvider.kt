@@ -13,14 +13,17 @@ import javax.inject.Singleton
  * actual Android system capabilities.
  */
 @Singleton
-class DefaultHardwareCapabilityProvider @Inject constructor(
-    @ApplicationContext private val context: Context
+open class DefaultHardwareCapabilityProvider @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val llmContext: LlmContext
 ) : HardwareCapabilityProvider {
+
+    protected open fun getSdkInt(): Int = Build.VERSION.SDK_INT
 
     override fun isVulkanSupported(): Boolean {
         val pm = context.packageManager
         // Check for Vulkan 1.1 hardware level (required for ggml Vulkan backend)
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+        return if (getSdkInt() >= Build.VERSION_CODES.N) {
             pm.hasSystemFeature(PackageManager.FEATURE_VULKAN_HARDWARE_LEVEL, 1) ||
             pm.hasSystemFeature(PackageManager.FEATURE_VULKAN_HARDWARE_VERSION, 0x00401000) // Vulkan 1.1
         } else {
@@ -54,8 +57,8 @@ class DefaultHardwareCapabilityProvider @Inject constructor(
     }
 
     override fun getRecommendedBatchSize(): Int {
-        val hardware = Build.HARDWARE.lowercase()
-        val model = Build.MODEL.lowercase()
+        val hardware = (Build.HARDWARE ?: "").lowercase()
+        val model = (Build.MODEL ?: "").lowercase()
         
         // S22 Ultra (Snapdragon 8 Gen 1 / Adreno 730) has severe Vulkan driver bugs with large batches.
         // GitHub issues confirm batch sizes > 32 cause immediate DeviceLostError.
@@ -80,8 +83,8 @@ class DefaultHardwareCapabilityProvider @Inject constructor(
     }
 
     override fun isMmapSafe(): Boolean {
-        val hardware = Build.HARDWARE.lowercase()
-        val model = Build.MODEL.lowercase()
+        val hardware = (Build.HARDWARE ?: "").lowercase()
+        val model = (Build.MODEL ?: "").lowercase()
         
         // S22 Ultra / S23 (Snapdragon 8 Gen 1/2) often crash with mmap enabled + Vulkan
         val isSnapdragon = hardware.contains("sm8450") || hardware.contains("qcom")
@@ -100,12 +103,7 @@ class DefaultHardwareCapabilityProvider @Inject constructor(
     }
 
     private fun isOpenCLSupported(): Boolean {
-        val paths = listOf(
-            "/system/vendor/lib64/libOpenCL.so",
-            "/vendor/lib64/libOpenCL.so",
-            "/system/lib64/libOpenCL.so"
-        )
-        return paths.any { java.io.File(it).exists() }
+        return llmContext.isOpenCLAvailable()
     }
 
     override fun getPreferredBackend(): BackendType {
@@ -127,8 +125,8 @@ class DefaultHardwareCapabilityProvider @Inject constructor(
     }
 
     private fun detectBestBackend(): BackendType {
-        val hardware = Build.HARDWARE.lowercase()
-        val model = Build.MODEL.lowercase()
+        val hardware = (Build.HARDWARE ?: "").lowercase()
+        val model = (Build.MODEL ?: "").lowercase()
 
         // S22 Ultra (Adreno 730) / Snapdragon 8 Gen 1 Blacklist
         // Vulkan is extremely unstable on these devices despite being "supported".
