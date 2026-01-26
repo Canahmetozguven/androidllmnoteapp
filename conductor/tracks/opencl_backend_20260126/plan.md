@@ -7,7 +7,7 @@
 - [x] Task: Update `app/src/main/cpp/CMakeLists.txt` to link OpenCL libraries. [f34d52d]
     - [ ] Sub-task: Locate or bundle OpenCL headers/stubs if not present in the NDK (usually requires `libOpenCL.so` stub).
     - [ ] Sub-task: Configure the `llama` target to link against OpenCL.
-- [ ] Task: Verify Native Build.
+- [x] Task: Verify Native Build. [328daf7]
     - [ ] Sub-task: Run `./build_vulkan.sh` (or create a new `build_all.sh`) to confirm the project compiles with OpenCL enabled.
 - [ ] Task: Conductor - User Manual Verification 'Build Configuration & Native Setup' (Protocol in workflow.md)
 
