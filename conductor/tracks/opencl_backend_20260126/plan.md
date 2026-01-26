@@ -11,7 +11,7 @@
     - [ ] Sub-task: Run `./build_vulkan.sh` (or create a new `build_all.sh`) to confirm the project compiles with OpenCL enabled.
 - [ ] Task: Conductor - User Manual Verification 'Build Configuration & Native Setup' (Protocol in workflow.md)
 
-## Phase 2: Runtime Detection & Backend Selection
+## Phase 2: Runtime Detection & Backend Selection [checkpoint: be6f5c0]
 - [x] Task: Implement OpenCL availability check in JNI. [f8a764f]
     - [ ] Sub-task: Create a native method `isOpenCLAvailable()` in `native-lib.cpp` that attempts to load `libOpenCL.so` or query platforms.
     - [ ] Sub-task: Expose this method to Kotlin via `LlamaContext` or `HardwareCapabilityProvider`.
