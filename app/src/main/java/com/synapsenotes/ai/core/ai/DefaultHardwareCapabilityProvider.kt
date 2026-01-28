@@ -98,8 +98,12 @@ open class DefaultHardwareCapabilityProvider @Inject constructor(
 
     override fun getAvailableBackends(): List<BackendType> {
         val backends = mutableListOf<BackendType>()
-        if (isVulkanSupported()) backends.add(BackendType.VULKAN)
-        if (isOpenCLSupported()) backends.add(BackendType.OPENCL)
+        if (isVulkanSupported() && !getFailedBackends().contains(BackendType.VULKAN)) {
+            backends.add(BackendType.VULKAN)
+        }
+        if (isOpenCLSupported() && !getFailedBackends().contains(BackendType.OPENCL)) {
+            backends.add(BackendType.OPENCL)
+        }
         backends.add(BackendType.CPU)
         return backends
     }
@@ -113,7 +117,11 @@ open class DefaultHardwareCapabilityProvider @Inject constructor(
         val saved = prefs.getString("preferred_backend", null)
         if (saved != null) {
             try {
-                return BackendType.valueOf(saved)
+                val backend = BackendType.valueOf(saved)
+                // If the saved backend has failed, detect a new one
+                if (!getFailedBackends().contains(backend)) {
+                    return backend
+                }
             } catch (e: IllegalArgumentException) {
                 // Invalid value, fall through to detection
             }
@@ -126,22 +134,91 @@ open class DefaultHardwareCapabilityProvider @Inject constructor(
         prefs.edit().putString("preferred_backend", backend.name).apply()
     }
 
-    private fun detectBestBackend(): BackendType {
+    override fun probeBackend(backend: BackendType): Boolean {
+        // If already marked as failed, skip
+        if (getFailedBackends().contains(backend)) {
+            android.util.Log.w(TAG, "Skipping $backend - previously marked as failed")
+            return false
+        }
+        
+        return try {
+            when (backend) {
+                BackendType.VULKAN -> isVulkanSupported() && !isKnownProblematicDevice()
+                BackendType.OPENCL -> isOpenCLSupported()
+                BackendType.CPU -> true
+            }
+        } catch (e: Exception) {
+            android.util.Log.e(TAG, "Backend probe failed for $backend", e)
+            markBackendFailed(backend)
+            false
+        }
+    }
+
+    override fun getFailedBackends(): Set<BackendType> {
+        val prefs = context.getSharedPreferences("ai_prefs", Context.MODE_PRIVATE)
+        val savedFailed = prefs.getStringSet("failed_backends", emptySet()) ?: emptySet()
+        return savedFailed.mapNotNull { 
+            try { BackendType.valueOf(it) } catch (_: Exception) { null }
+        }.toSet()
+    }
+
+    override fun markBackendFailed(backend: BackendType) {
+        val prefs = context.getSharedPreferences("ai_prefs", Context.MODE_PRIVATE)
+        val currentFailed = getFailedBackends().toMutableSet()
+        currentFailed.add(backend)
+        prefs.edit().putStringSet("failed_backends", currentFailed.map { it.name }.toSet()).apply()
+        android.util.Log.w(TAG, "Marked backend as failed: $backend. Failed list: $currentFailed")
+    }
+
+    override fun clearFailedBackends() {
+        val prefs = context.getSharedPreferences("ai_prefs", Context.MODE_PRIVATE)
+        prefs.edit().remove("failed_backends").apply()
+        android.util.Log.i(TAG, "Cleared failed backends list")
+    }
+
+    /**
+     * Check if this is a known problematic device for GPU backends.
+     * S22/S23 with Snapdragon 8 Gen 1/2 have severe Vulkan driver bugs.
+     */
+    private fun isKnownProblematicDevice(): Boolean {
         val hardware = getHardware().lowercase()
         val model = getModel().lowercase()
-
-        // S22 Ultra (Adreno 730) / Snapdragon 8 Gen 1 Blacklist
-        // Vulkan is extremely unstable on these devices despite being "supported".
-        // Force OpenCL if available, otherwise CPU.
+        
         val isSnapdragon8Gen1 = hardware.contains("sm8450") || hardware.contains("qcom")
         val isS22 = model.contains("sm-s90")
+        val isS23 = model.contains("sm-s91")
+        
+        return isSnapdragon8Gen1 || isS22 || isS23
+    }
 
-        if ((isSnapdragon8Gen1 || isS22) && isOpenCLSupported()) {
-            return BackendType.OPENCL
+    private fun detectBestBackend(): BackendType {
+        val failedBackends = getFailedBackends()
+        
+        // Log current state for debugging
+        android.util.Log.i(TAG, "Detecting best backend. Failed backends: $failedBackends")
+        
+        // Ordered fallback chain: VULKAN -> OPENCL -> CPU
+        val fallbackOrder = listOf(BackendType.VULKAN, BackendType.OPENCL, BackendType.CPU)
+        
+        for (backend in fallbackOrder) {
+            if (failedBackends.contains(backend)) {
+                android.util.Log.w(TAG, "Skipping $backend - previously failed")
+                continue
+            }
+            
+            if (probeBackend(backend)) {
+                android.util.Log.i(TAG, "Selected backend: $backend")
+                return backend
+            }
         }
-
-        if (isVulkanSupported()) return BackendType.VULKAN
-        if (isOpenCLSupported()) return BackendType.OPENCL
+        
+        // CPU is always the final fallback (should never fail)
+        android.util.Log.w(TAG, "All GPU backends failed, using CPU")
         return BackendType.CPU
     }
+
+    companion object {
+        private const val TAG = "HardwareCapability"
+    }
 }
+

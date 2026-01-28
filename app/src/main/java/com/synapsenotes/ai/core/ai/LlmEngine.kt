@@ -49,22 +49,43 @@ class LlmEngine @Inject constructor(
                 isLoaded = false
             }
 
-            val preferredBackend = hardwareCapabilityProvider.getPreferredBackend()
-            Log.i(TAG, "Loading model with preferred backend: ${preferredBackend.name}")
+            // Get available backends (excludes already-failed ones)
+            val availableBackends = hardwareCapabilityProvider.getAvailableBackends()
+            Log.i(TAG, "Available backends: $availableBackends")
 
             val nBatch = hardwareCapabilityProvider.getRecommendedBatchSize()
             val nCtx = hardwareCapabilityProvider.getRecommendedContextSize()
             val useMmap = hardwareCapabilityProvider.isMmapSafe()
 
-            val success = llmContext.loadModel(path, template, nBatch, nCtx, useMmap, preferredBackend)
-            if (success) {
-                isLoaded = true
-                val hwInfo = getHardwareInfo()
-                Log.i(TAG, "Model loaded successfully. Active Backend: ${hwInfo.backendName}. Batch: $nBatch, Ctx: $nCtx, Mmap: $useMmap")
-                Result.success(true)
-            } else {
-                Result.failure(Exception("Failed to load model at $path"))
+            // Try each available backend in order
+            for (backend in availableBackends) {
+                Log.i(TAG, "Attempting to load model with backend: ${backend.name}")
+                
+                try {
+                    val success = llmContext.loadModel(path, template, nBatch, nCtx, useMmap, backend)
+                    
+                    if (success) {
+                        isLoaded = true
+                        val hwInfo = getHardwareInfo()
+                        Log.i(TAG, "Model loaded successfully. Active Backend: ${hwInfo.backendName}. Batch: $nBatch, Ctx: $nCtx, Mmap: $useMmap")
+                        return@withContext Result.success(true)
+                    } else {
+                        Log.w(TAG, "Backend $backend failed to load model, marking as failed")
+                        if (backend != BackendType.CPU) {
+                            hardwareCapabilityProvider.markBackendFailed(backend)
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Exception loading model with backend $backend", e)
+                    if (backend != BackendType.CPU) {
+                        hardwareCapabilityProvider.markBackendFailed(backend)
+                    }
+                }
             }
+
+            // If we get here, all backends failed
+            Log.e(TAG, "Failed to load model with all available backends")
+            Result.failure(Exception("Failed to load model with all available backends"))
         }
     }
 

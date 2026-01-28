@@ -1,8 +1,0 @@
-{
-  "track_id": "opencl_backend_20260126",
-  "type": "feature",
-  "status": "new",
-  "created_at": "2026-01-26T12:57:00Z",
-  "updated_at": "2026-01-26T12:57:00Z",
-  "description": "Implement and verify OpenCL backend support for hardware acceleration alongside Vulkan."
-}

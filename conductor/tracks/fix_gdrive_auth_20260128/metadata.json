@@ -1,0 +1,8 @@
+{
+  "track_id": "fix_gdrive_auth_20260128",
+  "type": "bug",
+  "status": "new",
+  "created_at": "2026-01-28T12:41:00Z",
+  "updated_at": "2026-01-28T12:41:00Z",
+  "description": "Fix Google Drive connection error (403 Forbidden: SERVICE_DISABLED) and setup issues."
+}

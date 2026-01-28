@@ -54,24 +54,32 @@ enum class ModelType {
 }
 
 val AVAILABLE_MODELS = listOf(
+    // Chat Models - Qwen3 Family (Apache 2.0)
     ModelInfo(
-        id = "qwen2.5-3b-instruct",
-        name = "Qwen 2.5 3B Instruct",
-        url = "https://huggingface.co/Qwen/Qwen2.5-3B-Instruct-GGUF/resolve/main/qwen2.5-3b-instruct-q4_k_m.gguf",
-        filename = "qwen2.5-3b-instruct-q4_k_m.gguf",
-        configUrl = "https://huggingface.co/Qwen/Qwen2.5-3B-Instruct/resolve/main/tokenizer_config.json",
-        description = "Best for Bilingual RAG",
-        sizeBytes = 2_000_000_000L,
+        id = "qwen3-0.6b",
+        name = "Qwen3 0.6B",
+        url = "https://huggingface.co/bartowski/Qwen_Qwen3-0.6B-GGUF/resolve/main/Qwen_Qwen3-0.6B-Q4_K_M.gguf",
+        filename = "Qwen_Qwen3-0.6B-Q4_K_M.gguf",
+        description = "Ultra-lightweight (37k+ downloads)",
+        sizeBytes = 480_000_000L,
         type = ModelType.CHAT
     ),
     ModelInfo(
-        id = "deepseek-r1-distill-qwen-1.5b",
-        name = "DeepSeek R1 Distill Qwen 1.5B",
-        url = "https://huggingface.co/second-state/DeepSeek-R1-Distill-Qwen-1.5B-GGUF/resolve/main/DeepSeek-R1-Distill-Qwen-1.5B-Q4_K_M.gguf",
-        filename = "deepseek-r1-distill-qwen-1.5b-q4_k_m.gguf",
-        configUrl = "https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B/resolve/main/tokenizer_config.json",
-        description = "Reasoning Model",
-        sizeBytes = 1_100_000_000L,
+        id = "qwen3-1.7b",
+        name = "Qwen3 1.7B",
+        url = "https://huggingface.co/bartowski/Qwen_Qwen3-1.7B-GGUF/resolve/main/Qwen_Qwen3-1.7B-Q4_K_M.gguf",
+        filename = "Qwen_Qwen3-1.7B-Q4_K_M.gguf",
+        description = "Balanced quality (7k+ downloads)",
+        sizeBytes = 1_200_000_000L,
+        type = ModelType.CHAT
+    ),
+    ModelInfo(
+        id = "smollm3-3b",
+        name = "SmolLM3 3B",
+        url = "https://huggingface.co/bartowski/HuggingFaceTB_SmolLM3-3B-GGUF/resolve/main/HuggingFaceTB_SmolLM3-3B-Q4_K_M.gguf",
+        filename = "HuggingFaceTB_SmolLM3-3B-Q4_K_M.gguf",
+        description = "Best quality (Dec 2025)",
+        sizeBytes = 1_800_000_000L,
         type = ModelType.CHAT
     ),
     ModelInfo(
@@ -83,31 +91,24 @@ val AVAILABLE_MODELS = listOf(
         sizeBytes = 1_500_000_000L,
         type = ModelType.CHAT
     ),
+
+    // Embedding Models
     ModelInfo(
-        id = "qwen2.5-1.5b-instruct",
-        name = "Qwen 2.5 1.5B Instruct",
-        url = "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q4_k_m.gguf",
-        filename = "qwen2.5-1.5b-instruct-q4_k_m.gguf",
-        description = "Low RAM Fallback",
-        sizeBytes = 980_000_000L,
-        type = ModelType.CHAT
-    ),
-    ModelInfo(
-        id = "nomic-embed-text-v1.5",
-        name = "Nomic Embed v1.5",
-        url = "https://huggingface.co/nomic-ai/nomic-embed-text-v1.5-GGUF/resolve/main/nomic-embed-text-v1.5.Q8_0.gguf",
-        filename = "nomic-embed-text-v1.5.Q8_0.gguf",
-        description = "Matryoshka / High Accuracy",
-        sizeBytes = 137_000_000L,
+        id = "bge-m3",
+        name = "BGE-M3 Multilingual",
+        url = "https://huggingface.co/ggml-org/bge-m3-Q8_0-GGUF/resolve/main/bge-m3-q8_0.gguf",
+        filename = "bge-m3-q8_0.gguf",
+        description = "Turkish + English (100+ languages)",
+        sizeBytes = 635_000_000L,
         type = ModelType.EMBEDDING
     ),
     ModelInfo(
-        id = "multilingual-e5-small",
-        name = "Multilingual E5 Small",
-        url = "https://huggingface.co/second-state/Multilingual-E5-Small-GGUF/resolve/main/multilingual-e5-small-q8_0.gguf",
-        filename = "multilingual-e5-small-q8_0.gguf",
-        description = "Lightweight Fallback",
-        sizeBytes = 120_000_000L,
+        id = "bge-small-en",
+        name = "BGE Small English",
+        url = "https://huggingface.co/ggml-org/bge-small-en-v1.5-Q8_0-GGUF/resolve/main/bge-small-en-v1.5-q8_0.gguf",
+        filename = "bge-small-en-v1.5-q8_0.gguf",
+        description = "Ultra-lightweight fallback",
+        sizeBytes = 37_000_000L,
         type = ModelType.EMBEDDING
     )
 )

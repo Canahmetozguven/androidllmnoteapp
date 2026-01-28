@@ -33,3 +33,11 @@
 -dontwarn com.google.api.client.**
 -dontwarn com.google.j2objc.annotations.**
 -dontwarn javax.annotation.**
+
+# Apache HTTP Client / R8 Fixes
+-dontwarn org.apache.http.**
+-dontwarn android.net.http.AndroidHttpClient
+-dontwarn javax.naming.**
+-dontwarn javax.naming.directory.**
+-dontwarn javax.naming.ldap.**
+-dontwarn org.ietf.jgss.**

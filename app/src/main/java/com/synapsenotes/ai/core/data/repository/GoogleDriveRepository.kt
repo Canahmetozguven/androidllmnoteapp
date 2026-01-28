@@ -24,16 +24,31 @@ class GoogleDriveRepository @Inject constructor(
 ) : DriveRepository {
 
     override fun isSignedIn(): Boolean {
-        return GoogleSignIn.getLastSignedInAccount(context) != null
+        val googleAccount = GoogleSignIn.getLastSignedInAccount(context)
+        // Must have both a GoogleSignInAccount AND a valid Android Account
+        // to successfully make Drive API calls
+        return googleAccount != null && googleAccount.account != null
     }
 
     private fun getDriveService(): Drive? {
-        val account = GoogleSignIn.getLastSignedInAccount(context) ?: return null
+        val googleAccount = GoogleSignIn.getLastSignedInAccount(context)
+        if (googleAccount == null) {
+            android.util.Log.w("GoogleDriveRepository", "No signed-in Google account found")
+            return null
+        }
+        
+        // GoogleSignInAccount.getAccount() can be null in some scenarios
+        // (e.g., when sign-in was done without the required account type)
+        val androidAccount = googleAccount.account
+        if (androidAccount == null) {
+            android.util.Log.e("GoogleDriveRepository", "GoogleSignInAccount.account is null. Email: ${googleAccount.email}")
+            return null
+        }
         
         val credential = GoogleAccountCredential.usingOAuth2(
             context, listOf(DriveScopes.DRIVE_FILE, DriveScopes.DRIVE_READONLY)
         )
-        credential.selectedAccount = account.account
+        credential.selectedAccount = androidAccount
 
         // API Key is NOT required when using OAuth2 (GoogleAccountCredential).
         // Including it causes errors if the key restrictions (SHA-1/Package) don't match exactly.

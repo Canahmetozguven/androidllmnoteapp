@@ -60,4 +60,26 @@ interface HardwareCapabilityProvider {
      * Set the preferred backend.
      */
     fun setPreferredBackend(backend: BackendType)
+
+    /**
+     * Safely probe a backend to see if it works without crashing.
+     * Returns true if the backend is usable, false otherwise.
+     * This checks if the backend was previously marked as failed.
+     */
+    fun probeBackend(backend: BackendType): Boolean
+
+    /**
+     * Get backends that have been marked as failed (crashed during probe or load).
+     */
+    fun getFailedBackends(): Set<BackendType>
+
+    /**
+     * Mark a backend as failed (called after a crash or load failure).
+     */
+    fun markBackendFailed(backend: BackendType)
+
+    /**
+     * Clear failed backend status (for retry).
+     */
+    fun clearFailedBackends()
 }
