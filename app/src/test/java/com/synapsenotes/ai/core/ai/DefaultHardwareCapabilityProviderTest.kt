@@ -41,6 +41,9 @@ class DefaultHardwareCapabilityProviderTest {
         every { sharedPreferences.getString("preferred_backend", null) } returns null
         // Default: No failed backends
         every { sharedPreferences.getStringSet("failed_backends", emptySet()) } returns emptySet()
+        // Default: No backend being attempted (no previous crash)
+        every { sharedPreferences.getString("attempting_backend", null) } returns null
+        every { prefsEditor.remove(any()) } returns prefsEditor
 
         val realProvider = DefaultHardwareCapabilityProvider(context, llmContext)
         provider = spyk(realProvider)

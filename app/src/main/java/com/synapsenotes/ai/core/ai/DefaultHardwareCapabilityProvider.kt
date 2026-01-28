@@ -18,6 +18,26 @@ open class DefaultHardwareCapabilityProvider @Inject constructor(
     private val llmContext: LlmContext
 ) : HardwareCapabilityProvider {
 
+    init {
+        checkPreviousCrash()
+    }
+
+    private fun checkPreviousCrash() {
+        val prefs = context.getSharedPreferences("ai_prefs", Context.MODE_PRIVATE)
+        val attempting = prefs.getString("attempting_backend", null)
+        if (attempting != null) {
+            try {
+                val backend = BackendType.valueOf(attempting)
+                android.util.Log.e(TAG, "Available backends check: Previous run crashed while attempting $backend. Marking as failed.")
+                markBackendFailed(backend)
+                // Clear the attempting flag so we don't loop if the failure logic itself crashes (unlikely)
+                clearBackendAttempting()
+            } catch (e: Exception) {
+                android.util.Log.e(TAG, "Error processing previous crash state", e)
+            }
+        }
+    }
+
     protected open fun getSdkInt(): Int = Build.VERSION.SDK_INT
     protected open fun getModel(): String = Build.MODEL ?: ""
     protected open fun getHardware(): String = Build.HARDWARE ?: ""
@@ -176,6 +196,18 @@ open class DefaultHardwareCapabilityProvider @Inject constructor(
         android.util.Log.i(TAG, "Cleared failed backends list")
     }
 
+    override fun markBackendAttempting(backend: BackendType) {
+        val prefs = context.getSharedPreferences("ai_prefs", Context.MODE_PRIVATE)
+        prefs.edit().putString("attempting_backend", backend.name).apply()
+        android.util.Log.i(TAG, "Marked backend as attempting: $backend")
+    }
+
+    override fun clearBackendAttempting() {
+        val prefs = context.getSharedPreferences("ai_prefs", Context.MODE_PRIVATE)
+        prefs.edit().remove("attempting_backend").apply()
+        android.util.Log.i(TAG, "Cleared attempting backend")
+    }
+
     /**
      * Check if this is a known problematic device for GPU backends.
      * S22/S23 with Snapdragon 8 Gen 1/2 have severe Vulkan driver bugs.
@@ -187,6 +219,8 @@ open class DefaultHardwareCapabilityProvider @Inject constructor(
         val isSnapdragon8Gen1 = hardware.contains("sm8450") || hardware.contains("qcom")
         val isS22 = model.contains("sm-s90")
         val isS23 = model.contains("sm-s91")
+        
+        android.util.Log.i(TAG, "Checking device compatibility: Model=$model, Hardware=$hardware. S22=$isS22, S23=$isS23, Gen1=$isSnapdragon8Gen1")
         
         return isSnapdragon8Gen1 || isS22 || isS23
     }

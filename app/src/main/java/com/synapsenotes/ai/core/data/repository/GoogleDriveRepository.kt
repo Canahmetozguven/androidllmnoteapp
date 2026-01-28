@@ -1,8 +1,6 @@
 package com.synapsenotes.ai.core.data.repository
 
 import android.content.Context
-import com.synapsenotes.ai.domain.repository.DriveFile
-import com.synapsenotes.ai.domain.repository.DriveRepository
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
 import com.google.api.client.http.javanet.NetHttpTransport
@@ -14,6 +12,9 @@ import com.google.api.services.drive.model.File
 import com.google.api.client.googleapis.services.AbstractGoogleClientRequest
 import com.google.api.client.googleapis.services.GoogleClientRequestInitializer
 import com.synapsenotes.ai.BuildConfig
+import com.synapsenotes.ai.domain.repository.DriveError
+import com.synapsenotes.ai.domain.repository.DriveFile
+import com.synapsenotes.ai.domain.repository.DriveRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -25,34 +26,20 @@ class GoogleDriveRepository @Inject constructor(
 
     override fun isSignedIn(): Boolean {
         val googleAccount = GoogleSignIn.getLastSignedInAccount(context)
-        // Must have both a GoogleSignInAccount AND a valid Android Account
-        // to successfully make Drive API calls
         return googleAccount != null && googleAccount.account != null
     }
 
-    private fun getDriveService(): Drive? {
+    private fun getDriveService(): Drive {
         val googleAccount = GoogleSignIn.getLastSignedInAccount(context)
-        if (googleAccount == null) {
-            android.util.Log.w("GoogleDriveRepository", "No signed-in Google account found")
-            return null
-        }
+            ?: throw DriveError.NotSignedIn
         
-        // GoogleSignInAccount.getAccount() can be null in some scenarios
-        // (e.g., when sign-in was done without the required account type)
         val androidAccount = googleAccount.account
-        if (androidAccount == null) {
-            android.util.Log.e("GoogleDriveRepository", "GoogleSignInAccount.account is null. Email: ${googleAccount.email}")
-            return null
-        }
+            ?: throw DriveError.AccountMissing
         
         val credential = GoogleAccountCredential.usingOAuth2(
             context, listOf(DriveScopes.DRIVE_FILE, DriveScopes.DRIVE_READONLY)
         )
         credential.selectedAccount = androidAccount
-
-        // API Key is NOT required when using OAuth2 (GoogleAccountCredential).
-        // Including it causes errors if the key restrictions (SHA-1/Package) don't match exactly.
-        // The OAuth token is sufficient for both Authentication and Authorization.
 
         return Drive.Builder(
             NetHttpTransport(),
@@ -64,7 +51,7 @@ class GoogleDriveRepository @Inject constructor(
     }
 
     override suspend fun listFiles(): List<DriveFile> = withContext(Dispatchers.IO) {
-        val service = getDriveService() ?: return@withContext emptyList()
+        val service = getDriveService()
         
         try {
             val result = service.files().list()
@@ -82,16 +69,41 @@ class GoogleDriveRepository @Inject constructor(
                     createdTime = file.createdTime?.value
                 )
             }
+        } catch (e: com.google.api.client.googleapis.json.GoogleJsonResponseException) {
+            android.util.Log.e("GoogleDriveRepository", "List files failed (JSON): ${e.details}", e)
+            throw handleGoogleError(e)
         } catch (e: Exception) {
-            e.printStackTrace()
-            // Log full error for debugging
             android.util.Log.e("GoogleDriveRepository", "List files failed: ${e.javaClass.name}: ${e.message}", e)
-            throw e
+            throw DriveError.UnknownError(e.message ?: "Unknown error", e)
+        }
+    }
+
+    private fun handleGoogleError(e: com.google.api.client.googleapis.json.GoogleJsonResponseException): DriveError {
+        val details = e.details?.message ?: e.message ?: "No details"
+        return when (e.statusCode) {
+            403 -> {
+                if (details.contains("SERVICE_DISABLED", ignoreCase = true) || 
+                    details.contains("API has not been used", ignoreCase = true)) {
+                    DriveError.ServiceDisabled(details)
+                } else if (details.contains("rateLimitExceeded", ignoreCase = true) || 
+                           details.contains("quotaExceeded", ignoreCase = true)) {
+                    DriveError.QuotaExceeded(details)
+                } else {
+                    DriveError.NetworkError("Forbidden: $details")
+                }
+            }
+            else -> DriveError.UnknownError(details, e)
         }
     }
 
     override suspend fun downloadFile(fileId: String, mimeType: String): String? = withContext(Dispatchers.IO) {
-        val service = getDriveService() ?: return@withContext null
+        val service = try { 
+            getDriveService() 
+        } catch (e: Exception) { 
+            android.util.Log.e("GoogleDriveRepository", "Download failed: Auth error", e)
+            return@withContext null 
+        }
+        
         try {
             val outputStream = java.io.ByteArrayOutputStream()
             if (mimeType.startsWith("application/vnd.google-apps.")) {
@@ -104,14 +116,23 @@ class GoogleDriveRepository @Inject constructor(
                     .executeMediaAndDownloadTo(outputStream)
             }
             outputStream.toString("UTF-8")
+        } catch (e: com.google.api.client.googleapis.json.GoogleJsonResponseException) {
+            android.util.Log.e("GoogleDriveRepository", "Download failed (JSON): ${e.details}", e)
+            null
         } catch (e: Exception) {
-            e.printStackTrace()
+            android.util.Log.e("GoogleDriveRepository", "Download failed: ${e.message}", e)
             null
         }
     }
 
     override suspend fun uploadFile(name: String, content: String): String? = withContext(Dispatchers.IO) {
-        val service = getDriveService() ?: return@withContext null
+        val service = try { 
+            getDriveService() 
+        } catch (e: Exception) { 
+            android.util.Log.e("GoogleDriveRepository", "Upload failed: Auth error", e)
+            return@withContext null 
+        }
+        
         try {
             // 1. Find or create folder
             val folderId = getOrCreateFolder(service, "LLM Notes Backup") ?: return@withContext null
@@ -143,8 +164,11 @@ class GoogleDriveRepository @Inject constructor(
                     .execute()
             }
             file.id
+        } catch (e: com.google.api.client.googleapis.json.GoogleJsonResponseException) {
+            android.util.Log.e("GoogleDriveRepository", "Upload failed (JSON): ${e.details}", e)
+            null
         } catch (e: Exception) {
-            e.printStackTrace()
+            android.util.Log.e("GoogleDriveRepository", "Upload failed: ${e.message}", e)
             null
         }
     }
@@ -168,8 +192,11 @@ class GoogleDriveRepository @Inject constructor(
                 .setFields("id")
                 .execute()
             return newFolder.id
+        } catch (e: com.google.api.client.googleapis.json.GoogleJsonResponseException) {
+            android.util.Log.e("GoogleDriveRepository", "Folder creation failed (JSON): ${e.details}", e)
+            return null
         } catch (e: Exception) {
-            e.printStackTrace()
+            android.util.Log.e("GoogleDriveRepository", "Folder creation failed: ${e.message}", e)
             return null
         }
     }

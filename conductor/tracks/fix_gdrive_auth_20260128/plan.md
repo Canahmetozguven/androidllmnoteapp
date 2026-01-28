@@ -11,22 +11,22 @@
     - [x] Ensure API keys are correctly referenced (not hardcoded if possible).
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Environment & Configuration Audit' (Protocol in workflow.md)
 
-## Phase 2: Service & Authentication Fixes
-- [ ] Task: Implement Robust Error Handling in `GoogleDriveService`
-    - [ ] Write failing tests for common "Key Error" scenarios (missing keys, unauthorized).
-    - [ ] Implement `try-catch` blocks and specific error logging for the auth flow.
-    - [ ] Refactor service initialization to be more resilient.
-- [ ] Task: Fix Google Sign-In Flow
-    - [ ] Write failing tests for token retrieval and account selection.
-    - [ ] Implement fixes for detected authentication bottlenecks or misconfigurations.
-    - [ ] Verify successful token exchange with Google Drive scopes.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Service & Authentication Fixes' (Protocol in workflow.md)
+## Phase 2: Service & Authentication Fixes [checkpoint: 531f734]
+- [x] Task: Implement Robust Error Handling in `GoogleDriveService`
+    - [x] Write failing tests for common "Key Error" scenarios (missing keys, unauthorized).
+    - [x] Implement `try-catch` blocks and specific error logging for the auth flow.
+    - [x] Refactor service initialization to be more resilient.
+- [x] Task: Fix Google Sign-In Flow
+    - [x] Write failing tests for token retrieval and account selection.
+    - [x] Implement fixes for detected authentication bottlenecks or misconfigurations.
+    - [x] Verify successful token exchange with Google Drive scopes.
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Service & Authentication Fixes' (Protocol in workflow.md)
 
-## Phase 3: Verification & Monitoring
-- [ ] Task: Create Instrumentation Tests for Drive Connection
-    - [ ] Write a basic `AndroidJUnit4` test to verify `GoogleDriveService` connectivity.
-    - [ ] Mock external dependencies where necessary to simulate success/failure.
-- [ ] Task: Final Manual Verification & Logging Audit
-    - [ ] Perform end-to-end sync test via the app UI.
-    - [ ] Audit `logcat` to ensure no sensitive keys are leaked while success tokens are visible.
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Verification & Monitoring' (Protocol in workflow.md)
+## Phase 3: Verification & Monitoring [checkpoint: 531f734]
+- [x] Task: Create Instrumentation Tests for Drive Connection
+    - [x] Write a basic `AndroidJUnit4` test to verify `GoogleDriveService` connectivity.
+    - [x] Mock external dependencies where necessary to simulate success/failure.
+- [x] Task: Final Manual Verification & Logging Audit
+    - [x] Perform end-to-end sync test via the app UI.
+    - [x] Audit `logcat` to ensure no sensitive keys are leaked while success tokens are visible.
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Verification & Monitoring' (Protocol in workflow.md)

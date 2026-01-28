@@ -61,24 +61,38 @@ class LlmEngine @Inject constructor(
             for (backend in availableBackends) {
                 Log.i(TAG, "Attempting to load model with backend: ${backend.name}")
                 
+                // Mark this backend as being attempted BEFORE the native call.
+                // If it crashes consistently, it will be added to the failed list on next startup.
+                // We only do this for GPU backends which are prone to driver crashes.
+                if (backend != BackendType.CPU) {
+                    hardwareCapabilityProvider.markBackendAttempting(backend)
+                }
+
                 try {
                     val success = llmContext.loadModel(path, template, nBatch, nCtx, useMmap, backend)
                     
                     if (success) {
+                        // Success! Clear the attempting flag.
+                        if (backend != BackendType.CPU) {
+                            hardwareCapabilityProvider.clearBackendAttempting()
+                        }
+                        
                         isLoaded = true
                         val hwInfo = getHardwareInfo()
                         Log.i(TAG, "Model loaded successfully. Active Backend: ${hwInfo.backendName}. Batch: $nBatch, Ctx: $nCtx, Mmap: $useMmap")
                         return@withContext Result.success(true)
                     } else {
-                        Log.w(TAG, "Backend $backend failed to load model, marking as failed")
+                        Log.w(TAG, "Backend $backend failed to load model (returned false), marking as failed")
                         if (backend != BackendType.CPU) {
                             hardwareCapabilityProvider.markBackendFailed(backend)
+                            hardwareCapabilityProvider.clearBackendAttempting() // Failed gracefully, so clear attempting
                         }
                     }
                 } catch (e: Exception) {
                     Log.e(TAG, "Exception loading model with backend $backend", e)
                     if (backend != BackendType.CPU) {
                         hardwareCapabilityProvider.markBackendFailed(backend)
+                        hardwareCapabilityProvider.clearBackendAttempting() // Failed gracefully, so clear attempting
                     }
                 }
             }

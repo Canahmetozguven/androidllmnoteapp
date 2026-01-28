@@ -82,4 +82,15 @@ interface HardwareCapabilityProvider {
      * Clear failed backend status (for retry).
      */
     fun clearFailedBackends()
+
+    /**
+     * Mark a backend as being attempted. If the app crashes, this can be used
+     * to identify the culprit on next startup.
+     */
+    fun markBackendAttempting(backend: BackendType)
+
+    /**
+     * Clear the attempting status (called after successful completion of risk-prone operation).
+     */
+    fun clearBackendAttempting()
 }
