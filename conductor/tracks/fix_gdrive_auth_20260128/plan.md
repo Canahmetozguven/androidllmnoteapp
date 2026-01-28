@@ -1,6 +1,6 @@
 # Implementation Plan: Fix Google Drive "Key Error" and Setup Issues
 
-## Phase 1: Environment & Configuration Audit
+## Phase 1: Environment & Configuration Audit [checkpoint: 531f734]
 - [x] Task: Audit Google Cloud Console Project
     - [x] Verify Google Drive API and Google Picker API are enabled.
     - [x] Confirm OAuth 2.0 Client IDs match the Android package name.
