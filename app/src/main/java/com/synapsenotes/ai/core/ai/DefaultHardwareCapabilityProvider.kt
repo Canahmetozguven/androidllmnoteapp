@@ -82,13 +82,11 @@ open class DefaultHardwareCapabilityProvider @Inject constructor(
         val hardware = getHardware().lowercase()
         val model = getModel().lowercase()
         
-        // S22 Ultra (Snapdragon 8 Gen 1 / Adreno 730) has severe Vulkan driver bugs with large batches.
-        // GitHub issues confirm batch sizes > 32 cause immediate DeviceLostError.
-        val isSnapdragon8Gen1 = hardware.contains("sm8450") || hardware.contains("qcom")
-        val isS22 = model.contains("sm-s90")
+        // Snapdragon 8 Gen 1 (sm8450), 8 Gen 2 (sm8550), and Exynos 2200 (s5e9925) have severe Vulkan driver bugs with large batches.
+        val isProblematic = hardware.contains("sm8450") || hardware.contains("s5e9925") || hardware.contains("sm8550")
 
-        if (isSnapdragon8Gen1 || isS22) {
-            return 32 // Critical limit for Adreno 730 stability
+        if (isProblematic) {
+            return 32 // Critical limit for stability on these Adreno/Xclipse GPUs
         }
         
         val isExynos = hardware.contains("exynos") || hardware.contains("samsung")
@@ -108,12 +106,11 @@ open class DefaultHardwareCapabilityProvider @Inject constructor(
         val hardware = getHardware().lowercase()
         val model = getModel().lowercase()
         
-        // S22 Ultra / S23 (Snapdragon 8 Gen 1/2) often crash with mmap enabled + Vulkan
-        val isSnapdragon = hardware.contains("sm8450") || hardware.contains("qcom")
-        val isS22 = model.contains("sm-s90")
+        // Problematic Snapdragon/Exynos chips often crash with mmap enabled + Vulkan
+        val isProblematic = hardware.contains("sm8450") || hardware.contains("s5e9925") || hardware.contains("sm8550")
         
-        // If it's a problematic Samsung/Snapdragon device, disable mmap
-        return !(isSnapdragon || isS22)
+        // If it's a problematic SoC, disable mmap for stability
+        return !isProblematic
     }
 
     override fun getAvailableBackends(): List<BackendType> {
@@ -214,15 +211,13 @@ open class DefaultHardwareCapabilityProvider @Inject constructor(
      */
     private fun isKnownProblematicDevice(): Boolean {
         val hardware = getHardware().lowercase()
-        val model = getModel().lowercase()
         
-        val isSnapdragon8Gen1 = hardware.contains("sm8450") || hardware.contains("qcom")
-        val isS22 = model.contains("sm-s90")
-        val isS23 = model.contains("sm-s91")
+        // sm8450: Snapdragon 8 G1, s5e9925: Exynos 2200, sm8550: Snapdragon 8 G2
+        val isProblematic = hardware.contains("sm8450") || hardware.contains("s5e9925") || hardware.contains("sm8550")
         
-        android.util.Log.i(TAG, "Checking device compatibility: Model=$model, Hardware=$hardware. S22=$isS22, S23=$isS23, Gen1=$isSnapdragon8Gen1")
+        android.util.Log.i(TAG, "Checking device compatibility: Hardware=$hardware. isProblematic=$isProblematic")
         
-        return isSnapdragon8Gen1 || isS22 || isS23
+        return isProblematic
     }
 
     private fun detectBestBackend(): BackendType {

@@ -43,12 +43,13 @@ echo "vulkan-shaders-gen directory: $SHADER_GEN_DIR"
 which vulkan-shaders-gen
 
 echo ""
-echo "=== Step 2: Build Android APK ==="
+echo "=== Step 2: Build Android Release APK & AAB ==="
 cd "$PROJECT_DIR"
 rm -rf app/.cxx  # Clear CMake cache to pick up new config
 
-./gradlew :app:assembleDebug -PuseVulkan=true -Dorg.gradle.java.home=/usr/lib/jvm/java-17-openjdk-amd64
+./gradlew clean :app:assembleRelease :app:bundleRelease -PuseVulkan=true -Dorg.gradle.java.home=/usr/lib/jvm/java-17-openjdk-amd64
 
 echo ""
 echo "=== Build Complete ==="
-echo "APK: $PROJECT_DIR/app/build/outputs/apk/debug/app-debug.apk"
+echo "APK: $PROJECT_DIR/app/build/outputs/apk/release/app-release.apk"
+echo "AAB: $PROJECT_DIR/app/build/outputs/bundle/release/app-release.aab"

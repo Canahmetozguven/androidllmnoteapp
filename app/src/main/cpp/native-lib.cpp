@@ -53,15 +53,36 @@ static GPUVendor detect_gpu_vendor() {
     return GPU_UNKNOWN;
 }
 
+// Check if the device has a known problematic Vulkan driver (e.g. Snapdragon 8 Gen 1 baseline)
+static bool is_problematic_vulkan_device() {
+    std::string soc = get_system_property("ro.board.platform");
+    std::string hardware = get_system_property("ro.hardware");
+    
+    // sm8450: Snapdragon 8 Gen 1 (notorious Vulkan bugs)
+    // s5e9925: Exynos 2200 (Xclipse 920 GPU, unstable Vulkan)
+    // sm8550: Snapdragon 8 Gen 2 (mostly better but still some device-lost reports)
+    bool is_problematic = (soc.find("sm8450") != std::string::npos || 
+                           soc.find("s5e9925") != std::string::npos ||
+                           soc.find("sm8550") != std::string::npos ||
+                           hardware.find("sm8450") != std::string::npos ||
+                           hardware.find("s5e9925") != std::string::npos ||
+                           hardware.find("sm8550") != std::string::npos);
+                                   
+    if (is_problematic) {
+        __android_log_print(ANDROID_LOG_WARN, TAG, "Detected problematic SoC (%s / %s) - forcing CPU compatibility", soc.c_str(), hardware.c_str());
+        return true;
+    }
+    
+    return false;
+}
+
 // Determine best backend based on hardware
 static int auto_select_backend() {
     GPUVendor gpu = detect_gpu_vendor();
-    std::string device = get_system_property("ro.product.device");
-    std::string model = get_system_property("ro.product.model");
     
-    // Known problematic devices - force CPU
-    if (model.find("SM-S901") != std::string::npos || device.find("r0q") != std::string::npos) {
-        __android_log_print(ANDROID_LOG_WARN, TAG, "S22 detected - forcing CPU due to Vulkan driver issues");
+    // Known problematic SoCs - force CPU
+    if (is_problematic_vulkan_device()) {
+        __android_log_print(ANDROID_LOG_WARN, TAG, "Forcing CPU due to known SoC driver issues");
         return 0; // CPU
     }
     
@@ -180,31 +201,41 @@ Java_com_synapsenotes_ai_core_ai_LlamaContext_loadEmbeddingModelNative(JNIEnv* e
 
     struct llama_model_params model_params = llama_model_default_params();
     model_params.use_mmap = false;
-    model_params.n_gpu_layers = -1; // Try GPU first
     
-    __android_log_print(ANDROID_LOG_INFO, TAG, "Loading embedding model with smart fallback: OpenCL → Vulkan → CPU");
-    
-    // Try OpenCL first (most stable)
-    unsetenv("GGML_VULKAN_DISABLE");
-    unsetenv("GGML_OPENCL_DISABLE");
-    setenv("GGML_VULKAN_DISABLE", "1", 1);
-    g_model_embed = llama_model_load_from_file(model_path, model_params);
-    
-    if (!g_model_embed) {
-        // Try Vulkan
-        __android_log_print(ANDROID_LOG_WARN, TAG, "OpenCL failed, trying Vulkan for embedding model...");
-        unsetenv("GGML_VULKAN_DISABLE");
-        setenv("GGML_OPENCL_DISABLE", "1", 1);
-        g_model_embed = llama_model_load_from_file(model_path, model_params);
-    }
-    
-    if (!g_model_embed) {
-        // CPU fallback
-        __android_log_print(ANDROID_LOG_WARN, TAG, "GPU failed, using CPU for embedding model...");
+    // Check for known problematic SoCs - must force CPU to avoid Vulkan driver crash
+    if (is_problematic_vulkan_device()) {
+        __android_log_print(ANDROID_LOG_WARN, TAG, "Problematic SoC detected - forcing CPU for embedding model to avoid driver crash");
         model_params.n_gpu_layers = 0;
         setenv("GGML_VULKAN_DISABLE", "1", 1);
         setenv("GGML_OPENCL_DISABLE", "1", 1);
         g_model_embed = llama_model_load_from_file(model_path, model_params);
+    } else {
+        model_params.n_gpu_layers = -1; // Try GPU first
+        
+        __android_log_print(ANDROID_LOG_INFO, TAG, "Loading embedding model with smart fallback: OpenCL → Vulkan → CPU");
+        
+        // Try OpenCL first (most stable)
+        unsetenv("GGML_VULKAN_DISABLE");
+        unsetenv("GGML_OPENCL_DISABLE");
+        setenv("GGML_VULKAN_DISABLE", "1", 1);
+        g_model_embed = llama_model_load_from_file(model_path, model_params);
+        
+        if (!g_model_embed) {
+            // Try Vulkan
+            __android_log_print(ANDROID_LOG_WARN, TAG, "OpenCL failed, trying Vulkan for embedding model...");
+            unsetenv("GGML_VULKAN_DISABLE");
+            setenv("GGML_OPENCL_DISABLE", "1", 1);
+            g_model_embed = llama_model_load_from_file(model_path, model_params);
+        }
+        
+        if (!g_model_embed) {
+            // CPU fallback
+            __android_log_print(ANDROID_LOG_WARN, TAG, "GPU failed, using CPU for embedding model...");
+            model_params.n_gpu_layers = 0;
+            setenv("GGML_VULKAN_DISABLE", "1", 1);
+            setenv("GGML_OPENCL_DISABLE", "1", 1);
+            g_model_embed = llama_model_load_from_file(model_path, model_params);
+        }
     }
 
     env->ReleaseStringUTFChars(path, model_path);
