@@ -558,9 +558,10 @@ open class DefaultHardwareCapabilityProvider @Inject constructor(
              return listOf(BackendType.OPENCL, BackendType.CPU)
          }
          
-         // Snapdragon 8 Elite (S25) -> Prefer OpenCL (Adreno 830)
-         if (ids.any { it.contains("sm8750") }) {
-             return listOf(BackendType.OPENCL, BackendType.VULKAN, BackendType.CPU)
+         // Snapdragon 8 Elite (S25) -> Prefer Vulkan (Adreno 830) due to OpenCL instability
+         // Covers SM8750 (chipset) and SM-S938 (S25 Ultra)
+         if (ids.any { it.contains("sm8750") } || model.startsWith("sm-s938")) {
+             return listOf(BackendType.VULKAN, BackendType.OPENCL, BackendType.CPU)
          }
          
          // Snapdragon 8 Gen 1 (S22 / SM8450) -> Prefer OpenCL
