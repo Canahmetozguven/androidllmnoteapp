@@ -28,7 +28,7 @@ sync_source() {
     local WINDOWS_SRC="/mnt/c/Users/canahmet/Documents/projects/android_note_app/app/src/"
     local WSL_DEST="$PROJECT_DIR/app/src/"
     
-    if [ -d "$WINDOWS_SRC" ] && [ "$PROJECT_DIR" != "/mnt/c/"* ]; then
+    if [[ -d "$WINDOWS_SRC" && "$PROJECT_DIR" != "/mnt/c/"* ]]; then
         echo "🔄 Syncing source from Windows..."
         rsync -av --exclude='.git' --exclude='build' "$WINDOWS_SRC" "$WSL_DEST"
         echo "✅ Sync complete."
