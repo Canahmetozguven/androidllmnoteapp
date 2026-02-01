@@ -36,7 +36,7 @@ Run the setup script inside WSL:
 ### 2. Taking a Build
 To build the application with full GPU support (Vulkan + OpenCL), run the unified build script in WSL:
 ```bash
-./scripts/build/build_full.sh static
+./build.sh static
 ```
 *Use `dynamic` mode for testing Backend DL (dlopen) capabilities.*
 
