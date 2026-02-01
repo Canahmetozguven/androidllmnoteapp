@@ -24,93 +24,185 @@ export PATH=$PATH:$ANDROID_HOME/platform-tools
 PROJECT_DIR="$(pwd)"
 LLAMA_DIR="$PROJECT_DIR/app/src/main/cpp/llama"
 
-# Sync Source from Windows (WSL only)
+# Windows paths for artifact copying
+WINDOWS_PROJECT="/mnt/c/Users/canahmet/Documents/projects/android_note_app"
+WINDOWS_RELEASE_DIR="$WINDOWS_PROJECT/release_artifacts"
+
+# Use JAVA_HOME if set, otherwise fallback to known path
+if [ -z "$JAVA_HOME" ]; then
+    export JAVA_HOME="/usr/lib/jvm/java-17-openjdk-amd64"
+fi
+
+# === Step 0: Sync Source from Windows ===
 sync_source() {
-    # Hardcoded Windows path for your environment
-    local WINDOWS_SRC="/mnt/c/Users/canahmet/Documents/projects/android_note_app/app/src/"
+    echo "=== Step 0: Syncing Source from Windows ==="
+    local WINDOWS_SRC="$WINDOWS_PROJECT/app/src/"
     local WSL_DEST="$PROJECT_DIR/app/src/"
     
-    echo "🔍 Checking source path: $WINDOWS_SRC"
+    echo "Syncing from: $WINDOWS_SRC"
+    echo "To: $WSL_DEST"
 
     if [[ -d "$WINDOWS_SRC" && "$PROJECT_DIR" != "/mnt/c/"* ]]; then
-        echo "🔄 Syncing source from Windows..."
         mkdir -p "$WSL_DEST"
-        # Sync app/src to app/src
         # --delete ensures deleted files in Windows are removed from WSL
         rsync -av --delete --exclude='.git' --exclude='build' --exclude='.cxx' "$WINDOWS_SRC" "$WSL_DEST"
-        echo "✅ Sync complete."
+        echo "Sync complete."
     else
-        echo "⚠️  Skipping sync: Windows source not found or running inside /mnt/c/"
+        echo "WARNING: Windows source not found or running inside /mnt/c/"
+        echo "Skipping sync. Building with current WSL files."
     fi
 }
 
-# Build host shader generator
+# === Step 1: Build host shader generator ===
 build_shader_gen() {
-    echo "🔧 Building vulkan-shaders-gen for Host..."
+    echo ""
+    echo "=== Step 1: Build vulkan-shaders-gen for Host ==="
     cd "$LLAMA_DIR"
     
     EXISTING_GEN=$(find build-host -name 'vulkan-shaders-gen' -type f -executable 2>/dev/null | head -1)
     if [ -n "$EXISTING_GEN" ]; then
-        echo "   ✅ Found existing: $EXISTING_GEN"
+        echo "Found existing vulkan-shaders-gen at: $EXISTING_GEN"
         SHADER_GEN_DIR=$(dirname "$(realpath "$EXISTING_GEN")")
     else
+        echo "Building vulkan-shaders-gen..."
         rm -rf build-host
         mkdir -p build-host && cd build-host
-        cmake .. -DGGML_VULKAN=ON -DCMAKE_BUILD_TYPE=Release > /dev/null 2>&1
-        make vulkan-shaders-gen -j$(nproc) > /dev/null 2>&1
+        cmake .. -DGGML_VULKAN=ON -DCMAKE_BUILD_TYPE=Release
+        make vulkan-shaders-gen -j$(nproc)
         cd "$LLAMA_DIR"
+        
         SHADER_GEN=$(find build-host -name 'vulkan-shaders-gen' -type f -executable | head -1)
+        if [ -z "$SHADER_GEN" ]; then
+            echo "ERROR: vulkan-shaders-gen not found after build!"
+            exit 1
+        fi
         SHADER_GEN_DIR=$(dirname "$(realpath "$SHADER_GEN")")
-        echo "   ✅ Built: $SHADER_GEN"
     fi
+    
     export PATH="$SHADER_GEN_DIR:$PATH"
+    echo "vulkan-shaders-gen directory: $SHADER_GEN_DIR"
+    which vulkan-shaders-gen
     cd "$PROJECT_DIR"
 }
 
-# Clean build
-clean_build() {
-    echo "🗑️  Cleaning build artifacts..."
-    rm -rf "$LLAMA_DIR/build-host" 2>/dev/null || true
-    rm -rf "$PROJECT_DIR/app/build" 2>/dev/null || true
-    rm -rf "$PROJECT_DIR/app/.cxx" 2>/dev/null || true
-    rm -rf "$PROJECT_DIR/.gradle" 2>/dev/null || true
-    echo "✅ Clean complete"
+# === Function: Extract version from build.gradle.kts ===
+get_version() {
+    local gradle_file="$PROJECT_DIR/app/build.gradle.kts"
+    if [ -f "$gradle_file" ]; then
+        VERSION_NAME=$(grep 'versionName' "$gradle_file" | head -1 | sed 's/.*"\(.*\)".*/\1/')
+        echo "$VERSION_NAME"
+    else
+        echo "unknown"
+    fi
 }
 
-# Main build logic
+# === Clean build ===
+clean_build() {
+    echo "Cleaning build artifacts..."
+    rm -rf "$LLAMA_DIR/build-host"
+    rm -rf "$PROJECT_DIR/app/build"
+    rm -rf "$PROJECT_DIR/app/.cxx"
+    rm -rf "$PROJECT_DIR/.gradle"
+    echo "Clean complete"
+}
+
+# === Step 3: Copy Artifacts ===
+copy_artifacts() {
+    local VERSION=$(get_version)
+    local WSL_ARTIFACTS_DIR="$PROJECT_DIR/artifacts"
+    
+    mkdir -p "$WSL_ARTIFACTS_DIR"
+    mkdir -p "$WINDOWS_RELEASE_DIR"
+    
+    echo ""
+    echo "=== Step 3: Copying Artifacts ==="
+    echo "Version: $VERSION"
+    echo "WSL Destination: $WSL_ARTIFACTS_DIR"
+    echo "Windows Destination: $WINDOWS_RELEASE_DIR"
+    
+    # Source paths
+    local APK_SRC="$PROJECT_DIR/app/build/outputs/apk/release/app-release.apk"
+    local AAB_SRC="$PROJECT_DIR/app/build/outputs/bundle/release/app-release.aab"
+    
+    # Versioned filenames
+    local APK_VERSIONED="SynapseNotes-v${VERSION}.apk"
+    local AAB_VERSIONED="SynapseNotes-v${VERSION}.aab"
+    
+    # Copy APK
+    if [ -f "$APK_SRC" ]; then
+        # Copy to WSL artifacts (plain name)
+        cp "$APK_SRC" "$WSL_ARTIFACTS_DIR/app-release.apk"
+        echo "Copied APK to WSL artifacts/"
+        
+        # Copy to Windows release_artifacts (versioned name)
+        cp "$APK_SRC" "$WINDOWS_RELEASE_DIR/$APK_VERSIONED"
+        echo "Copied $APK_VERSIONED to Windows release_artifacts/"
+    else
+        echo "WARNING: APK not found at $APK_SRC"
+    fi
+    
+    # Copy AAB
+    if [ -f "$AAB_SRC" ]; then
+        # Copy to WSL artifacts (plain name)
+        cp "$AAB_SRC" "$WSL_ARTIFACTS_DIR/app-release.aab"
+        echo "Copied AAB to WSL artifacts/"
+        
+        # Copy to Windows release_artifacts (versioned name)
+        cp "$AAB_SRC" "$WINDOWS_RELEASE_DIR/$AAB_VERSIONED"
+        echo "Copied $AAB_VERSIONED to Windows release_artifacts/"
+    else
+        echo "WARNING: AAB not found at $AAB_SRC"
+    fi
+}
+
+# === Step 2: Main build logic ===
 build_all() {
     local mode=$1
     local cmake_extra=""
     
     if [ "$mode" == "dynamic" ]; then
         cmake_extra="-DGGML_BACKEND_DL=ON"
-        echo "🏗️  Building in DYNAMIC mode (Backend DL enabled)..."
+        echo "Building in DYNAMIC mode (Backend DL enabled)..."
     else
-        echo "🏗️  Building in STATIC mode..."
+        echo "Building in STATIC mode..."
     fi
 
-    # Sync happens inside build_all to ensure it runs before compilation
+    # Sync source from Windows to WSL
     sync_source
+    
+    # Build shader generator for Vulkan
     build_shader_gen
 
-    echo "⚙️  Compiling Android APK with Vulkan + OpenCL..."
-    ./gradlew :app:assembleRelease \
+    echo ""
+    echo "=== Step 2: Build Android Release APK & AAB ==="
+    cd "$PROJECT_DIR"
+    rm -rf app/.cxx  # Clear CMake cache to pick up new config
+    
+    # Build Release variant (APK and AAB)
+    # -PuseVulkan=true and -PuseOpenCL=true trigger the native build logic in app/build.gradle.kts
+    ./gradlew :app:assembleRelease :app:bundleRelease \
+        -Dorg.gradle.java.home="/usr/lib/jvm/java-17-openjdk-amd64" \
         -PuseVulkan=true \
         -PuseOpenCL=true \
-        -PcmakeFlags="$cmake_extra" \
-        2>&1 | grep -E "^Building|error|warning|:app:" || true
+        -PcmakeFlags="$cmake_extra"
 
-    echo "✅ Build Process Finished"
-    echo "📦 Output: app/build/outputs/apk/release/app-release.apk"
+    # Copy artifacts to WSL and Windows
+    copy_artifacts
+
+    echo ""
+    echo "=== Build Complete ==="
+    echo "Artifacts are located in:"
+    echo "  WSL: $PROJECT_DIR/artifacts"
+    echo "  Windows: $WINDOWS_RELEASE_DIR"
 }
 
-# Execution
+# === Execution ===
 case "$BUILD_MODE" in
     clean)
         clean_build
         ;;
     release)
-        echo "🚀 Starting Full Release Build (Clean + Static)..."
+        echo "Starting Full Release Build (Clean + Static)..."
         clean_build
         build_all "static"
         ;;
