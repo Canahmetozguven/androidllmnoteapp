@@ -99,11 +99,16 @@ case "$BUILD_MODE" in
     clean)
         clean_build
         ;;
+    release)
+        echo "🚀 Starting Full Release Build (Clean + Static)..."
+        clean_build
+        build_all "static"
+        ;;
     static|dynamic)
         build_all "$BUILD_MODE"
         ;;
     *)
-        echo "Usage: $0 {static|dynamic|clean}"
+        echo "Usage: $0 {static|dynamic|clean|release}"
         exit 1
         ;;
 esac
