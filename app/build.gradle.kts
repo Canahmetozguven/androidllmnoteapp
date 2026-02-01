@@ -13,7 +13,25 @@ plugins {
     alias(libs.plugins.googleServices)
 }
 
+// HYBRID BUILD SAFETY: In WSL, prioritize ANDROID_HOME environment variable over 
+// potentially broken Windows paths in local.properties.
+val isLinux = System.getProperty("os.name").lowercase().contains("linux")
+if (isLinux && System.getenv("ANDROID_HOME") != null) {
+    val localPropsFile = rootProject.file("local.properties")
+    if (localPropsFile.exists()) {
+        val props = Properties()
+        localPropsFile.inputStream().use { props.load(it) }
+        val sdkDir = props.getProperty("sdk.dir")
+        if (sdkDir != null && (sdkDir.contains(":") || sdkDir.contains("\\"))) {
+            // Found a Windows path in WSL. We don't want AGP to use this.
+            // Note: We don't modify the file, just warn the user.
+            println("WARNING: Detected Windows SDK path in WSL environment. Please ensure ANDROID_HOME is set correctly.")
+        }
+    }
+}
+
 // Auto-generated Version Code: Minute-based logic to fit Integer.MAX_VALUE
+
 // Strategy: 2026000000 + Minutes_Since_Start_Of_2026
 val calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
 val year = 2026
@@ -24,11 +42,14 @@ val diffMillis = calendar.timeInMillis - startOfYear.timeInMillis
 val minutesSinceStart = (diffMillis / 60000).toInt()
 
 val baseVersion = 2026000000
-val autoVersionCode = baseVersion + minutesSinceStart
+// Add manual offset to avoid conflict with previous version 2026040935
+val manualOffset = 1000 
+val autoVersionCode = baseVersion + minutesSinceStart + manualOffset
 
 android {
     namespace = "com.synapsenotes.ai"
     compileSdk = 35
+    buildToolsVersion = "35.0.0"
 
     defaultConfig {
         applicationId = "com.synapsenotes.ai"
@@ -45,7 +66,7 @@ android {
         buildConfigField("String", "GOOGLE_DRIVE_API_KEY", "\"$googleDriveApiKey\"")
 
         versionCode = autoVersionCode
-        versionName = "1.9.7"
+        versionName = "1.9.8"
 
         ndkVersion = "26.1.10909125"
 
@@ -92,6 +113,7 @@ android {
             cmake {
                 // FORCE VULKAN: Always enable Vulkan for GPU acceleration on supported devices
                 // We default to ON to prevent CPU-only fallbacks that crash on large models (S22 OOM)
+                // USAGE: ./gradlew ... -PuseVulkan=false to disable Vulkan for debugging/CPU-only builds
                 val useVulkan = project.findProperty("useVulkan") != "false" 
                 if (useVulkan) {
                     arguments += listOf(
@@ -104,6 +126,7 @@ android {
                 }
 
                 // ENABLE OPENCL: Secondary backend for Adreno/Mali
+                // USAGE: ./gradlew ... -PuseOpenCL=false to disable OpenCL if causing build/runtime issues
                 val useOpenCL = project.findProperty("useOpenCL") != "false"
                 if (useOpenCL) {
                     arguments += listOf(
@@ -114,6 +137,10 @@ android {
                         "-DGGML_OPENCL=OFF"
                     )
                 }
+
+                // CPU Optimization flags for fallback stability
+                // Note: Moved architecture-specific flags to CMakeLists.txt to avoid x86_64 build errors
+                // arguments += listOf("-DCMAKE_CXX_FLAGS=-march=armv8.2-a+dotprod")
             }
         }
     }
@@ -136,6 +163,7 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+        aidl = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.8" // Matches Kotlin 1.9.22 roughly, or check mapping. 
@@ -147,6 +175,12 @@ android {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
             excludes += "META-INF/DEPENDENCIES"
+        }
+        jniLibs {
+            // Exclude our OpenCL stub from the final APK.
+            // We only need it for link-time (compilation), but at runtime,
+            // the system's /system/lib64/libOpenCL.so must be loaded.
+            excludes += "lib/**/libOpenCL.so"
         }
     }
 }
@@ -186,6 +220,7 @@ dependencies {
 
     // WorkManager
     implementation(libs.androidx.work.runtime.ktx)
+    implementation("androidx.lifecycle:lifecycle-process:2.8.7")
 
     // Network
     implementation(libs.okhttp)

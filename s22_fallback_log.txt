@@ -1,0 +1,10 @@
+--------- beginning of main
+02-01 01:00:18.105 D/AndroidRuntime(30735): >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+02-01 01:00:18.154 I/AndroidRuntime(30735): Using default boot image
+02-01 01:00:18.154 I/AndroidRuntime(30735): Leaving lock profiling enabled
+02-01 01:00:18.619 D/AndroidRuntime(30735): Calling main entry com.android.commands.monkey.Monkey
+02-01 01:00:18.819 I/AndroidRuntime(30735): VM exiting with result code 0.
+02-01 01:00:19.063 I/LLM_JNI (30753): JNI_OnLoad: Initializing llama.cpp backend [Build: 2026-01-21 v5 - Dynamic Config + Stop]
+02-01 01:00:19.065 E/HardwareCapability(30753): Previous run crashed while attempting VULKAN (Chat). Marking as failed.
+02-01 01:00:19.066 W/HardwareCapability(30753): Marked backend as failed: VULKAN. Failed list: [VULKAN]
+02-01 01:00:19.066 I/HardwareCapability(30753): Cleared attempting backend

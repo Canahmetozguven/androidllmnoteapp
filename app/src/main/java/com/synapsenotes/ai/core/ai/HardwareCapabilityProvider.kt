@@ -36,9 +36,15 @@ interface HardwareCapabilityProvider {
     fun getRecommendedBatchSize(): Int
 
     /**
-     * Get recommended context size.
+     * Get recommended batch size for embedding based on hardware, RAM, and model size.
      */
-    fun getRecommendedContextSize(): Int
+    fun getRecommendedEmbeddingBatchSize(modelSizeBytes: Long): Int
+
+    /**
+     * Get recommended context size for a specific backend.
+     * Vulkan backend might require smaller context on low RAM devices due to higher VRAM usage.
+     */
+    fun getRecommendedContextSize(backend: BackendType): Int
 
     /**
      * Check if memory mapping (mmap) is safe to use on this device.
@@ -62,6 +68,16 @@ interface HardwareCapabilityProvider {
     fun setPreferredBackend(backend: BackendType)
 
     /**
+     * Get the currently preferred embedding backend (persisted).
+     */
+    fun getPreferredEmbeddingBackend(): BackendType
+
+    /**
+     * Set the preferred embedding backend.
+     */
+    fun setPreferredEmbeddingBackend(backend: BackendType)
+
+    /**
      * Safely probe a backend to see if it works without crashing.
      * Returns true if the backend is usable, false otherwise.
      * This checks if the backend was previously marked as failed.
@@ -72,6 +88,12 @@ interface HardwareCapabilityProvider {
      * Get backends that have been marked as failed (crashed during probe or load).
      */
     fun getFailedBackends(): Set<BackendType>
+
+    /**
+     * Get recommended backend order based on device specific heuristics.
+     * Default should be VULKAN -> OPENCL -> CPU.
+     */
+    fun getRecommendedBackendOrder(): List<BackendType> = listOf(BackendType.VULKAN, BackendType.OPENCL, BackendType.CPU)
 
     /**
      * Mark a backend as failed (called after a crash or load failure).
@@ -93,4 +115,21 @@ interface HardwareCapabilityProvider {
      * Clear the attempting status (called after successful completion of risk-prone operation).
      */
     fun clearBackendAttempting()
+
+    /**
+     * Mark an embedding backend as being attempted.
+     */
+    fun markEmbeddingBackendAttempting(backend: BackendType)
+
+    /**
+     * Clear the embedding attempting status.
+     */
+    fun clearEmbeddingBackendAttempting()
+
+    /**
+     * Check if Android Hardware Buffer (AHB) interop is supported.
+     * Returns true if both Vulkan and OpenCL backends support AHB.
+     * This is required for hybrid Vulkan/OpenCL acceleration with zero-copy memory sharing.
+     */
+    fun isAHBInteropSupported(): Boolean
 }

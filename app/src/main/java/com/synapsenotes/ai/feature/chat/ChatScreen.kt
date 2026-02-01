@@ -91,7 +91,8 @@ import com.synapsenotes.ai.ui.theme.BubbleAiOnSurface
 import com.synapsenotes.ai.ui.theme.GreenSuccess
 import java.text.SimpleDateFormat
 import java.util.Date
-import java.util.Locale
+import com.synapsenotes.ai.R
+import androidx.compose.ui.res.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -137,12 +138,15 @@ fun ChatScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            text = "Chat with Notes",
+                            text = stringResource(R.string.chat_screen_title),
                             style = MaterialTheme.typography.titleMedium
                         )
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                text = if (hardwareInfo.isGpuAccelerationEnabled) "On-device AI (${hardwareInfo.backendName})" else "On-device AI",
+                                text = if (hardwareInfo.isGpuAccelerationEnabled) 
+                                    stringResource(R.string.on_device_ai_backend, hardwareInfo.backendName)
+                                else 
+                                    stringResource(R.string.on_device_ai),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -165,7 +169,7 @@ fun ChatScreen(
                     IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack, 
-                            contentDescription = "Back"
+                            contentDescription = stringResource(R.string.back_content_description)
                         )
                     }
                 },
@@ -173,7 +177,7 @@ fun ChatScreen(
                     IconButton(onClick = { showMenu = true }) {
                         Icon(
                             imageVector = Icons.Default.MoreVert, 
-                            contentDescription = "More options"
+                            contentDescription = stringResource(R.string.more_options_content_description)
                         )
                     }
                     DropdownMenu(
@@ -181,7 +185,7 @@ fun ChatScreen(
                         onDismissRequest = { showMenu = false }
                     ) {
                         DropdownMenuItem(
-                            text = { Text("New Chat") },
+                            text = { Text(stringResource(R.string.new_chat)) },
                             onClick = { 
                                 viewModel.createNewSession()
                                 showMenu = false 
@@ -189,7 +193,7 @@ fun ChatScreen(
                             leadingIcon = { Icon(Icons.Default.Add, null) }
                         )
                         DropdownMenuItem(
-                            text = { Text("History") },
+                            text = { Text(stringResource(R.string.history)) },
                             onClick = { 
                                 showHistorySheet = true
                                 showMenu = false 
@@ -242,7 +246,7 @@ fun ChatScreen(
                         onNoteClick = { /* Navigate to note */ },
                         onCopyClick = { content ->
                             clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(content))
-                            android.widget.Toast.makeText(context, "Copied to clipboard", android.widget.Toast.LENGTH_SHORT).show()
+                            android.widget.Toast.makeText(context, context.getString(R.string.copied_to_clipboard), android.widget.Toast.LENGTH_SHORT).show()
                         },
                         onShareClick = { content ->
                             val sendIntent: android.content.Intent = android.content.Intent().apply {
@@ -267,7 +271,7 @@ fun ChatScreen(
                             color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                         ) {
                             Text(
-                                text = "Today",
+                                text = stringResource(R.string.today),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
@@ -302,14 +306,17 @@ fun ChatScreen(
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = if (selectedNotes.isEmpty()) "Referencing: All Notes" else "Referencing: ${selectedNotes.size} Selected",
+                                    text = if (selectedNotes.isEmpty()) 
+                                        stringResource(R.string.referencing_all) 
+                                    else 
+                                        stringResource(R.string.referencing_count, selectedNotes.size),
                                     style = MaterialTheme.typography.labelMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Icon(
                                     imageVector = Icons.Outlined.OpenInNew,
-                                    contentDescription = "Select",
+                                    contentDescription = stringResource(R.string.select_content_description),
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.size(14.dp)
                                 )
@@ -357,7 +364,7 @@ internal fun ChatEmptyState(modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(24.dp))
         
         Text(
-            text = "Chat with your notes",
+            text = stringResource(R.string.empty_state_title),
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onSurface
         )
@@ -365,7 +372,7 @@ internal fun ChatEmptyState(modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(8.dp))
         
         Text(
-            text = "Ask questions about your notes and get AI-powered answers. All processing happens on your device.",
+            text = stringResource(R.string.empty_state_description),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -379,14 +386,14 @@ internal fun ChatEmptyState(modifier: Modifier = Modifier) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Try asking:",
+                text = stringResource(R.string.try_asking),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(4.dp))
-            SuggestionChip(text = "Summarize my recent notes")
-            SuggestionChip(text = "What are my main topics?")
-            SuggestionChip(text = "Find notes about...")
+            SuggestionChip(text = stringResource(R.string.suggestion_summarize))
+            SuggestionChip(text = stringResource(R.string.suggestion_topics))
+            SuggestionChip(text = stringResource(R.string.suggestion_find))
         }
     }
 }
@@ -448,7 +455,7 @@ internal fun ChatInputBar(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "Backup to Google Drive complete",
+                            text = stringResource(R.string.backup_complete),
                             style = MaterialTheme.typography.labelSmall,
                             color = GreenSuccess.copy(alpha = 0.8f)
                         )
@@ -466,7 +473,7 @@ internal fun ChatInputBar(
                     modifier = Modifier.weight(1f),
                     placeholder = { 
                         Text(
-                            text = "Ask about your notes...",
+                            text = stringResource(R.string.ask_about_notes),
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         ) 
                     },
@@ -506,14 +513,14 @@ internal fun ChatInputBar(
                         if (isLoading) {
                             Icon(
                                 imageVector = Icons.Default.Stop,
-                                contentDescription = "Stop",
+                                contentDescription = stringResource(R.string.stop_content_description),
                                 tint = Color.White,
                                 modifier = Modifier.size(24.dp)
                             )
                         } else {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.Send,
-                                contentDescription = "Send",
+                                contentDescription = stringResource(R.string.send_content_description),
                                 tint = if (inputText.isNotBlank()) 
                                     Color.White 
                                 else 
@@ -527,7 +534,7 @@ internal fun ChatInputBar(
             
             // Disclaimer
             Text(
-                text = "AI can make mistakes. Check important info.",
+                text = stringResource(R.string.ai_disclaimer),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                 modifier = Modifier
@@ -605,7 +612,7 @@ fun MessageBubble(
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Text(
-                                    text = "Thought Process",
+                                    text = stringResource(R.string.thought_process),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -663,12 +670,12 @@ fun MessageBubble(
                             ) {
                                 ActionChipButton(
                                     icon = Icons.Outlined.ContentCopy,
-                                    label = "Copy to Note",
+                                    label = stringResource(R.string.copy_to_note),
                                     onClick = { onCopyClick(message.content) }
                                 )
                                 ActionChipButton(
                                     icon = Icons.Outlined.Share,
-                                    label = "Share",
+                                    label = stringResource(R.string.share),
                                     onClick = { onShareClick(message.content) }
                                 )
                             }

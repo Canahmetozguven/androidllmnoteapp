@@ -32,7 +32,7 @@ class LlmEngineTest {
     @BeforeEach
     fun setup() {
         whenever(hardwareCapabilityProvider.getRecommendedBatchSize()).thenReturn(512)
-        whenever(hardwareCapabilityProvider.getRecommendedContextSize()).thenReturn(2048)
+        whenever(hardwareCapabilityProvider.getRecommendedContextSize(any())).thenReturn(2048)
         whenever(hardwareCapabilityProvider.isVulkanSupported()).thenReturn(true)
         whenever(hardwareCapabilityProvider.getGpuName()).thenReturn("Test GPU")
         
@@ -66,7 +66,7 @@ class LlmEngineTest {
             callback.onToken("Hello")
             callback.onToken(" World")
             "Hello World"
-        }.whenever(llmContext).completion(anyString(), any())
+        }.whenever(llmContext).completion(anyString(), any(), any(), any())
         
         val tokens = llmEngine.completionFlow("Hi").toList()
         

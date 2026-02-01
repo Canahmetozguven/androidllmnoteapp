@@ -1,0 +1,4 @@
+[14t00h[?1002h[?1003h[?1006h4h?2031$p[?1004$p[?2004$p[?2026$p[?u[H]66;w=1; \[6n[H]66;s=2; \[6n[u9:39:28 +1ms service=config path=C:\Users\canahmet\.config\opencode\config.json loading
+INFO  2026-01-31T09:39:28 +2ms service=config path=C:\Users\canahmet\.config\opencode\opencode.json loading
+INFO  2026-01-31T09:39:28 +10ms service=config path=C:\Users\canahmet\.config\opencode\opencode.jsonc loading
+]11;?^C

@@ -61,13 +61,10 @@ fun OnboardingScreen(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-            try {
-                val account = task.getResult(ApiException::class.java)
-                viewModel.onGoogleSignInSuccess(account)
-            } catch (e: ApiException) {
-                // Handle error
-            }
+             viewModel.handleSignInResult(result.data)
+        } else {
+             // Handle cancellation/failure
+             android.util.Log.w("OnboardingScreen", "Sign in failed/cancelled: ${result.resultCode}")
         }
     }
 

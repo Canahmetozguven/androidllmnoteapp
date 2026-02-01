@@ -1,0 +1,1 @@
+- Created docs/llama_strategy_recommendation.md to outline the backend optimization strategy for Android devices.

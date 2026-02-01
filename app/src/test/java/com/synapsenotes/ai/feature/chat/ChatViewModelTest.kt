@@ -28,6 +28,7 @@ class ChatViewModelTest {
     private val llmEngine: LlmEngine = mockk(relaxed = true)
     private val chatRepository: ChatRepository = mockk(relaxed = true)
     private val noteRepository: NoteRepository = mockk(relaxed = true)
+    private val promptBuilder: com.synapsenotes.ai.core.ai.PromptBuilder = mockk(relaxed = true)
 
     @BeforeEach
     fun setup() {
@@ -38,6 +39,7 @@ class ChatViewModelTest {
         viewModel = ChatViewModel(
             vectorSearchUseCase,
             llmEngine,
+            promptBuilder,
             chatRepository,
             noteRepository
         )

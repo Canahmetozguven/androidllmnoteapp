@@ -55,8 +55,8 @@ Android application integrating `llama.cpp` for on-device LLM inference using Vu
 ```bash
 # WSL ONLY
 ./setup_android_sdk.sh       # First setup
-./build_vulkan.sh            # Full native rebuild
-./publish.sh                 # Release build
+./build_vulkan.sh            # Full native rebuild (Debug)
+./release.sh                 # Release build (APK + AAB)
 
 # Windows
 ./gradlew assembleDebug      # Java-only build (Native will fail if not pre-built)

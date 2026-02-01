@@ -18,6 +18,19 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.SynapseNotes"
         tools:targetApi="31">
+
+        <!-- Allow access to vendor OpenCL library if present (e.g. Samsung/Qualcomm) -->
+        <!-- 'required=false' allows installation on Pixel/others that lack it -->
+        <uses-native-library android:name="libOpenCL.so" android:required="false" />
+        <uses-native-library android:name="libOpenCL-pixel.so" android:required="false" />
+        <uses-native-library android:name="libGLES_mali.so" android:required="false" />
+        <uses-native-library android:name="libPVROCL.so" android:required="false" />
+
+        <service
+            android:name=".core.ai.probe.GpuProbeService"
+            android:process=":gpu_probe"
+            android:exported="false" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

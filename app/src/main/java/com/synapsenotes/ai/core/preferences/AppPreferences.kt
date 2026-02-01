@@ -39,4 +39,12 @@ class AppPreferences @Inject constructor(
     var safeMode: Boolean
         get() = prefs.getBoolean("safe_mode_enabled", false)
         set(value) = prefs.edit().putBoolean("safe_mode_enabled", value).apply()
+
+    var isDriveConnected: Boolean
+        get() = prefs.getBoolean("is_drive_connected", false)
+        set(value) = prefs.edit().putBoolean("is_drive_connected", value).apply()
+
+    var driveEmail: String?
+        get() = prefs.getString("drive_email", null)
+        set(value) = prefs.edit().putString("drive_email", value).apply()
 }

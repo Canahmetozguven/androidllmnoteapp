@@ -9,8 +9,8 @@
 ## AI & Local Inference Engine
 - **Inference Library**: `llama.cpp` integrated via JNI
 - **Hardware Acceleration**: 
-    - **Vulkan API**: Primary high-performance backend for modern Android GPUs.
-    - **OpenCL**: Secondary acceleration backend for Adreno and Mali GPUs to maximize compatibility.
+    - **Vulkan API**: Primary backend for Mali (ARM) and Xclipse (AMD) GPUs.
+    - **OpenCL**: Primary backend for Adreno (Qualcomm) GPUs to leverage dedicated optimization.
 - **Model Format**: GGUF (various quantization levels)
 
 ## Data & Persistence

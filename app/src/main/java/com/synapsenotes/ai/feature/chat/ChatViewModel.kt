@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.synapsenotes.ai.core.ai.HardwareInfo
 import com.synapsenotes.ai.core.ai.LlmEngine
+import com.synapsenotes.ai.core.ai.PromptBuilder
 import com.synapsenotes.ai.domain.model.ChatMessage
 import com.synapsenotes.ai.domain.model.Note
 import com.synapsenotes.ai.domain.model.SourceNote
@@ -26,6 +27,7 @@ import javax.inject.Inject
 class ChatViewModel @Inject constructor(
     private val vectorSearchUseCase: VectorSearchUseCase,
     private val llmEngine: LlmEngine,
+    private val promptBuilder: PromptBuilder,
     private val chatRepository: ChatRepository,
     private val noteRepository: NoteRepository
 ) : ViewModel() {
@@ -121,21 +123,11 @@ class ChatViewModel @Inject constructor(
                     vectorSearchUseCase(text)
                 }
 
-                var context = relevantNotes.joinToString("\n\n") { "Note: ${it.title}\n${it.content}" }
                 val sources = relevantNotes.map { note ->
                     SourceNote(noteId = note.id, noteTitle = note.title)
                 }
-                
-                if (context.length > 10000) {
-                     context = context.take(10000) + "\n\n[System: Context truncated due to length]"
-                }
 
-                val contextString = if (context.isNotBlank()) "Context:\n$context\n\n" else ""
-                val prompt = if (contextString.isNotBlank()) {
-                    "$contextString\n$text"
-                } else {
-                    text
-                }
+                val prompt = promptBuilder.buildPrompt(text, relevantNotes)
                 
                 var currentResponse = ""
                 var currentThought = ""
@@ -148,6 +140,27 @@ class ChatViewModel @Inject constructor(
                 )
                 
                 _messages.update { it + aiMsg }
+
+                var lastUpdateTime = 0L
+                
+                // Helper to update messages state
+                fun updateMessageState() {
+                    _messages.update { current ->
+                        if (current.isNotEmpty()) {
+                            val last = current.last()
+                            if (!last.isUser) {
+                                current.dropLast(1) + last.copy(
+                                    content = currentResponse,
+                                    thoughtProcess = if (currentThought.isNotEmpty()) currentThought else null
+                                )
+                            } else {
+                                current
+                            }
+                        } else {
+                            current
+                        }
+                    }
+                }
 
                 llmEngine.completionFlow(prompt).collect { token ->
                     var processedToken = token
@@ -170,22 +183,16 @@ class ChatViewModel @Inject constructor(
                         currentResponse += processedToken
                     }
                     
-                    _messages.update { current ->
-                        if (current.isNotEmpty()) {
-                            val last = current.last()
-                            if (!last.isUser) {
-                                current.dropLast(1) + last.copy(
-                                    content = currentResponse,
-                                    thoughtProcess = if (currentThought.isNotEmpty()) currentThought else null
-                                )
-                            } else {
-                                current
-                            }
-                        } else {
-                            current
-                        }
+                    // Batch UI updates to ~30fps to prevent composition thrashing
+                    val currentTime = System.currentTimeMillis()
+                    if (currentTime - lastUpdateTime > 33) { 
+                        updateMessageState()
+                        lastUpdateTime = currentTime
                     }
                 }
+                
+                // Final update to ensure complete message is shown
+                updateMessageState()
                 
                 chatRepository.saveMessage(sessionId, aiMsg.copy(content = currentResponse, thoughtProcess = if (currentThought.isNotEmpty()) currentThought else null))
                 

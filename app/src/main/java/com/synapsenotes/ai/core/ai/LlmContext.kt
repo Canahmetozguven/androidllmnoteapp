@@ -8,13 +8,14 @@ import javax.inject.Inject
  */
 interface LlmContext {
     fun loadModel(path: String, template: String? = null, nBatch: Int = 512, nCtx: Int = 2048, useMmap: Boolean = true, backendType: BackendType): Boolean
-    fun loadEmbeddingModel(path: String): Boolean
-    fun completion(prompt: String, callback: LlmCallback? = null): String
+    fun loadEmbeddingModel(path: String, nBatch: Int, nCtx: Int, useMmap: Boolean, backendType: BackendType): Boolean
+    fun completion(prompt: String, systemPrompt: String, stopSequences: Array<String>, callback: LlmCallback? = null): String
     fun stopCompletion()
     fun embed(text: String): FloatArray
     fun unload()
     fun isGpuEnabled(): Boolean
     fun isOpenCLAvailable(): Boolean
+    fun isAHBSupported(backendId: Int): Boolean
 }
 
 /**
@@ -32,14 +33,18 @@ class DefaultLlmContext @Inject constructor() : LlmContext {
         return nativeContext.loadModelNative(path, template, nBatch, nCtx, useMmap, backendType.ordinal)
     }
 
-    override fun loadEmbeddingModel(path: String): Boolean {
+    override fun loadEmbeddingModel(path: String, nBatch: Int, nCtx: Int, useMmap: Boolean, backendType: BackendType): Boolean {
         if (!isLibraryLoaded()) return false
-        return nativeContext.loadEmbeddingModelNative(path)
+        return nativeContext.loadEmbeddingModelNative(path, nBatch, nCtx, useMmap, backendType.ordinal)
     }
 
-    override fun completion(prompt: String, callback: LlmCallback?): String {
+    override fun completion(prompt: String, systemPrompt: String, stopSequences: Array<String>, callback: LlmCallback?): String {
         if (!isLibraryLoaded()) return "Error: Native library not loaded"
-        return nativeContext.completion(prompt, callback ?: object : LlmCallback { override fun onToken(token: String) {} })
+        val result = nativeContext.completion(prompt, systemPrompt, stopSequences, callback ?: object : LlmCallback { override fun onToken(token: String) {} })
+        if (result.startsWith("Error:")) {
+            throw RuntimeException(result) // Propagate native error as exception
+        }
+        return result
     }
 
     override fun stopCompletion() {
@@ -67,5 +72,10 @@ class DefaultLlmContext @Inject constructor() : LlmContext {
     override fun isOpenCLAvailable(): Boolean {
         if (!isLibraryLoaded()) return false
         return nativeContext.isOpenCLAvailable()
+    }
+
+    override fun isAHBSupported(backendId: Int): Boolean {
+        if (!isLibraryLoaded()) return false
+        return nativeContext.isAHBSupported(backendId)
     }
 }

@@ -17,11 +17,12 @@ class LlamaContext {
     }
 
     external fun loadModelNative(path: String, template: String?, nBatch: Int, nCtx: Int, useMmap: Boolean, backendId: Int): Boolean
-    external fun loadEmbeddingModelNative(path: String): Boolean
-    external fun completion(prompt: String, callback: LlmCallback): String
+    external fun loadEmbeddingModelNative(path: String, nBatch: Int, nCtx: Int, useMmap: Boolean, backendId: Int): Boolean
+    external fun completion(prompt: String, systemPrompt: String, stopSequences: Array<String>, callback: LlmCallback): String
     external fun stopCompletion()
     external fun embed(text: String): FloatArray
     external fun unload()
     external fun isGpuEnabled(): Boolean
     external fun isOpenCLAvailable(): Boolean
+    external fun isAHBSupported(backendId: Int): Boolean
 }

@@ -1,3 +1,29 @@
 <resources>
     <string name="app_name">Synapse Notes</string>
+    <string name="chat_screen_title">Chat with Notes</string>
+    <string name="on_device_ai">On-device AI</string>
+    <string name="on_device_ai_backend">On-device AI (%1$s)</string>
+    <string name="back_content_description">Back</string>
+    <string name="more_options_content_description">More options</string>
+    <string name="new_chat">New Chat</string>
+    <string name="history">History</string>
+    <string name="ask_about_notes">Ask about your notes...</string>
+    <string name="send_content_description">Send</string>
+    <string name="stop_content_description">Stop</string>
+    <string name="backup_complete">Backup to Google Drive complete</string>
+    <string name="ai_disclaimer">AI can make mistakes. Check important info.</string>
+    <string name="empty_state_title">Chat with your notes</string>
+    <string name="empty_state_description">Ask questions about your notes and get AI-powered answers. All processing happens on your device.</string>
+    <string name="try_asking">Try asking:</string>
+    <string name="suggestion_summarize">Summarize my recent notes</string>
+    <string name="suggestion_topics">What are my main topics?</string>
+    <string name="suggestion_find">Find notes about...</string>
+    <string name="today">Today</string>
+    <string name="referencing_all">Referencing: All Notes</string>
+    <string name="referencing_count">Referencing: %1$d Selected</string>
+    <string name="select_content_description">Select</string>
+    <string name="thought_process">Thought Process</string>
+    <string name="copy_to_note">Copy to Note</string>
+    <string name="share">Share</string>
+    <string name="copied_to_clipboard">Copied to clipboard</string>
 </resources>

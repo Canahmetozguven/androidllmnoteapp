@@ -36,10 +36,20 @@ class FilesViewModel @Inject constructor(
     }
 
     fun checkSignInAndLoad() {
-        val signedIn = driveRepository.isSignedIn()
-        _isSignedIn.value = signedIn
-        if (signedIn) {
-            loadFiles()
+        // Guard against crashes if account is null or permissions missing
+        try {
+            val signedIn = driveRepository.isSignedIn()
+            _isSignedIn.value = signedIn
+            if (signedIn) {
+                loadFiles()
+            } else {
+                 _files.value = emptyList()
+                 // Don't show error immediately on start, just show empty state or "Connect" UI
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("FilesViewModel", "Check sign-in failed", e)
+            _isSignedIn.value = false
+            _importMessage.value = "Auth check failed: ${e.message}"
         }
     }
 

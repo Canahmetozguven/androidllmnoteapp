@@ -91,9 +91,10 @@ fun SettingsScreen(
         if (result.resultCode == Activity.RESULT_OK) {
             viewModel.handleSignInResult(result.data)
         } else {
-             val errorMsg = "Sign in failed (Code: ${result.resultCode}). Verify Google Services SHA-1."
+             // Handle cancellation or failure returned by activity result
+             val errorMsg = if (result.resultCode == Activity.RESULT_CANCELED) "Sign in cancelled" else "Sign in failed (Code: ${result.resultCode})"
              android.util.Log.w("SettingsScreen", errorMsg)
-             Toast.makeText(context, errorMsg, Toast.LENGTH_LONG).show()
+             // We let the ViewModel handle null intents, but here we catch activity result failures
         }
     }
 

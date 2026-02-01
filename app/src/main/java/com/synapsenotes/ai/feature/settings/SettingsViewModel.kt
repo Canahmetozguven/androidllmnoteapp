@@ -147,39 +147,102 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun handleSignInResult(intent: Intent?) {
+        if (intent == null) {
+            android.util.Log.e("SettingsViewModel", "Sign in failed: Intent is null")
+            _uiState.value = _uiState.value.copy(syncStatusMessage = "Sign in failed: No data received")
+            return
+        }
         try {
             android.util.Log.d("SettingsViewModel", "Handling sign in result intent: $intent")
             val task = GoogleSignIn.getSignedInAccountFromIntent(intent)
             val account = task.getResult(ApiException::class.java)
-            android.util.Log.d("SettingsViewModel", "Sign in successful: ${account.email}")
-            onGoogleSignInSuccess(account)
+            if (account != null) {
+                android.util.Log.d("SettingsViewModel", "Sign in successful: ${account.email}")
+                onGoogleSignInSuccess(account)
+            } else {
+                 _uiState.value = _uiState.value.copy(syncStatusMessage = "Sign in failed: Account is null")
+            }
         } catch (e: ApiException) {
             android.util.Log.e("SettingsViewModel", "Sign in failed code: ${e.statusCode}", e)
-            e.printStackTrace()
+            val errorMsg = when(e.statusCode) {
+                7 -> "Network error. Please check your connection."
+                12500 -> "Sign in cancelled or configuration error. Check SHA-1."
+                12501 -> "Sign in cancelled."
+                else -> "Sign in failed (Code: ${e.statusCode})"
+            }
+             _uiState.value = _uiState.value.copy(syncStatusMessage = errorMsg)
+        } catch (e: Exception) {
+             android.util.Log.e("SettingsViewModel", "Sign in failed: ${e.message}", e)
+             _uiState.value = _uiState.value.copy(syncStatusMessage = "Sign in failed: ${e.message}")
         }
     }
 
     private fun checkGoogleSignInStatus() {
+        // 1. Check local cached account FIRST (fast, offline-friendly)
         val account = GoogleSignIn.getLastSignedInAccount(context)
         val hasPermissions = account != null && GoogleSignIn.hasPermissions(
             account, 
             Scope(DriveScopes.DRIVE_FILE), 
             Scope(DriveScopes.DRIVE_READONLY)
         )
-        
+
         if (account != null && hasPermissions) {
+            // We have a valid local token. Use it.
             onGoogleSignInSuccess(account)
-        } else {
-             // If account exists but permissions are missing (e.g. scope upgrade),
-             // treat as disconnected so user can sign in again to grant them.
+            return
+        }
+
+        // 2. If no valid local token but prefs say we should be connected, try silent recovery
+        if (appPreferences.isDriveConnected) {
+             // Show optimistic UI state
              _uiState.value = _uiState.value.copy(
-                isGoogleDriveConnected = false,
-                userEmail = null
-            )
+                 isGoogleDriveConnected = true,
+                 userEmail = appPreferences.driveEmail,
+                 lastSyncedTimestamp = appPreferences.lastSyncTimestamp
+             )
+             
+             // Attempt to refresh credentials
+             googleSignInClient.silentSignIn().addOnCompleteListener { task ->
+                 try {
+                     val refreshedAccount = task.getResult(ApiException::class.java)
+                     // Re-verify permissions
+                     val hasPermissions = GoogleSignIn.hasPermissions(
+                        refreshedAccount,
+                        Scope(DriveScopes.DRIVE_FILE),
+                        Scope(DriveScopes.DRIVE_READONLY)
+                     )
+                     
+                     if (hasPermissions) {
+                         onGoogleSignInSuccess(refreshedAccount)
+                     } else {
+                         // Explicitly revoked permissions -> Disconnect
+                         handleDisconnect()
+                     }
+                 } catch (e: Exception) {
+                     android.util.Log.e("SettingsViewModel", "Silent sign-in failed (ignored to preserve sticky state)", e)
+                     // DO NOT disconnect here. Network flakes or API quirks shouldn't wipe the user's session.
+                     // We will catch actual auth failures during Sync operations.
+                 }
+             }
+        } else {
+             handleDisconnect()
         }
     }
 
+    private fun handleDisconnect() {
+        appPreferences.isDriveConnected = false
+        appPreferences.driveEmail = null
+        _uiState.value = _uiState.value.copy(
+            isGoogleDriveConnected = false,
+            userEmail = null
+        )
+    }
+
     private fun onGoogleSignInSuccess(account: GoogleSignInAccount) {
+        // Save sticky state
+        appPreferences.isDriveConnected = true
+        appPreferences.driveEmail = account.email
+        
         _uiState.value = _uiState.value.copy(
             isGoogleDriveConnected = true,
             userEmail = account.email,
@@ -235,7 +298,18 @@ class SettingsViewModel @Inject constructor(
                 _uiState.value = _uiState.value.copy(isSyncing = false, syncStatusMessage = message)
             } catch (e: Exception) {
                 android.util.Log.e("SettingsViewModel", "Sync failed", e)
-                _uiState.value = _uiState.value.copy(isSyncing = false, syncStatusMessage = "Sync failed")
+                
+                // Check for Auth errors specifically
+                val message = e.message ?: ""
+                if (message.contains("NotSignedIn") || message.contains("AccountMissing") || message.contains("401")) {
+                     _uiState.value = _uiState.value.copy(
+                         isSyncing = false, 
+                         syncStatusMessage = "Session expired. Please reconnect."
+                     )
+                     handleDisconnect()
+                } else {
+                     _uiState.value = _uiState.value.copy(isSyncing = false, syncStatusMessage = "Sync failed: ${e.localizedMessage}")
+                }
             }
         }
     }
@@ -409,14 +483,6 @@ class SettingsViewModel @Inject constructor(
                 }
 
                 _uiState.value = _uiState.value.copy(syncStatusMessage = "Failed to load model: $errorMsg")
-                
-                // Fallback attempt: disable GPU and retry
-                if (errorMsg.contains("GPU") || errorMsg.contains("Vulkan") || hardwareCapabilityProvider.isVulkanSupported()) {
-                     _uiState.value = _uiState.value.copy(syncStatusMessage = "Retrying on CPU...")
-                     // TODO: Add a way to force CPU mode in LlmEngine or ModelManager if GPU fails
-                     // For now, the native code tries GPU, then logs WARN and falls back to CPU if load fails.
-                     // But if it crashes or fails LATER, we need a safer way.
-                }
             }
             
             updateLoadingState(info.id, false, isEmbedding, result.isSuccess)

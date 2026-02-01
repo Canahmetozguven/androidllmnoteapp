@@ -1,0 +1,2 @@
+--------- beginning of main
+02-01 00:59:29.541 I/AndroidRuntime(27239): VM exiting with result code 0, cleanup skipped.

@@ -5,9 +5,28 @@
     native <methods>;
 }
 
-# Keep JNI classes
+# Keep JNI classes - Explicitly keep LlamaContext and its members
+-keep class com.synapsenotes.ai.core.ai.LlamaContext {
+    native <methods>;
+    <init>(...);
+    *;
+}
+
+# Keep Callback Interface and methods (prevent stripping of onToken)
+-keep interface com.synapsenotes.ai.core.ai.LlmCallback {
+    public void onToken(java.lang.String);
+}
+
+# Keep LLM context interfaces/impls explicitly (interface + implementation)
+-keep interface com.synapsenotes.ai.core.ai.LlmContext { *; }
+-keep class com.synapsenotes.ai.core.ai.DefaultLlmContext { *; }
+
+# Keep everything in the AI package to be safe
 -keep class com.synapsenotes.ai.core.ai.** { *; }
--keep class com.synapsenotes.ai.core.ai.** { *; }
+
+# Keep HardwareCapabilityProvider specifically if it's being used for feature detection
+-keep class com.synapsenotes.ai.core.ai.HardwareCapabilityProvider { *; }
+
 
 # Hilt/Dagger rules
 -keep class dagger.hilt.android.internal.** { *; }

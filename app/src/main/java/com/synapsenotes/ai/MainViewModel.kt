@@ -13,6 +13,10 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import java.io.File
 
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ProcessLifecycleOwner
+
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val appPreferences: AppPreferences,
@@ -24,8 +28,33 @@ class MainViewModel @Inject constructor(
     val isOnboardingCompleted: Boolean
         get() = appPreferences.onboardingCompleted
 
+    private val lifecycleObserver = object : DefaultLifecycleObserver {
+        override fun onStart(owner: LifecycleOwner) {
+            restoreModels()
+        }
+
+        override fun onStop(owner: LifecycleOwner) {
+            viewModelScope.launch {
+                Log.i("MainViewModel", "App backgrounded: Releasing LLM engine resources")
+                llmEngine.release()
+            }
+        }
+    }
+
     init {
-        restoreModels()
+        // Register for process lifecycle events to handle memory management
+        // Use the main thread for lifecycle registration
+        ProcessLifecycleOwner.get().lifecycle.addObserver(lifecycleObserver)
+        
+        // Initial load (if not triggered by onStart already)
+        if (ProcessLifecycleOwner.get().lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)) {
+             restoreModels()
+        }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        ProcessLifecycleOwner.get().lifecycle.removeObserver(lifecycleObserver)
     }
 
     private fun restoreModels() {

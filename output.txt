@@ -1,0 +1,5 @@
+INFO  2026-01-31T09:41:33 +209ms service=default version=1.1.47 args=["--print-logs"] opencode
+INFO  2026-01-31T09:41:33 +1ms service=config path=C:\Users\canahmet\.config\opencode\config.json loading
+INFO  2026-01-31T09:41:33 +1ms service=config path=C:\Users\canahmet\.config\opencode\opencode.json loading
+INFO  2026-01-31T09:41:33 +6ms service=config path=C:\Users\canahmet\.config\opencode\opencode.jsonc loading
+^C

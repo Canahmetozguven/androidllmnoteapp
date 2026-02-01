@@ -32,11 +32,30 @@ class OnboardingViewModel @Inject constructor(
 
     fun onGoogleSignInSuccess(account: GoogleSignInAccount) {
         viewModelScope.launch {
-            // TODO: Initialize Drive Service with this account
+            appPreferences.isDriveConnected = true
+            appPreferences.driveEmail = account.email
+            
             _uiState.value = _uiState.value.copy(
                 isGoogleDriveConnected = true,
                 userEmail = account.email
             )
+        }
+    }
+
+    fun handleSignInResult(intent: Intent?) {
+        if (intent == null) {
+             android.util.Log.e("OnboardingVM", "Sign in result intent is null")
+             // Could update UI state to show error
+             return
+        }
+        try {
+            val task = com.google.android.gms.auth.api.signin.GoogleSignIn.getSignedInAccountFromIntent(intent)
+            val account = task.getResult(com.google.android.gms.common.api.ApiException::class.java)
+            if (account != null) {
+                onGoogleSignInSuccess(account)
+            }
+        } catch (e: com.google.android.gms.common.api.ApiException) {
+            android.util.Log.e("OnboardingVM", "Sign in failed code: ${e.statusCode}", e)
         }
     }
 }
