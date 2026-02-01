@@ -1,10 +1,10 @@
 # Implementation Plan - Advanced Backend Optimization Research
 
-## Phase 1: Codebase Audit & Baseline Analysis
+## Phase 1: Codebase Audit & Baseline Analysis [checkpoint: c9411b4]
 - [x] Task: Analyze `cpp_kotlin_jni_setup.md` and related source files to map the current backend selection logic.
 - [x] Task: Review existing build scripts (`build_opencl.sh`, `build_vulkan.sh`) to document current compiler flags and definitions.
 - [x] Task: Examine `VULKAN_OPENCL_AHB_INTEROP_REFERENCE.md` and `GGML_OPENCL_ANALYSIS.md` to establish the known baseline for AHB and OpenCL.
-- [~] Task: Conductor - User Manual Verification 'Codebase Audit & Baseline Analysis' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Codebase Audit & Baseline Analysis' (Protocol in workflow.md)
 
 ## Phase 2: External Research (Adreno/Mali & Llama.cpp)
 - [ ] Task: Research Adreno-specific OpenCL vs. Vulkan performance characteristics and known driver quirks (Qualcomm developer docs, forums).
