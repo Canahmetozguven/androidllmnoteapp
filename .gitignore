@@ -78,3 +78,12 @@ undefined/
 
 .gemini/
 gha-creds-*.json
+
+# Debug logs and temporary files
+*.logcat
+s22_*.txt
+s22_*.log
+*_build_log*.txt
+adb_status.txt
+opencode_log.txt
+output.txt

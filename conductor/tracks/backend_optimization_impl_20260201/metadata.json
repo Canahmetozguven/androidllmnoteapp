@@ -1,8 +1,0 @@
-{
-  "track_id": "backend_optimization_impl_20260201",
-  "type": "feature",
-  "status": "new",
-  "created_at": "2026-02-01T13:00:00Z",
-  "updated_at": "2026-02-01T13:00:00Z",
-  "description": "Implement vendor-aware backend selection (Adreno->OpenCL, Mali->Vulkan) and stability guardrails for Android LLM inference."
-}

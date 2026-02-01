@@ -1,10 +1,12 @@
-# Android LLM Note App (Vulkan Accelerated)
+# Android LLM Note App (Optimized)
 
-A high-performance Android note-taking application featuring on-device Large Language Model (LLM) integration via `llama.cpp` and Vulkan GPU acceleration.
+A high-performance Android note-taking application featuring on-device Large Language Model (LLM) integration via `llama.cpp` with optimized Vulkan and OpenCL GPU acceleration.
 
 ## 🚀 Key Features
 - **On-Device Inference**: Privacy-first AI chat that runs entirely on your device.
-- **GPU Acceleration**: High-speed responses using the Vulkan API.
+- **Dual-Backend GPU Acceleration**: 
+    - **OpenCL**: Optimized for Qualcomm **Adreno** GPUs.
+    - **Vulkan**: Primary backend for **Mali** and **Xclipse** GPUs.
 - **RAG (Retrieval-Augmented Generation)**: Chat with your own notes using local vector search.
 - **Material 3 Design**: Modern, fluid UI with light/dark mode support.
 
@@ -14,77 +16,66 @@ A high-performance Android note-taking application featuring on-device Large Lan
 
 ### Windows Host
 - **Android Studio**: For UI development and emulator management.
-- **Android Emulator**: x86_64 AVD (API 36 recommended) with Graphics set to "Hardware - GLES 2.0" or "Automatic".
+- **Android Emulator**: x86_64 AVD (API 36 recommended).
 - **WSL2 (Ubuntu 22.04)**: For the native C++ build environment.
 
 ### WSL Environment
 - **Android SDK & NDK**: Linux versions must be installed in `~/android-sdk`.
-- **NDK Version**: `26.1.10909125` (specifically required for Vulkan compatibility).
+- **NDK Version**: `26.1.10909125`.
 
 ---
 
 ## 🏗 Setup & Building
 
-The project uses a hybrid build system where the Android app is managed by Gradle, but the heavy lifting of shader generation and C++ cross-compilation is orchestrated in WSL.
-
 ### 1. Initial WSL Setup
-Run the setup script inside your WSL terminal to configure environment variables and install the required NDK:
+Run the setup script inside WSL:
 ```bash
-chmod +x setup_android_sdk.sh
-./setup_android_sdk.sh
+./scripts/setup/setup_android_sdk.sh
 ```
 
 ### 2. Taking a Build
-To build the application with full Vulkan support, run the two-step build script in WSL:
+To build the application with full GPU support (Vulkan + OpenCL), run the unified build script in WSL:
 ```bash
-chmod +x build_vulkan.sh
-./build_vulkan.sh
+./scripts/build/build_full.sh static
 ```
-*This script builds the host shader compiler first, then generates the SPIR-V headers, and finally compiles the APK.*
+*Use `dynamic` mode for testing Backend DL (dlopen) capabilities.*
 
 ### 3. Deployment
-Once the build completes in WSL, the APK will be located at `app/build/outputs/apk/debug/app-debug.apk`. 
-Deploy it to your emulator via Windows CMD/PowerShell:
+APK will be located at `app/build/outputs/apk/release/app-release.apk`. 
+Deploy via Windows:
 ```powershell
-adb install -r app/build/outputs/apk/debug/app-debug.apk
+adb install -r app/build/outputs/apk/release/app-release.apk
 ```
+
+---
+
+## 📂 Documentation Structure
+
+The project documentation is organized as follows:
+
+### 📖 [Guides](./docs/guides/)
+- [START_HERE.md](./docs/guides/START_HERE.md): Quick start for new developers.
+- [VULKAN_WSL_GUIDE.md](./docs/guides/VULKAN_WSL_GUIDE.md): Deep dive into WSL setup.
+- [OPENCL_CMAKE_GUIDE.md](./docs/guides/OPENCL_CMAKE_GUIDE.md): OpenCL build configurations.
+
+### 🏗️ [Architecture](./docs/architecture/)
+- [IMPLEMENTATION_SUMMARY.md](./docs/architecture/IMPLEMENTATION_SUMMARY.md): Overview of the system architecture.
+- [cpp_kotlin_jni_setup.md](./docs/architecture/cpp_kotlin_jni_setup.md): How Kotlin calls into C++.
+- [GGML_OPENCL_ANALYSIS.md](./docs/architecture/GGML_OPENCL_ANALYSIS.md): OpenCL backend implementation details.
+
+### 🎯 [Strategy](./docs/strategy/)
+- [llama_strategy_recommendation.md](./docs/strategy/llama_strategy_recommendation.md): GPU backend selection logic.
+- [VULKAN_VS_OPENCL_PERFORMANCE.md](./docs/architecture/VULKAN_VS_OPENCL_PERFORMANCE.md): Benchmark analysis.
+
+### ✅ [Tasks](./docs/tasks/)
+- [TODO.md](./docs/tasks/TODO.md): Immediate action items.
+- [port_plan.md](./docs/tasks/port_plan.md): The long-term roadmap.
 
 ---
 
 ## 💻 Development Workflow
 
-To maintain high performance and compatibility, follow this sync-and-build workflow:
-
-1.  **Edit Code**: Use Android Studio on **Windows** to modify Kotlin, Compose UI, or C++ files.
-2.  **Sync to WSL**: Since the build runs in WSL, synchronize your changes:
-    ```bash
-    # Example sync command inside WSL
-    cp -r /mnt/c/Users/<user>/Documents/projects/android_note_app/app/src ~/projects/android_note_app/app/
-    ```
-3.  **Rebuild**: Run `./build_vulkan.sh` in WSL.
-4.  **Verify**: Check the **Green Dot** indicator in the Chat header to ensure the GPU is active.
-
----
-
-## 📂 Documentation
-Detailed technical papers and setup guides are located in the `docs/` folder:
-- [Technical Implementation](docs/wsl/technical_implementation.md): Deep dive into Vulkan patches and JNI logic.
-- [Environment Snapshot](docs/wsl/environment_setup.md): Exact system state for reproducibility.
-- [Setup Guide](docs/wsl/setup_guide.md): Step-by-step environment configuration.
-
----
-
-## ⚖ Troubleshooting
-
-### Common Issues
-- **Crash on "Load Model"**: Often caused by stale native libraries (`UnsatisfiedLinkError`). See critical fix below.
-- **No GPU Acceleration**: Check `adb logcat | grep LLAMA_CPP`. If you see "ErrorExtensionNotPresent", the emulator is falling back to CPU.
-- **Compilation Errors**: Ensure you are using NDK `26.1.10909125`. Newer or older versions may have conflicting Vulkan headers.
-
-### CRITICAL: Native Build Caching & Sync
-If you encounter persistent `UnsatisfiedLinkError` or `NoSuchMethodError` despite code changes, the build environment is likely stale.
-
-**Prevention & Fixes:**
-1.  **Explicit JNI Registration:** We use `RegisterNatives` in `JNI_OnLoad` to hardcode the mapping between Java and C++. This prevents name-mangling mismatches.
-2.  **Nuclear Clean:** Manually delete `app/build` and `.cxx` in **BOTH** Windows and WSL environments before rebuilding.
-3.  **Verify Sync:** Always confirm your C++ changes (`native-lib.cpp`) actually exist in the WSL file system before running the build script.
+1.  **Edit Code**: Use Android Studio on **Windows**.
+2.  **Sync to WSL**: Changes are automatically synced by the build script if paths are configured.
+3.  **Rebuild**: Run `./scripts/build/build_full.sh` in WSL.
+4.  **Verify**: Check the Hardware Dashboard in the app to see which backend is active.
