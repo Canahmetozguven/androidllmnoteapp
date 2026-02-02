@@ -65,6 +65,15 @@ val AVAILABLE_MODELS = listOf(
         type = ModelType.CHAT
     ),
     ModelInfo(
+        id = "mobilellm-r1-950m",
+        name = "MobileLLM-R1 950M",
+        url = "https://huggingface.co/DevQuasar/facebook.MobileLLM-R1-950M-GGUF/resolve/main/facebook.MobileLLM-R1-950M.Q4_K_M.gguf",
+        filename = "facebook.MobileLLM-R1-950M.Q4_K_M.gguf",
+        description = "Meta's sub-1B reasoning model",
+        sizeBytes = 649_000_000L,
+        type = ModelType.CHAT
+    ),
+    ModelInfo(
         id = "qwen3-0.6b",
         name = "Qwen3 0.6B",
         url = "https://huggingface.co/bartowski/Qwen_Qwen3-0.6B-GGUF/resolve/main/Qwen_Qwen3-0.6B-Q4_K_M.gguf",
@@ -74,21 +83,21 @@ val AVAILABLE_MODELS = listOf(
         type = ModelType.CHAT
     ),
     ModelInfo(
+        id = "smollm2-1.7b",
+        name = "SmolLM2 1.7B",
+        url = "https://huggingface.co/ngxson/SmolLM2-1.7B-Instruct-Q4_K_M-GGUF/resolve/main/smollm2-1.7b-instruct-q4_k_m.gguf",
+        filename = "smollm2-1.7b-instruct-q4_k_m.gguf",
+        description = "State-of-the-art sub-2B",
+        sizeBytes = 1_138_000_000L,
+        type = ModelType.CHAT
+    ),
+    ModelInfo(
         id = "qwen3-1.7b",
         name = "Qwen3 1.7B",
         url = "https://huggingface.co/bartowski/Qwen_Qwen3-1.7B-GGUF/resolve/main/Qwen_Qwen3-1.7B-Q4_K_M.gguf",
         filename = "Qwen_Qwen3-1.7B-Q4_K_M.gguf",
         description = "Balanced quality (7k+ downloads)",
         sizeBytes = 1_200_000_000L,
-        type = ModelType.CHAT
-    ),
-    ModelInfo(
-        id = "smollm3-3b",
-        name = "SmolLM3 3B",
-        url = "https://huggingface.co/bartowski/HuggingFaceTB_SmolLM3-3B-GGUF/resolve/main/HuggingFaceTB_SmolLM3-3B-Q4_K_M.gguf",
-        filename = "HuggingFaceTB_SmolLM3-3B-Q4_K_M.gguf",
-        description = "Best quality (Dec 2025)",
-        sizeBytes = 1_800_000_000L,
         type = ModelType.CHAT
     ),
     ModelInfo(
