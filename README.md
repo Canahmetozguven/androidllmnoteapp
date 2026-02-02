@@ -34,10 +34,21 @@ Run the setup script inside WSL:
 ```
 
 ### 2. Taking a Build
-To build the application with full GPU support (Vulkan + OpenCL), run the unified build script in WSL:
-```bash
-./build.sh static
-```
+Depending on your target device, choose the appropriate build mode:
+
+- **Ultimate CPU Build (Recommended for Flagships)**: 
+  Optimized for Snapdragon 8 Elite, Gen 3, and Dimensity 9400. Uses I8MM instructions to outperform the GPU.
+  ```bash
+  ./build.sh cpu_ultimate
+  ```
+  *See [ULTIMATE_CPU_GUIDELINES.md](./docs/strategy/ULTIMATE_CPU_GUIDELINES.md) for details.*
+
+- **Standard GPU Build**:
+  Enables Vulkan and OpenCL for broad compatibility.
+  ```bash
+  ./build.sh static
+  ```
+
 *Use `dynamic` mode for testing Backend DL (dlopen) capabilities.*
 
 ### 3. Deployment

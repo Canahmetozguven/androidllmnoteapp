@@ -88,12 +88,21 @@ if (GGML_OPENCL)
     endif()
 endif()
 
-add_library(
-        llm_notes_cpp
-        SHARED
-        native-lib.cpp
-        AhbManager.cpp
-)
+if (ULTIMATE_CPU)
+    add_library(
+            llm_notes_cpp
+            SHARED
+            native-lib.cpp
+    )
+    target_compile_definitions(llm_notes_cpp PRIVATE NO_GPU_INTEROP)
+else()
+    add_library(
+            llm_notes_cpp
+            SHARED
+            native-lib.cpp
+            AhbManager.cpp
+    )
+endif()
 
 target_include_directories(llm_notes_cpp PRIVATE llama/include)
 
@@ -112,10 +121,29 @@ target_link_options(llm_notes_cpp PRIVATE "-Wl,-z,max-page-size=16384")
 # Enable Vulkan Android Platform extensions (required for AHB)
 target_compile_definitions(llm_notes_cpp PRIVATE VK_USE_PLATFORM_ANDROID_KHR)
 
-# ARM64-specific optimizations (CPU Fallback)
+# ARM64-specific optimizations
 if(${CMAKE_ANDROID_ARCH_ABI} MATCHES "arm64-v8a")
-    # Target armv8.2-a+dotprod for faster CPU inference on modern Android
-    # This is safe for Snapdragon 845+, Pixel 3+, Exynos 9810+
-    target_compile_options(llm_notes_cpp PRIVATE "-march=armv8.2-a+dotprod")
-    message(STATUS "Applied ARM64 optimizations: -march=armv8.2-a+dotprod")
+    option(ULTIMATE_CPU "Enable Ultimate CPU Optimizations (I8MM, BF16)" OFF)
+    
+    if (ULTIMATE_CPU)
+        message(STATUS "🚀 Enabling ULTIMATE CPU Optimizations (ARMv8.6-a + i8mm + bf16 + dotprod + OpenMP)")
+        
+        # Compiler Flags
+        add_compile_options("-march=armv8.6-a+i8mm+bf16+dotprod")
+        add_compile_options("-O3")
+        add_compile_options("-flto=thin")
+        
+        # Linker Flags
+        add_link_options("-flto=thin")
+        
+        # OpenMP
+        add_compile_options("-fopenmp")
+        add_link_options("-fopenmp")
+        add_link_options("-static-openmp") # Try static first to avoid bundling issues
+        
+    else()
+        # Standard optimizations (Safe for SD845+)
+        target_compile_options(llm_notes_cpp PRIVATE "-march=armv8.2-a+dotprod")
+        message(STATUS "Applied Standard ARM64 optimizations: -march=armv8.2-a+dotprod")
+    endif()
 endif()

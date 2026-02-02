@@ -7,6 +7,7 @@
 #   ./build.sh dynamic   # Build with dynamic backend loading (dlopen)
 #   ./build.sh clean     # Clean build artifacts
 #   ./build.sh release   # Clean build + Static build (Production)
+#   ./build.sh cpu_ultimate # Build optimized for High-End CPU (SD 8 Elite)
 #
 set -e
 
@@ -107,6 +108,22 @@ clean_build() {
 }
 
 # === Step 3: Copy Artifacts ===
+bundle_omp() {
+    echo "=== Bundling libomp.so ==="
+    # Find libomp.so in NDK
+    local OMP_PATH=$(find $ANDROID_HOME/ndk -name "libomp.so" | grep "aarch64" | head -1)
+    
+    if [ -n "$OMP_PATH" ]; then
+        echo "Found libomp.so at: $OMP_PATH"
+        local JNI_DIR="$PROJECT_DIR/app/src/main/jniLibs/arm64-v8a"
+        mkdir -p "$JNI_DIR"
+        cp "$OMP_PATH" "$JNI_DIR/"
+        echo "Successfully bundled libomp.so to $JNI_DIR"
+    else
+        echo "WARNING: libomp.so not found in NDK. OpenMP might fail at runtime."
+    fi
+}
+
 copy_artifacts() {
     local VERSION=$(get_version)
     local WSL_ARTIFACTS_DIR="$PROJECT_DIR/artifacts"
@@ -202,9 +219,34 @@ case "$BUILD_MODE" in
         clean_build
         ;;
     release)
-        echo "Starting Full Release Build (Clean + Static)..."
+        echo "🚀 Starting Full Release Build (Clean + Static)..."
         clean_build
         build_all "static"
+        ;;
+    cpu_ultimate)
+        echo "💪 Starting ULTIMATE CPU Build (Clean + I8MM + No GPU)..."
+        clean_build
+        
+        # Override build_all logic slightly for this special case
+        sync_source
+        
+        # We don't need shader gen for CPU only
+        echo "⚠️  Skipping shader generation (CPU Mode)"
+        
+        echo "⚙️  Compiling Android APK with ULTIMATE CPU Optimizations..."
+        # Bundle OpenMP for CPU mode
+        bundle_omp
+        
+        ./gradlew :app:assembleRelease :app:bundleRelease \
+            -Dorg.gradle.java.home="/usr/lib/jvm/java-17-openjdk-amd64" \
+            -PuseVulkan=false \
+            -PuseOpenCL=false \
+            -PcmakeFlags="-DULTIMATE_CPU=ON -DGGML_OPENCL=OFF -DGGML_VULKAN=OFF" \
+            2>&1 | grep -E "^Building|error|warning|:app:" || true
+            
+        copy_artifacts
+        
+        echo "✅ Ultimate CPU Build Finished"
         ;;
     static|dynamic)
         build_all "$BUILD_MODE"

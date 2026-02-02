@@ -532,20 +532,21 @@ open class DefaultHardwareCapabilityProvider @Inject constructor(
          // Get actual GPU vendor from EGL
          val renderer = gpuInfoProvider.getGpuRenderer()?.lowercase() ?: ""
          
-         // 1. Adreno (Qualcomm) -> OpenCL preferred
-         if (renderer.contains("adreno")) {
-             return listOf(BackendType.OPENCL, BackendType.VULKAN, BackendType.CPU)
-         }
-         
-         // 2. Mali (ARM) -> Vulkan preferred
-         if (renderer.contains("mali")) {
-             return listOf(BackendType.VULKAN, BackendType.OPENCL, BackendType.CPU)
-         }
-         
-         // 3. Xclipse (Samsung/AMD) -> Vulkan preferred
-         if (renderer.contains("xclipse") || renderer.contains("amd")) {
-             return listOf(BackendType.VULKAN, BackendType.OPENCL, BackendType.CPU)
-         }
+          // 1. Adreno (Qualcomm) -> CPU preferred
+          // Research (Feb 2026) shows CPU + I8MM is 3x-5x faster than Adreno OpenCL for token generation.
+          if (renderer.contains("adreno")) {
+              return listOf(BackendType.CPU, BackendType.OPENCL, BackendType.VULKAN)
+          }
+          
+          // 2. Mali (ARM) -> CPU preferred
+          if (renderer.contains("mali")) {
+              return listOf(BackendType.CPU, BackendType.VULKAN, BackendType.OPENCL)
+          }
+          
+          // 3. Xclipse (Samsung/AMD) -> CPU preferred
+          if (renderer.contains("xclipse") || renderer.contains("amd")) {
+              return listOf(BackendType.CPU, BackendType.VULKAN, BackendType.OPENCL)
+          }
          
          // Fallback/Legacy heuristics if EGL failed
          

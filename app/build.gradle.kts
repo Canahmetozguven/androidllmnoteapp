@@ -42,8 +42,9 @@ val diffMillis = calendar.timeInMillis - startOfYear.timeInMillis
 val minutesSinceStart = (diffMillis / 60000).toInt()
 
 val baseVersion = 2026000000
-// Add manual offset to avoid conflict with previous version 2026040935
-val manualOffset = 1000 
+// Add manual offset to avoid conflict with previous versions
+// Bump this when Play Store rejects due to version code conflict
+val manualOffset = 2000 
 val autoVersionCode = baseVersion + minutesSinceStart + manualOffset
 
 android {
@@ -141,6 +142,13 @@ android {
                 // CPU Optimization flags for fallback stability
                 // Note: Moved architecture-specific flags to CMakeLists.txt to avoid x86_64 build errors
                 // arguments += listOf("-DCMAKE_CXX_FLAGS=-march=armv8.2-a+dotprod")
+
+                // Inject custom CMake flags from build script (e.g. ULTIMATE_CPU)
+                val cmakeFlags = project.findProperty("cmakeFlags") as? String
+                if (!cmakeFlags.isNullOrEmpty()) {
+                    // Simple split by space. Ensure flags passed don't contain spaces within values.
+                    arguments += cmakeFlags.split(" ")
+                }
             }
         }
     }
