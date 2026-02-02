@@ -21,12 +21,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.FormatListBulleted
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CloudDone
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FormatBold
 import androidx.compose.material.icons.filled.FormatItalic
-import androidx.compose.material.icons.filled.FormatListBulleted
 import androidx.compose.material.icons.filled.FormatUnderlined
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Title
@@ -59,6 +59,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -79,6 +81,8 @@ fun NoteDetailScreen(
     viewModel: NoteDetailViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
     var showAiSheet by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
 
@@ -181,7 +185,13 @@ fun NoteDetailScreen(
         bottomBar = {
             // Formatting Toolbar
             Box(modifier = Modifier.imePadding().navigationBarsPadding()) {
-                FormattingToolbar()
+                FormattingToolbar(
+                    onDone = {
+                        viewModel.saveNote()
+                        focusManager.clearFocus()
+                        keyboardController?.hide()
+                    }
+                )
             }
         }
     ) { padding ->
@@ -284,7 +294,9 @@ fun NoteDetailScreen(
 }
 
 @Composable
-private fun FormattingToolbar() {
+internal fun FormattingToolbar(
+    onDone: () -> Unit
+) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.surface,
@@ -313,7 +325,7 @@ private fun FormattingToolbar() {
                         .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
                 )
                 
-                FormatButton(Icons.Default.FormatListBulleted, "List")
+                FormatButton(Icons.AutoMirrored.Filled.FormatListBulleted, "List")
                 FormatButton(Icons.Default.Title, "Header")
             }
             
@@ -321,7 +333,8 @@ private fun FormattingToolbar() {
             Text(
                 text = "Done",
                 style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.clickable(onClick = onDone)
             )
         }
     }
