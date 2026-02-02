@@ -353,7 +353,7 @@ class SettingsViewModel @Inject constructor(
             )
         }
 
-        _uiState.value = SettingsUiState(chatModels, embeddingModels)
+        _uiState.value = _uiState.value.copy(chatModels = chatModels, embeddingModels = embeddingModels)
     }
 
     private fun updateDownloadStatus(workInfos: List<WorkInfo>) {
@@ -386,9 +386,8 @@ class SettingsViewModel @Inject constructor(
                 )
             }
         }
-        _uiState.value = SettingsUiState(currentChat, currentEmbed)
+        _uiState.value = _uiState.value.copy(chatModels = currentChat, embeddingModels = currentEmbed)
     }
-
 
     fun downloadModel(info: ModelInfo) {
         val request = OneTimeWorkRequestBuilder<DownloadWorker>()
@@ -517,6 +516,6 @@ class SettingsViewModel @Inject constructor(
             }
         }
         
-        _uiState.value = SettingsUiState(currentChat, currentEmbed)
+        _uiState.value = _uiState.value.copy(chatModels = currentChat, embeddingModels = currentEmbed)
     }
 }
