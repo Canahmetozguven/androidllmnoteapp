@@ -18,6 +18,27 @@ class ModelManager @Inject constructor(
         if (!modelsDir.exists()) {
             modelsDir.mkdirs()
         }
+        
+        // Copy bundled models from assets
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+            try {
+                val assets = context.assets.list("") ?: return@launch
+                for (assetName in assets) {
+                    if (assetName.endsWith(".gguf")) {
+                        val destFile = File(modelsDir, assetName)
+                        if (!destFile.exists()) {
+                            context.assets.open(assetName).use { input ->
+                                destFile.outputStream().use { output ->
+                                    input.copyTo(output)
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
     }
 
     fun isModelAvailable(modelName: String): Boolean {

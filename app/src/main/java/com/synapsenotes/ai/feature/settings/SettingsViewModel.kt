@@ -56,6 +56,15 @@ enum class ModelType {
 val AVAILABLE_MODELS = listOf(
     // Chat Models - Qwen3 Family (Apache 2.0)
     ModelInfo(
+        id = "lfm2-1.2b-rag",
+        name = "LFM2 1.2B RAG",
+        url = "https://huggingface.co/LiquidAI/LFM2-1.2B-RAG-GGUF/resolve/main/LFM2-1.2B-RAG-Q4_K_M.gguf",
+        filename = "LFM2-1.2B-RAG-Q4_K_M.gguf",
+        description = "LiquidAI RAG Specialist",
+        sizeBytes = 730_894_048L,
+        type = ModelType.CHAT
+    ),
+    ModelInfo(
         id = "qwen3-0.6b",
         name = "Qwen3 0.6B",
         url = "https://huggingface.co/bartowski/Qwen_Qwen3-0.6B-GGUF/resolve/main/Qwen_Qwen3-0.6B-Q4_K_M.gguf",
