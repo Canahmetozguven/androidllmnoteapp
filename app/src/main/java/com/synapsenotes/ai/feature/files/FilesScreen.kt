@@ -1,5 +1,6 @@
 package com.synapsenotes.ai.feature.files
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,6 +37,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -53,13 +55,23 @@ fun FilesScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     val isSignedIn by viewModel.isSignedIn.collectAsState()
     val importMessage by viewModel.importMessage.collectAsState()
+    val toastMessage by viewModel.toastMessage.collectAsState()
     
+    val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(importMessage) {
         importMessage?.let {
             snackbarHostState.showSnackbar(it)
             viewModel.clearImportMessage()
+        }
+    }
+
+    // Show Toast for download errors
+    LaunchedEffect(toastMessage) {
+        toastMessage?.let {
+            Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+            viewModel.clearToastMessage()
         }
     }
 

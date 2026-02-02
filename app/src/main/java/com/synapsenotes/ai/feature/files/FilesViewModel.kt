@@ -1,5 +1,6 @@
 package com.synapsenotes.ai.feature.files
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.synapsenotes.ai.domain.repository.DriveFile
@@ -19,6 +20,10 @@ class FilesViewModel @Inject constructor(
     private val saveNoteUseCase: SaveNoteUseCase
 ) : ViewModel() {
 
+    companion object {
+        private const val TAG = "FilesViewModel"
+    }
+
     private val _files = MutableStateFlow<List<DriveFile>>(emptyList())
     val files: StateFlow<List<DriveFile>> = _files.asStateFlow()
 
@@ -27,6 +32,9 @@ class FilesViewModel @Inject constructor(
     
     private val _importMessage = MutableStateFlow<String?>(null)
     val importMessage: StateFlow<String?> = _importMessage.asStateFlow()
+
+    private val _toastMessage = MutableStateFlow<String?>(null)
+    val toastMessage: StateFlow<String?> = _toastMessage.asStateFlow()
 
     private val _isSignedIn = MutableStateFlow(false)
     val isSignedIn: StateFlow<Boolean> = _isSignedIn.asStateFlow()
@@ -73,24 +81,34 @@ class FilesViewModel @Inject constructor(
     fun importFile(file: DriveFile) {
         viewModelScope.launch {
             _isLoading.value = true
-            val content = driveRepository.downloadFile(file.id, file.mimeType)
-            if (content != null) {
-                val newNote = Note(
-                    id = java.util.UUID.randomUUID().toString(),
-                    title = file.name,
-                    content = content,
-                    createdAt = System.currentTimeMillis(),
-                    updatedAt = System.currentTimeMillis(),
-                    tags = emptyList(),
-                    embedding = null
-                )
-                saveNoteUseCase(newNote)
-                _importMessage.value = "Imported '${file.name}'"
-            } else {
-                _importMessage.value = "Failed to import '${file.name}'"
-            }
+            val result = driveRepository.downloadFile(file.id, file.mimeType)
+            result.fold(
+                onSuccess = { content ->
+                    val newNote = Note(
+                        id = java.util.UUID.randomUUID().toString(),
+                        title = file.name,
+                        content = content,
+                        createdAt = System.currentTimeMillis(),
+                        updatedAt = System.currentTimeMillis(),
+                        tags = emptyList(),
+                        embedding = null
+                    )
+                    saveNoteUseCase(newNote)
+                    _importMessage.value = "Imported '${file.name}'"
+                },
+                onFailure = { exception ->
+                    Log.e(TAG, "Failed to import file '${file.name}': ${exception.message}", exception)
+                    val errorMessage = "Download failed: ${exception.message ?: "Unknown error"}"
+                    _importMessage.value = "Failed to import '${file.name}'"
+                    _toastMessage.value = errorMessage
+                }
+            )
             _isLoading.value = false
         }
+    }
+    
+    fun clearToastMessage() {
+        _toastMessage.value = null
     }
     
     fun clearImportMessage() {

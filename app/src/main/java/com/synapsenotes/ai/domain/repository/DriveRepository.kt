@@ -13,6 +13,6 @@ data class DriveFile(
 interface DriveRepository {
     fun isSignedIn(): Boolean
     suspend fun listFiles(): List<DriveFile>
-    suspend fun downloadFile(fileId: String, mimeType: String): String?
+    suspend fun downloadFile(fileId: String, mimeType: String): Result<String>
     suspend fun uploadFile(name: String, content: String): String?
 }

@@ -57,4 +57,36 @@ class GoogleDriveRepositoryTest {
             // Success
         }
     }
+
+    @Test
+    fun `downloadFile returns failure Result when not signed in`() = runTest {
+        every { GoogleSignIn.getLastSignedInAccount(any()) } returns null
+
+        val result = repository.downloadFile("file123", "text/plain")
+        
+        org.junit.jupiter.api.Assertions.assertTrue(result.isFailure, "Expected Result.failure when not signed in")
+        val exception = result.exceptionOrNull()
+        org.junit.jupiter.api.Assertions.assertNotNull(exception, "Exception should not be null")
+        org.junit.jupiter.api.Assertions.assertTrue(
+            exception is DriveError.NotSignedIn,
+            "Expected DriveError.NotSignedIn but got ${exception?.javaClass?.simpleName}"
+        )
+    }
+
+    @Test
+    fun `downloadFile returns failure Result when account missing`() = runTest {
+        val account = mockk<GoogleSignInAccount>()
+        every { account.account } returns null
+        every { GoogleSignIn.getLastSignedInAccount(any()) } returns account
+
+        val result = repository.downloadFile("file123", "text/plain")
+        
+        org.junit.jupiter.api.Assertions.assertTrue(result.isFailure, "Expected Result.failure when account missing")
+        val exception = result.exceptionOrNull()
+        org.junit.jupiter.api.Assertions.assertNotNull(exception, "Exception should not be null")
+        org.junit.jupiter.api.Assertions.assertTrue(
+            exception is DriveError.AccountMissing,
+            "Expected DriveError.AccountMissing but got ${exception?.javaClass?.simpleName}"
+        )
+    }
 }

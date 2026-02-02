@@ -24,6 +24,10 @@ class GoogleDriveRepository @Inject constructor(
     @ApplicationContext private val context: Context
 ) : DriveRepository {
 
+    companion object {
+        private const val TAG = "GoogleDriveRepository"
+    }
+
     override fun isSignedIn(): Boolean {
         val googleAccount = GoogleSignIn.getLastSignedInAccount(context)
         return googleAccount != null && googleAccount.account != null
@@ -96,12 +100,15 @@ class GoogleDriveRepository @Inject constructor(
         }
     }
 
-    override suspend fun downloadFile(fileId: String, mimeType: String): String? = withContext(Dispatchers.IO) {
+    override suspend fun downloadFile(fileId: String, mimeType: String): Result<String> = withContext(Dispatchers.IO) {
         val service = try { 
             getDriveService() 
+        } catch (e: DriveError) { 
+            android.util.Log.e(TAG, "Download failed: Auth error - ${e.javaClass.simpleName}", e)
+            return@withContext Result.failure(e)
         } catch (e: Exception) { 
-            android.util.Log.e("GoogleDriveRepository", "Download failed: Auth error", e)
-            return@withContext null 
+            android.util.Log.e(TAG, "Download failed: Unexpected auth error - ${e.message}", e)
+            return@withContext Result.failure(DriveError.UnknownError("Auth error: ${e.message}", e))
         }
         
         try {
@@ -115,13 +122,14 @@ class GoogleDriveRepository @Inject constructor(
                 service.files().get(fileId)
                     .executeMediaAndDownloadTo(outputStream)
             }
-            outputStream.toString("UTF-8")
+            Result.success(outputStream.toString("UTF-8"))
         } catch (e: com.google.api.client.googleapis.json.GoogleJsonResponseException) {
-            android.util.Log.e("GoogleDriveRepository", "Download failed (JSON): ${e.details}", e)
-            null
+            val error = handleGoogleError(e)
+            android.util.Log.e(TAG, "Download failed (JSON): ${e.details?.message ?: e.message}", e)
+            Result.failure(error)
         } catch (e: Exception) {
-            android.util.Log.e("GoogleDriveRepository", "Download failed: ${e.message}", e)
-            null
+            android.util.Log.e(TAG, "Download failed: ${e.javaClass.name}: ${e.message}", e)
+            Result.failure(DriveError.UnknownError(e.message ?: "Unknown download error", e))
         }
     }
 
