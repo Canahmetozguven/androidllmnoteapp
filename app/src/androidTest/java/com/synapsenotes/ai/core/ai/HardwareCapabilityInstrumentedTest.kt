@@ -15,7 +15,8 @@ class HardwareCapabilityInstrumentedTest {
         // Use the real implementation with the test application context
         val provider = DefaultHardwareCapabilityProvider(
             ApplicationProvider.getApplicationContext(),
-            DefaultLlmContext()
+            DefaultLlmContext(),
+            GpuInfoProvider()
         )
 
         // Check RAM

@@ -20,7 +20,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.ArrowBack
+
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CloudDone
 import androidx.compose.material.icons.filled.Download
@@ -110,7 +112,7 @@ fun SettingsScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            imageVector = Icons.Default.ArrowBack,
                             contentDescription = "Back"
                         )
                     }
@@ -126,7 +128,7 @@ fun SettingsScreen(
         ) {
             // Cloud Backup Section
             item {
-                SectionHeader(title = "CLOUD BACKUP")
+                SettingsSectionHeader(title = "CLOUD BACKUP")
             }
             
             item {
@@ -149,7 +151,7 @@ fun SettingsScreen(
 
             // Chat Models Section
             item {
-                SectionHeader(title = "CHAT MODELS")
+                SettingsSectionHeader(title = "CHAT MODELS")
             }
 
             items(uiState.chatModels) { model ->
@@ -164,7 +166,7 @@ fun SettingsScreen(
 
             // Embedding Models Section
             item {
-                SectionHeader(title = "EMBEDDING MODELS")
+                SettingsSectionHeader(title = "EMBEDDING MODELS")
             }
 
             items(uiState.embeddingModels) { model ->
@@ -179,7 +181,7 @@ fun SettingsScreen(
             item { Spacer(modifier = Modifier.height(16.dp)) }
             
             item {
-                SectionHeader(title = "ABOUT")
+                SettingsSectionHeader(title = "ABOUT")
             }
             
             item {
@@ -203,7 +205,7 @@ fun SettingsScreen(
 }
 
 @Composable
-private fun SectionHeader(title: String) {
+internal fun SettingsSectionHeader(title: String) {
     Text(
         text = title,
         style = MaterialTheme.typography.labelSmall,
@@ -214,7 +216,7 @@ private fun SectionHeader(title: String) {
 }
 
 @Composable
-private fun CloudBackupCard(
+internal fun CloudBackupCard(
     isConnected: Boolean,
     userEmail: String?,
     isSyncing: Boolean = false,
@@ -313,10 +315,19 @@ private fun CloudBackupCard(
                     onClick = onConnect,
                     shape = RoundedCornerShape(20.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
-                    )
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        contentColor = MaterialTheme.colorScheme.onSurface
+                    ),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
                 ) {
-                    Text("Connect")
+                    Icon(
+                        imageVector = Icons.Default.AccountCircle,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Sign in with Google")
                 }
             }
         }
@@ -520,7 +531,7 @@ private fun formatFileSize(bytes: Long): String {
 }
 
 @Composable
-private fun AboutPrivacyButton(onClick: () -> Unit) {
+internal fun AboutPrivacyButton(onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -571,7 +582,7 @@ private fun AboutPrivacyButton(onClick: () -> Unit) {
             }
             
             Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                imageVector = Icons.Default.ArrowBack,
                 contentDescription = null,
                 tint = SecondaryText,
                 modifier = Modifier
