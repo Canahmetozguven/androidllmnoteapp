@@ -117,9 +117,6 @@ target_link_libraries(
 # Enforce 16KB page size alignment for Android 15+ compatibility
 target_link_options(llm_notes_cpp PRIVATE "-Wl,-z,max-page-size=16384")
 
-# Enable Vulkan Android Platform extensions (required for AHB)
-target_compile_definitions(llm_notes_cpp PRIVATE VK_USE_PLATFORM_ANDROID_KHR)
-
 # ARM64-specific optimizations
 if(${CMAKE_ANDROID_ARCH_ABI} MATCHES "arm64-v8a")
     option(ULTIMATE_CPU "Enable Ultimate CPU Optimizations (I8MM, BF16)" OFF)
