@@ -20,21 +20,6 @@ enum GPUVendor {
     GPU_UNKNOWN
 };
 
-// AHB (Android Hardware Buffer) capability structure
-struct AHBCapability {
-    bool vulkan_ahb_supported = false;
-    bool opencl_arm_import_memory = false;
-    bool opencl_arm_ahb = false;
-    bool opencl_qcom_ahb = false;
-    GPUVendor vendor = GPU_UNKNOWN;
-    
-    bool is_ahb_available() const {
-        return vulkan_ahb_supported || 
-               (opencl_arm_import_memory && opencl_arm_ahb) || 
-               opencl_qcom_ahb;
-    }
-};
-
 // Hardware detection and automatic backend selection
 static std::string get_system_property(const char* key) {
     char value[PROP_VALUE_MAX] = {0};
@@ -171,102 +156,6 @@ static void batch_add(llama_batch & batch, llama_token id, llama_pos pos, int32_
     batch.n_tokens++;
 }
 
-// AHB Capability Detection Functions
-static AHBCapability detect_ahb_capabilities() {
-    AHBCapability cap;
-    cap.vendor = detect_gpu_vendor();
-    
-    // Check Vulkan AHB support
-    // Note: This is a basic check. Full Vulkan instance/device enumeration would be more robust
-    // but requires Vulkan initialization, which we defer to avoid overhead.
-    // We assume if Vulkan is available on Android 28+, AHB extension is likely supported.
-    cap.vulkan_ahb_supported = true; // Optimistic - real check needs vkEnumerateInstanceExtensionProperties
-    __android_log_print(ANDROID_LOG_INFO, TAG, "Vulkan AHB: Assumed available (requires runtime verification via vkEnumerateDeviceExtensionProperties)");
-    
-    // Check OpenCL AHB support via dlsym
-    void* opencl_handle = dlopen("libOpenCL.so", RTLD_NOW | RTLD_LOCAL);
-    if (!opencl_handle) {
-        // Try alternate paths
-        const char* paths[] = {
-            "/system/vendor/lib64/libOpenCL.so",
-            "/system/lib64/libOpenCL.so",
-            "/vendor/lib64/libOpenCL.so"
-        };
-        for (const char* path : paths) {
-            opencl_handle = dlopen(path, RTLD_NOW | RTLD_LOCAL);
-            if (opencl_handle) break;
-        }
-    }
-    
-    if (opencl_handle) {
-        // Query OpenCL extensions
-        // We need clGetPlatformIDs and clGetPlatformInfo to check extensions
-        typedef int (*clGetPlatformIDs_t)(unsigned int, void*, unsigned int*);
-        typedef int (*clGetPlatformInfo_t)(void*, unsigned int, size_t, void*, size_t*);
-        
-        auto clGetPlatformIDs = (clGetPlatformIDs_t)dlsym(opencl_handle, "clGetPlatformIDs");
-        auto clGetPlatformInfo = (clGetPlatformInfo_t)dlsym(opencl_handle, "clGetPlatformInfo");
-        
-        if (clGetPlatformIDs && clGetPlatformInfo) {
-            void* platform_id = nullptr;
-            unsigned int num_platforms = 0;
-            
-            if (clGetPlatformIDs(1, &platform_id, &num_platforms) == 0 && num_platforms > 0) {
-                // Query extensions string (CL_PLATFORM_EXTENSIONS = 0x0900)
-                const unsigned int CL_PLATFORM_EXTENSIONS = 0x0900;
-                size_t ext_size = 0;
-                clGetPlatformInfo(platform_id, CL_PLATFORM_EXTENSIONS, 0, nullptr, &ext_size);
-                
-                if (ext_size > 0) {
-                    std::vector<char> ext_str(ext_size);
-                    clGetPlatformInfo(platform_id, CL_PLATFORM_EXTENSIONS, ext_size, ext_str.data(), nullptr);
-                    std::string extensions(ext_str.data());
-                    
-                    // Check for ARM extensions
-                    if (extensions.find("cl_arm_import_memory") != std::string::npos) {
-                        cap.opencl_arm_import_memory = true;
-                        __android_log_print(ANDROID_LOG_INFO, TAG, "OpenCL: cl_arm_import_memory available");
-                    }
-                    if (extensions.find("cl_arm_import_memory_android_hardware_buffer") != std::string::npos) {
-                        cap.opencl_arm_ahb = true;
-                        __android_log_print(ANDROID_LOG_INFO, TAG, "OpenCL: cl_arm_import_memory_android_hardware_buffer available");
-                    }
-                    
-                    // Check for Qualcomm extension
-                    if (extensions.find("cl_qcom_android_hardware_buffer_interop") != std::string::npos) {
-                        cap.opencl_qcom_ahb = true;
-                        __android_log_print(ANDROID_LOG_INFO, TAG, "OpenCL: cl_qcom_android_hardware_buffer_interop available");
-                    }
-                    
-                    __android_log_print(ANDROID_LOG_DEBUG, TAG, "OpenCL Extensions: %s", extensions.c_str());
-                } else {
-                    __android_log_print(ANDROID_LOG_WARN, TAG, "OpenCL: No platform extensions found");
-                }
-            } else {
-                __android_log_print(ANDROID_LOG_WARN, TAG, "OpenCL: No platforms available");
-            }
-        } else {
-            __android_log_print(ANDROID_LOG_WARN, TAG, "OpenCL: Failed to load platform query functions");
-        }
-        
-        dlclose(opencl_handle);
-    } else {
-        __android_log_print(ANDROID_LOG_INFO, TAG, "OpenCL: Library not available - no AHB support");
-    }
-    
-    // Summary log
-    __android_log_print(ANDROID_LOG_INFO, TAG, 
-        "AHB Capability Summary - Vendor: %s, Vulkan AHB: %d, ARM Import: %d, ARM AHB: %d, QCOM AHB: %d, Overall: %s",
-        cap.vendor == GPU_ADRENO ? "Adreno" : (cap.vendor == GPU_MALI ? "Mali" : "Unknown"),
-        cap.vulkan_ahb_supported,
-        cap.opencl_arm_import_memory,
-        cap.opencl_arm_ahb,
-        cap.opencl_qcom_ahb,
-        cap.is_ahb_available() ? "AVAILABLE" : "NOT AVAILABLE");
-    
-    return cap;
-}
-
 // Forward declarations
 extern "C" {
     JNIEXPORT jboolean JNICALL Java_com_synapsenotes_ai_core_ai_LlamaContext_loadModelNative(JNIEnv* env, jobject, jstring path, jstring template_str, jint n_batch, jint n_ctx, jboolean use_mmap, jint backend_id);
@@ -279,8 +168,6 @@ extern "C" {
     JNIEXPORT void JNICALL Java_com_synapsenotes_ai_core_ai_LlamaContext_unload(JNIEnv* env, jobject);
     // Probe Native
     JNIEXPORT jboolean JNICALL Java_com_synapsenotes_ai_core_ai_NativeLib_probeBackendNative(JNIEnv* env, jobject, jint backend_id);
-    // AHB Support Check
-    JNIEXPORT jboolean JNICALL Java_com_synapsenotes_ai_core_ai_LlamaContext_isAHBSupported(JNIEnv* env, jobject, jint backend_id);
     // Test Methods
     JNIEXPORT jint JNICALL Java_com_synapsenotes_ai_core_ai_NativeLib_testSelectionLogicNative(JNIEnv* env, jobject, jstring soc, jstring hw);
 }
@@ -304,7 +191,6 @@ JNI_OnLoad(JavaVM* vm, void* reserved) {
             {"stopCompletion", "()V", (void*)Java_com_synapsenotes_ai_core_ai_LlamaContext_stopCompletion},
             {"isGpuEnabled", "()Z", (void*)Java_com_synapsenotes_ai_core_ai_LlamaContext_isGpuEnabled},
             {"isOpenCLAvailable", "()Z", (void*)Java_com_synapsenotes_ai_core_ai_LlamaContext_isOpenCLAvailable},
-            {"isAHBSupported", "(I)Z", (void*)Java_com_synapsenotes_ai_core_ai_LlamaContext_isAHBSupported},
             {"embed", "(Ljava/lang/String;)[F", (void*)Java_com_synapsenotes_ai_core_ai_LlamaContext_embed},
             {"unload", "()V", (void*)Java_com_synapsenotes_ai_core_ai_LlamaContext_unload}
         };
@@ -936,52 +822,6 @@ Java_com_synapsenotes_ai_core_ai_LlamaContext_unload(JNIEnv* env, jobject) {
     } catch (...) {
         __android_log_print(ANDROID_LOG_ERROR, TAG, "Unknown exception in unload");
     }
-}
-
-extern "C" JNIEXPORT jboolean JNICALL
-Java_com_synapsenotes_ai_core_ai_LlamaContext_isAHBSupported(JNIEnv* env, jobject, jint backend_id) {
-    __android_log_print(ANDROID_LOG_INFO, TAG, "Checking AHB support for backend_id: %d", backend_id);
-    
-    // Detect capabilities
-    AHBCapability cap = detect_ahb_capabilities();
-    
-    // Backend-specific logic
-    // 0 = CPU (no AHB needed)
-    if (backend_id == 0) {
-        __android_log_print(ANDROID_LOG_INFO, TAG, "CPU backend - AHB not applicable");
-        return JNI_FALSE;
-    }
-    
-    // 1 = Vulkan
-    if (backend_id == 1) {
-        bool supported = cap.vulkan_ahb_supported;
-        __android_log_print(ANDROID_LOG_INFO, TAG, "Vulkan AHB support: %s", supported ? "YES" : "NO");
-        return supported ? JNI_TRUE : JNI_FALSE;
-    }
-    
-    // 2 = OpenCL
-    if (backend_id == 2) {
-        bool supported = false;
-        
-        // ARM Mali requires both extensions
-        if (cap.vendor == GPU_MALI) {
-            supported = cap.opencl_arm_import_memory && cap.opencl_arm_ahb;
-            __android_log_print(ANDROID_LOG_INFO, TAG, "ARM Mali OpenCL AHB support: %s", supported ? "YES" : "NO");
-        }
-        // Qualcomm Adreno uses different extension
-        else if (cap.vendor == GPU_ADRENO) {
-            supported = cap.opencl_qcom_ahb;
-            __android_log_print(ANDROID_LOG_INFO, TAG, "Qualcomm Adreno OpenCL AHB support: %s", supported ? "YES" : "NO");
-        }
-        else {
-            __android_log_print(ANDROID_LOG_WARN, TAG, "Unknown GPU vendor - OpenCL AHB support uncertain");
-        }
-        
-        return supported ? JNI_TRUE : JNI_FALSE;
-    }
-    
-    __android_log_print(ANDROID_LOG_WARN, TAG, "Unknown backend_id: %d", backend_id);
-    return JNI_FALSE;
 }
 
 extern "C" JNIEXPORT jint JNICALL

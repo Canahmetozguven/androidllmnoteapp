@@ -100,7 +100,6 @@ else()
             llm_notes_cpp
             SHARED
             native-lib.cpp
-            AhbManager.cpp
     )
 endif()
 

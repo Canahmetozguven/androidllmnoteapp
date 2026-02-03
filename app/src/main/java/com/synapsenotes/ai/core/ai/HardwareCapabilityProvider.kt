@@ -125,11 +125,4 @@ interface HardwareCapabilityProvider {
      * Clear the embedding attempting status.
      */
     fun clearEmbeddingBackendAttempting()
-
-    /**
-     * Check if Android Hardware Buffer (AHB) interop is supported.
-     * Returns true if both Vulkan and OpenCL backends support AHB.
-     * This is required for hybrid Vulkan/OpenCL acceleration with zero-copy memory sharing.
-     */
-    fun isAHBInteropSupported(): Boolean
 }

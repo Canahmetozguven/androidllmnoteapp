@@ -24,5 +24,4 @@ class LlamaContext {
     external fun unload()
     external fun isGpuEnabled(): Boolean
     external fun isOpenCLAvailable(): Boolean
-    external fun isAHBSupported(backendId: Int): Boolean
 }

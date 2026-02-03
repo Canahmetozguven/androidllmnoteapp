@@ -601,29 +601,6 @@ open class DefaultHardwareCapabilityProvider @Inject constructor(
         return BackendType.CPU
     }
 
-    override fun isAHBInteropSupported(): Boolean {
-        // For AHB interop to work, we need both Vulkan (backend ID 1) and OpenCL (backend ID 2) to support it.
-        // This enables zero-copy memory sharing for hybrid acceleration.
-        val vulkanSupported = try {
-            llmContext.isAHBSupported(1)
-        } catch (e: Exception) {
-            android.util.Log.e(TAG, "Failed to check Vulkan AHB support", e)
-            false
-        }
-        
-        val openclSupported = try {
-            llmContext.isAHBSupported(2)
-        } catch (e: Exception) {
-            android.util.Log.e(TAG, "Failed to check OpenCL AHB support", e)
-            false
-        }
-        
-        val isSupported = vulkanSupported && openclSupported
-        android.util.Log.i(TAG, "AHB Interop Support - Vulkan: $vulkanSupported, OpenCL: $openclSupported, Overall: $isSupported")
-        
-        return isSupported
-    }
-
     companion object {
         private const val TAG = "HardwareCapability"
     }
