@@ -30,6 +30,9 @@ High-performance C++ bridge managing Vulkan-accelerated LLM inference via JNI an
   - Global state (`g_model`, `g_context`) is shared; ensure single-threaded access or add mutexes if expanding.
   - Respect `g_stop_requested` atomic flag for user cancellation.
 - **Logging**: Use `__android_log_print` with tag `LLM_JNI`.
+- **JNI Null Safety**: 
+  - ALWAYS check `jobject` and `jstring` parameters for null before calling NDK functions. Use `env->ExceptionCheck()` after calling back into Java to prevent native crashes from unhandled JVM exceptions.
+  - ALWAYS check for `nullptr` when converting C strings to Java strings (e.g., via `NewStringUTF`) to handle invalid UTF-8 or allocation failures gracefully.
 
 ## TESTING STRATEGY
 - **Kotlin Wrapper**: Test `LlmContext` (Kotlin) by mocking the JNI calls if possible, or usually just test `LlmEngine` (Core layer) and mock `LlmContext`.
