@@ -33,7 +33,8 @@ class LlmEngine @Inject constructor(
             "<｜User｜>", "<｜Assistant｜>", "<｜end▁of▁sentence｜>", 
             "<|im_end|>", "<|im_start|>", 
             "</s>", "<|endoftext|>",
-            "<|eot_id|>", "<|end_of_text|>", "<|begin_of_text|>"
+            "<|eot_id|>", "<|end_of_text|>", "<|begin_of_text|>",
+            "<|start_header_id|>", "<|end_header_id|>", "<|python_tag|>"
         )
     }
 
