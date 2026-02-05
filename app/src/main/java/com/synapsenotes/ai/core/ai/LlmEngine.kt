@@ -32,11 +32,13 @@ class LlmEngine @Inject constructor(
         private val DEFAULT_STOP_SEQUENCES = arrayOf(
             "<｜User｜>", "<｜Assistant｜>", "<｜end▁of▁sentence｜>", 
             "<|im_end|>", "<|im_start|>", 
-            "</s>", "<|endoftext|>"
+            "</s>", "<|endoftext|>",
+            "<|eot_id|>", "<|end_of_text|>", "<|begin_of_text|>"
         )
     }
 
-    private var isLoaded = false
+    private var isChatLoaded = false
+    private var isEmbeddingLoaded = false
     private val mutex = Mutex()
 
     /**
@@ -57,11 +59,11 @@ class LlmEngine @Inject constructor(
     fun isGpuEnabled(): Boolean = llmContext.isGpuEnabled()
 
     suspend fun loadModel(path: String, template: String? = null): Result<Boolean> = withContext(Dispatchers.IO) {
-        mutex.withLock {
-            if (isLoaded) {
-                llmContext.unload()
-                isLoaded = false
-            }
+         mutex.withLock {
+             if (isChatLoaded) {
+                 llmContext.unloadChat()
+                 isChatLoaded = false
+             }
 
                         // Get available backends (excludes already-failed ones)
 
@@ -130,10 +132,10 @@ class LlmEngine @Inject constructor(
                             hardwareCapabilityProvider.setPreferredBackend(backend)
                         }
                         
-                        isLoaded = true
-                        val hwInfo = getHardwareInfo()
-                        Log.i(TAG, "Model loaded successfully. Active Backend: ${hwInfo.backendName}. Batch: $nBatch, Ctx: $nCtx, Mmap: $useMmap")
-                        return@withContext Result.success(true)
+                        isChatLoaded = true
+                         val hwInfo = getHardwareInfo()
+                         Log.i(TAG, "Model loaded successfully. Active Backend: ${hwInfo.backendName}. Batch: $nBatch, Ctx: $nCtx, Mmap: $useMmap")
+                         return@withContext Result.success(true)
                     } else {
                         Log.w(TAG, "Backend $backend failed to load model (returned false), marking as failed")
                         if (backend != BackendType.CPU) {
@@ -209,13 +211,14 @@ class LlmEngine @Inject constructor(
                         llmContext.loadEmbeddingModel(path, nBatch, nCtx, useMmap, backend)
                     }
                     
-                    if (success) {
-                         if (backend != BackendType.CPU) {
-                             hardwareCapabilityProvider.clearEmbeddingBackendAttempting()
-                             hardwareCapabilityProvider.setPreferredEmbeddingBackend(backend)
-                         }
-                         Log.i(TAG, "Embedding model loaded successfully with $backend")
-                         return@withContext Result.success(true)
+                     if (success) {
+                          if (backend != BackendType.CPU) {
+                              hardwareCapabilityProvider.clearEmbeddingBackendAttempting()
+                              hardwareCapabilityProvider.setPreferredEmbeddingBackend(backend)
+                          }
+                          isEmbeddingLoaded = true
+                          Log.i(TAG, "Embedding model loaded successfully with $backend")
+                          return@withContext Result.success(true)
                     } else {
                         Log.w(TAG, "Embedding backend $backend failed (returned false)")
                         if (backend != BackendType.CPU) {
@@ -242,13 +245,13 @@ class LlmEngine @Inject constructor(
         }
     }
 
-    fun completionFlow(prompt: String): Flow<String> = callbackFlow {
-        launch(Dispatchers.IO) {
-            mutex.withLock {
-                if (!isLoaded) {
-                    close(IllegalStateException("Model not loaded"))
-                    return@withLock
-                }
+     fun completionFlow(prompt: String): Flow<String> = callbackFlow {
+         launch(Dispatchers.IO) {
+             mutex.withLock {
+                 if (!isChatLoaded) {
+                     close(IllegalStateException("Model not loaded"))
+                     return@withLock
+                 }
                 
                 try {
                     val callback = object : LlmCallback {
@@ -275,26 +278,30 @@ class LlmEngine @Inject constructor(
         llmContext.stopCompletion()
     }
 
-    suspend fun completion(prompt: String): String = withContext(Dispatchers.IO) {
-        mutex.withLock {
-            if (!isLoaded) throw IllegalStateException("Model not loaded")
-            llmContext.completion(prompt, DEFAULT_SYSTEM_PROMPT, DEFAULT_STOP_SEQUENCES)
-        }
-    }
+     suspend fun completion(prompt: String): String = withContext(Dispatchers.IO) {
+         mutex.withLock {
+             if (!isChatLoaded) throw IllegalStateException("Chat model not loaded")
+             llmContext.completion(prompt, DEFAULT_SYSTEM_PROMPT, DEFAULT_STOP_SEQUENCES)
+         }
+     }
 
-    suspend fun embed(text: String): FloatArray = withContext(Dispatchers.IO) {
-        mutex.withLock {
-            if (!isLoaded) throw IllegalStateException("Model not loaded")
-            llmContext.embed(text)
-        }
-    }
+     suspend fun embed(text: String): FloatArray = withContext(Dispatchers.IO) {
+         mutex.withLock {
+             if (!isEmbeddingLoaded) throw IllegalStateException("Embedding model not loaded")
+             llmContext.embed(text)
+         }
+     }
 
-    suspend fun release() {
-        mutex.withLock {
-            if (isLoaded) {
-                llmContext.unload()
-                isLoaded = false
-            }
-        }
-    }
+     suspend fun release() {
+         mutex.withLock {
+             if (isChatLoaded) {
+                 llmContext.unloadChat()
+                 isChatLoaded = false
+             }
+             if (isEmbeddingLoaded) {
+                 llmContext.unloadEmbedding()
+                 isEmbeddingLoaded = false
+             }
+         }
+     }
 }
