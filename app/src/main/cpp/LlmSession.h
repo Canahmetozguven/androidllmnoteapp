@@ -42,6 +42,32 @@ public:
         chat_template.clear();
     }
 
+    void unloadChat() {
+        std::lock_guard<std::mutex> lock(session_mutex);
+        if (context) {
+            llama_free(context);
+            context = nullptr;
+        }
+        if (model) {
+            llama_model_free(model);
+            model = nullptr;
+        }
+        gpu_enabled = false;
+        chat_template.clear();
+    }
+
+    void unloadEmbedding() {
+        std::lock_guard<std::mutex> lock(session_mutex);
+        if (context_embed) {
+            llama_free(context_embed);
+            context_embed = nullptr;
+        }
+        if (model_embed) {
+            llama_model_free(model_embed);
+            model_embed = nullptr;
+        }
+    }
+
     // Chat Model State
     llama_model* model;
     llama_context* context;
