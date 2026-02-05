@@ -22,6 +22,8 @@ class LlamaContext {
     external fun stopCompletion()
     external fun embed(text: String): FloatArray
     external fun unload()
+    external fun unloadChat()
+    external fun unloadEmbedding()
     external fun isGpuEnabled(): Boolean
     external fun isOpenCLAvailable(): Boolean
 }

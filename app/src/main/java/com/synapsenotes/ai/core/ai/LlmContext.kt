@@ -13,6 +13,8 @@ interface LlmContext {
     fun stopCompletion()
     fun embed(text: String): FloatArray
     fun unload()
+    fun unloadChat()
+    fun unloadEmbedding()
     fun isGpuEnabled(): Boolean
     fun isOpenCLAvailable(): Boolean
 }
@@ -60,6 +62,18 @@ class DefaultLlmContext @Inject constructor() : LlmContext {
     override fun unload() {
         if (isLibraryLoaded()) {
             nativeContext.unload()
+        }
+    }
+
+    override fun unloadChat() {
+        if (isLibraryLoaded()) {
+            nativeContext.unloadChat()
+        }
+    }
+
+    override fun unloadEmbedding() {
+        if (isLibraryLoaded()) {
+            nativeContext.unloadEmbedding()
         }
     }
 
