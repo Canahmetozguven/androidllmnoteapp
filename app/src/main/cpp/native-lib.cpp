@@ -166,6 +166,8 @@ extern "C" {
     JNIEXPORT jboolean JNICALL Java_com_synapsenotes_ai_core_ai_LlamaContext_isOpenCLAvailable(JNIEnv* env, jobject);
     JNIEXPORT jfloatArray JNICALL Java_com_synapsenotes_ai_core_ai_LlamaContext_embed(JNIEnv* env, jobject, jstring text);
     JNIEXPORT void JNICALL Java_com_synapsenotes_ai_core_ai_LlamaContext_unload(JNIEnv* env, jobject);
+    JNIEXPORT void JNICALL Java_com_synapsenotes_ai_core_ai_LlamaContext_unloadChat(JNIEnv* env, jobject);
+    JNIEXPORT void JNICALL Java_com_synapsenotes_ai_core_ai_LlamaContext_unloadEmbedding(JNIEnv* env, jobject);
     // Probe Native
     JNIEXPORT jboolean JNICALL Java_com_synapsenotes_ai_core_ai_NativeLib_probeBackendNative(JNIEnv* env, jobject, jint backend_id);
     // Test Methods
@@ -192,7 +194,9 @@ JNI_OnLoad(JavaVM* vm, void* reserved) {
             {"isGpuEnabled", "()Z", (void*)Java_com_synapsenotes_ai_core_ai_LlamaContext_isGpuEnabled},
             {"isOpenCLAvailable", "()Z", (void*)Java_com_synapsenotes_ai_core_ai_LlamaContext_isOpenCLAvailable},
             {"embed", "(Ljava/lang/String;)[F", (void*)Java_com_synapsenotes_ai_core_ai_LlamaContext_embed},
-            {"unload", "()V", (void*)Java_com_synapsenotes_ai_core_ai_LlamaContext_unload}
+            {"unload", "()V", (void*)Java_com_synapsenotes_ai_core_ai_LlamaContext_unload},
+            {"unloadChat", "()V", (void*)Java_com_synapsenotes_ai_core_ai_LlamaContext_unloadChat},
+            {"unloadEmbedding", "()V", (void*)Java_com_synapsenotes_ai_core_ai_LlamaContext_unloadEmbedding}
         };
         if (env->RegisterNatives(clazz, methods, sizeof(methods) / sizeof(methods[0])) < 0) {
              __android_log_print(ANDROID_LOG_ERROR, TAG, "Failed to register LlamaContext natives");
@@ -657,6 +661,10 @@ Java_com_synapsenotes_ai_core_ai_LlamaContext_completion(JNIEnv* env, jobject, j
                 result_str += piece;
                 
                 jstring jPiece = env->NewStringUTF(piece.c_str());
+                if (jPiece == nullptr) {
+                    __android_log_print(ANDROID_LOG_WARN, TAG, "Invalid UTF-8 token skipped");
+                    continue; 
+                }
                 env->CallVoidMethod(callback, onTokenMethod, jPiece);
                 if (env->ExceptionCheck()) {
                     env->ExceptionClear();
@@ -821,6 +829,32 @@ Java_com_synapsenotes_ai_core_ai_LlamaContext_unload(JNIEnv* env, jobject) {
         __android_log_print(ANDROID_LOG_ERROR, TAG, "Exception in unload: %s", e.what());
     } catch (...) {
         __android_log_print(ANDROID_LOG_ERROR, TAG, "Unknown exception in unload");
+    }
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_synapsenotes_ai_core_ai_LlamaContext_unloadChat(JNIEnv* env, jobject) {
+    try {
+        LlmSession* session = get_session();
+        session->unloadChat();
+        __android_log_print(ANDROID_LOG_INFO, TAG, "Chat model unloaded");
+    } catch (const std::exception& e) {
+        __android_log_print(ANDROID_LOG_ERROR, TAG, "Exception in unloadChat: %s", e.what());
+    } catch (...) {
+        __android_log_print(ANDROID_LOG_ERROR, TAG, "Unknown exception in unloadChat");
+    }
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_synapsenotes_ai_core_ai_LlamaContext_unloadEmbedding(JNIEnv* env, jobject) {
+    try {
+        LlmSession* session = get_session();
+        session->unloadEmbedding();
+        __android_log_print(ANDROID_LOG_INFO, TAG, "Embedding model unloaded");
+    } catch (const std::exception& e) {
+        __android_log_print(ANDROID_LOG_ERROR, TAG, "Exception in unloadEmbedding: %s", e.what());
+    } catch (...) {
+        __android_log_print(ANDROID_LOG_ERROR, TAG, "Unknown exception in unloadEmbedding");
     }
 }
 
