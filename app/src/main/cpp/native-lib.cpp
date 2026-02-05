@@ -10,15 +10,9 @@
 #include <dlfcn.h>
 #include "llama.h"
 #include "LlmSession.h"
+#include "AhbManager.h"
 
 #define TAG "LLM_JNI"
-
-enum GPUVendor {
-    GPU_ADRENO,      // Qualcomm
-    GPU_MALI,        // ARM
-    GPU_POWERVR,     // Imagination
-    GPU_UNKNOWN
-};
 
 // Hardware detection and automatic backend selection
 static std::string get_system_property(const char* key) {
@@ -293,20 +287,22 @@ extern "C" {
 
 extern "C" JNIEXPORT jint JNICALL
 JNI_OnLoad(JavaVM* vm, void* reserved) {
-    __android_log_print(ANDROID_LOG_INFO, TAG, "JNI_OnLoad: Initializing llama.cpp backend [Build: 2026-01-21 v6 - Hybrid Probe]");
-    
-    // Check AHB capabilities early for diagnostic purposes
-    __android_log_print(ANDROID_LOG_INFO, TAG, "=== AHB Capability Detection ===");
-    bool vulkan_ahb = check_vulkan_ahb_support();
-    bool opencl_ahb = check_opencl_ahb_support();
-    __android_log_print(ANDROID_LOG_INFO, TAG, "AHB Summary: Vulkan=%s, OpenCL=%s", 
-                       vulkan_ahb ? "YES" : "NO", opencl_ahb ? "YES" : "NO");
-    __android_log_print(ANDROID_LOG_INFO, TAG, "=================================");
+    __android_log_print(ANDROID_LOG_INFO, TAG, "JNI_OnLoad: Initializing llama.cpp backend [Build: 2026-02-06 v7 - AHB Manager]");
     
     JNIEnv* env;
     if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) {
         return JNI_ERR;
     }
+
+    // Initialize AHB Manager for vendor-aware interop path selection
+    __android_log_print(ANDROID_LOG_INFO, TAG, "=== AHB Manager Initialization ===");
+    AhbManager ahbManager;
+    if (ahbManager.init(env)) {
+        __android_log_print(ANDROID_LOG_INFO, TAG, "AHB Manager: Path selected = %s", ahbManager.getInteropTypeString());
+    } else {
+        __android_log_print(ANDROID_LOG_WARN, TAG, "AHB Manager: No interop path available");
+    }
+    __android_log_print(ANDROID_LOG_INFO, TAG, "===================================");
 
     // Register LlamaContext natives
     jclass clazz = env->FindClass("com/synapsenotes/ai/core/ai/LlamaContext");

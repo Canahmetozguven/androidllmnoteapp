@@ -1,70 +1,73 @@
-#pragma once
+#ifndef AHB_MANAGER_H
+#define AHB_MANAGER_H
 
-#include <android/hardware_buffer.h>
-#include <vulkan/vulkan.h>
-
-#ifdef GGML_USE_OPENCL
-#include <CL/cl.h>
-#include <CL/cl_ext.h>
-#endif
-
-#include <vector>
-#include <string>
+#include <jni.h>
 #include <android/log.h>
+#include <dlfcn.h>
+#include <string>
 
-#define TAG_AHB "AhbManager"
+#define AHB_TAG "AHB_MANAGER"
 
-#ifdef GGML_USE_OPENCL
-// Forward declarations for function pointers to avoid linking issues
-typedef cl_mem (*clImportMemoryARM_fn)(cl_context, cl_mem_flags, const cl_import_properties_arm*, void*, size_t, cl_int*);
+// AHB Interop Path Selection
+enum AhbInteropType {
+    AHB_PATH_NONE = 0,    // No AHB support or unsupported vendor
+    AHB_PATH_ARM = 1,     // ARM Mali path (cl_arm_import_memory extensions)
+    AHB_PATH_QCOM = 2     // Qualcomm Adreno path (cl_qcom_android_hardware_buffer_interop)
+};
 
-// QCOM extension function pointer (if different from ARM)
-typedef cl_mem (*clCreateMemObjectFromAHardwareBufferQCOM_fn)(cl_context, cl_mem_flags, AHardwareBuffer*, cl_int*);
-#endif
+// GPU Vendor Detection (reuse from native-lib.cpp)
+enum GPUVendor {
+    GPU_ADRENO,      // Qualcomm
+    GPU_MALI,        // ARM
+    GPU_POWERVR,     // Imagination
+    GPU_UNKNOWN
+};
 
+/**
+ * AhbManager: Vendor-aware AHB interop abstraction
+ * 
+ * Responsibilities:
+ * - Detect GPU vendor (ARM Mali vs Qualcomm Adreno vs Unsupported)
+ * - Select appropriate AHB import path based on OpenCL extensions
+ * - Provide interop type for downstream import/export logic
+ * 
+ * Usage:
+ *   AhbManager manager;
+ *   manager.init(env);
+ *   AhbInteropType type = manager.getInteropType();
+ */
 class AhbManager {
 public:
-    struct SharedResource {
-        AHardwareBuffer* ahb = nullptr;
-        VkImage vkImage = VK_NULL_HANDLE;
-        VkDeviceMemory vkMemory = VK_NULL_HANDLE;
-#ifdef GGML_USE_OPENCL
-        cl_mem clMem = nullptr;
-#endif
-        uint32_t width = 0;
-        uint32_t height = 0;
-        uint32_t format = 0; // AHARDWAREBUFFER_FORMAT_...
-    };
-
     AhbManager();
     ~AhbManager();
-
-    // Check if system supports AHB
-    bool isSupported() const;
-
-    // Allocate an AHardwareBuffer directly
-    AHardwareBuffer* allocateAHB(uint32_t width, uint32_t height, uint32_t format, uint64_t usage);
-
-    // Create a Vulkan Image backed by an AHardwareBuffer (Import or Export)
-    bool createVulkanExportableImage(VkDevice device, VkPhysicalDevice physicalDevice, 
-                                     uint32_t width, uint32_t height, 
-                                     SharedResource& outResource);
-
-#ifdef GGML_USE_OPENCL
-    // Import an existing AHB into OpenCL
-    cl_mem importAHBToOpenCL(cl_context context, AHardwareBuffer* ahb, 
-                             const cl_import_properties_arm* properties = nullptr);
     
-    // Wait for all OpenCL operations on the queue to complete
-    bool waitForOpenCL(cl_command_queue queue);
-#endif
-
-    // Wait for all Vulkan operations on the queue to complete
-    bool waitForVulkan(VkQueue queue);
-
+    /**
+     * Initialize AHB manager - detect vendor and check extensions
+     * @param env JNI environment (reserved for future use)
+     * @return true if initialization successful, false otherwise
+     */
+    bool init(JNIEnv* env);
+    
+    /**
+     * Get the detected AHB interop path
+     * @return AhbInteropType enum indicating supported path
+     */
+    AhbInteropType getInteropType() const;
+    
+    /**
+     * Get human-readable string of current interop type
+     * @return String representation for logging
+     */
+    const char* getInteropTypeString() const;
+    
 private:
-    bool mSupported;
+    AhbInteropType interop_type_;
+    GPUVendor gpu_vendor_;
     
-    // Helper to find memory type index
-    uint32_t findMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties);
+    // Internal detection methods
+    GPUVendor detectGpuVendor();
+    bool checkOpenClAhbExtensions();
+    bool checkVulkanAhbExtension();
 };
+
+#endif // AHB_MANAGER_H

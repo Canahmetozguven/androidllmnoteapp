@@ -1,454 +1,197 @@
 #include "AhbManager.h"
-#include <dlfcn.h>
+#include <sys/system_properties.h>
+#include <cstring>
 #include <vector>
 
-// Log macros
-#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG_AHB, __VA_ARGS__)
-#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, TAG_AHB, __VA_ARGS__)
-#define LOGW(...) __android_log_print(ANDROID_LOG_WARN, TAG_AHB, __VA_ARGS__)
-
-// Function pointers for dynamically loaded functions (if needed)
-typedef PFN_vkGetMemoryAndroidHardwareBufferANDROID vkGetMemoryAndroidHardwareBufferANDROID_fn;
-
-AhbManager::AhbManager()
-    : mSupported(false)
-{
-    // Check if AHardwareBuffer is available (API 26+)
-    // The mere existence of this constructor suggests we're building for API 26+
-    // A real implementation might check __ANDROID_API__ or query system properties
-#if __ANDROID_API__ >= 26
-    mSupported = true;
-    LOGI("AhbManager initialized - AHardwareBuffer supported");
-#else
-    LOGW("AhbManager initialized - AHardwareBuffer NOT supported (API < 26)");
-#endif
+// Helper to get Android system properties
+static std::string get_system_property(const char* key) {
+    char value[PROP_VALUE_MAX] = {0};
+    __system_property_get(key, value);
+    return std::string(value);
 }
 
-AhbManager::~AhbManager()
-{
-    LOGI("AhbManager destroyed");
+// Resolve GPU vendor from SoC/hardware strings (logic from native-lib.cpp)
+static GPUVendor resolve_gpu_vendor(const std::string& soc, const std::string& hardware) {
+    // Check for Adreno (Qualcomm Snapdragon)
+    if (soc.find("msm") != std::string::npos || 
+        soc.find("sm") != std::string::npos ||
+        soc.find("sdm") != std::string::npos ||
+        hardware.find("qcom") != std::string::npos) {
+        return GPU_ADRENO;
+    }
+    
+    // Check for Mali (Samsung Exynos, MediaTek, Google Tensor)
+    if (soc.find("exynos") != std::string::npos ||
+        soc.find("mt") != std::string::npos ||
+        soc.find("gs201") != std::string::npos || // Tensor G2
+        soc.find("zuma") != std::string::npos ||  // Tensor G3
+        hardware.find("exynos") != std::string::npos ||
+        hardware.find("gs201") != std::string::npos ||
+        hardware.find("zuma") != std::string::npos) {
+        return GPU_MALI;
+    }
+    
+    return GPU_UNKNOWN;
 }
 
-bool AhbManager::isSupported() const
-{
-    return mSupported;
+AhbManager::AhbManager() 
+    : interop_type_(AHB_PATH_NONE), gpu_vendor_(GPU_UNKNOWN) {
 }
 
-AHardwareBuffer* AhbManager::allocateAHB(uint32_t width, uint32_t height, uint32_t format, uint64_t usage)
-{
-    if (!mSupported)
-    {
-        LOGE("allocateAHB: AHardwareBuffer not supported on this platform");
-        return nullptr;
-    }
-
-    AHardwareBuffer_Desc desc{};
-    desc.width = width;
-    desc.height = height;
-    desc.layers = 1;
-    desc.format = format;
-    desc.usage = usage;
-
-    AHardwareBuffer* ahb = nullptr;
-    int result = AHardwareBuffer_allocate(&desc, &ahb);
-
-    if (result != 0 || ahb == nullptr)
-    {
-        LOGE("allocateAHB: AHardwareBuffer_allocate failed with code %d", result);
-        return nullptr;
-    }
-
-    LOGI("allocateAHB: Successfully allocated AHB (%ux%u, format=%u, usage=%llu)",
-         width, height, format, (unsigned long long)usage);
-
-    return ahb;
+AhbManager::~AhbManager() {
 }
 
-bool AhbManager::createVulkanExportableImage(VkDevice device, VkPhysicalDevice physicalDevice,
-                                             uint32_t width, uint32_t height,
-                                             SharedResource& outResource)
-{
-    if (!mSupported)
-    {
-        LOGE("createVulkanExportableImage: AHardwareBuffer not supported");
-        return false;
+bool AhbManager::init(JNIEnv* env) {
+    __android_log_print(ANDROID_LOG_INFO, AHB_TAG, "Initializing AhbManager");
+    
+    // Detect GPU vendor
+    gpu_vendor_ = detectGpuVendor();
+    
+    // Check OpenCL AHB extensions
+    bool opencl_ahb = checkOpenClAhbExtensions();
+    
+    // Check Vulkan AHB extension
+    bool vulkan_ahb = checkVulkanAhbExtension();
+    
+    // Select interop path based on vendor and extension availability
+    if (gpu_vendor_ == GPU_MALI && opencl_ahb) {
+        interop_type_ = AHB_PATH_ARM;
+        __android_log_print(ANDROID_LOG_INFO, AHB_TAG, "Selected AHB path: ARM Mali");
+    } else if (gpu_vendor_ == GPU_ADRENO && opencl_ahb) {
+        interop_type_ = AHB_PATH_QCOM;
+        __android_log_print(ANDROID_LOG_INFO, AHB_TAG, "Selected AHB path: Qualcomm Adreno");
+    } else {
+        interop_type_ = AHB_PATH_NONE;
+        __android_log_print(ANDROID_LOG_WARN, AHB_TAG, "AHB interop not supported - vendor: %d, opencl: %d, vulkan: %d", 
+                           gpu_vendor_, opencl_ahb, vulkan_ahb);
     }
-
-    outResource.width = width;
-    outResource.height = height;
-    outResource.format = AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM;
-
-    // Step 1: Create VkImage with external memory create info
-    VkExternalMemoryImageCreateInfo externalMemoryImageCreateInfo{};
-    externalMemoryImageCreateInfo.sType = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO;
-    externalMemoryImageCreateInfo.pNext = nullptr;
-    externalMemoryImageCreateInfo.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_ANDROID_HARDWARE_BUFFER_BIT_ANDROID;
-
-    VkImageCreateInfo imageCreateInfo{};
-    imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    imageCreateInfo.pNext = &externalMemoryImageCreateInfo;
-    imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
-    imageCreateInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
-    imageCreateInfo.mipLevels = 1;
-    imageCreateInfo.arrayLayers = 1;
-    imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-    imageCreateInfo.tiling = VK_IMAGE_TILING_LINEAR;  // Important for AHB compatibility
-    imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    imageCreateInfo.extent = {width, height, 1};
-    imageCreateInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-
-    VkResult result = vkCreateImage(device, &imageCreateInfo, nullptr, &outResource.vkImage);
-    if (result != VK_SUCCESS)
-    {
-        LOGE("createVulkanExportableImage: vkCreateImage failed with code %d", result);
-        return false;
-    }
-
-    // Step 2: Get memory requirements
-    VkMemoryRequirements memoryRequirements{};
-    vkGetImageMemoryRequirements(device, outResource.vkImage, &memoryRequirements);
-
-    // Step 3: Setup dedicated memory allocation
-    VkMemoryDedicatedAllocateInfo dedicatedAllocateInfo{};
-    dedicatedAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO;
-    dedicatedAllocateInfo.pNext = nullptr;
-    dedicatedAllocateInfo.buffer = VK_NULL_HANDLE;
-    dedicatedAllocateInfo.image = outResource.vkImage;
-
-    // Step 4: Create exportable memory allocation
-    VkExportMemoryAllocateInfo exportMemoryAllocateInfo{};
-    exportMemoryAllocateInfo.sType = VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO;
-    exportMemoryAllocateInfo.pNext = &dedicatedAllocateInfo;
-    exportMemoryAllocateInfo.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_ANDROID_HARDWARE_BUFFER_BIT_ANDROID;
-
-    // Find suitable memory type
-    uint32_t memoryTypeIndex = findMemoryType(physicalDevice, 
-                                               memoryRequirements.memoryTypeBits,
-                                               VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-    VkMemoryAllocateInfo memoryAllocateInfo{};
-    memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    memoryAllocateInfo.pNext = &exportMemoryAllocateInfo;
-    memoryAllocateInfo.allocationSize = memoryRequirements.size;
-    memoryAllocateInfo.memoryTypeIndex = memoryTypeIndex;
-
-    result = vkAllocateMemory(device, &memoryAllocateInfo, nullptr, &outResource.vkMemory);
-    if (result != VK_SUCCESS)
-    {
-        LOGE("createVulkanExportableImage: vkAllocateMemory failed with code %d", result);
-        vkDestroyImage(device, outResource.vkImage, nullptr);
-        outResource.vkImage = VK_NULL_HANDLE;
-        return false;
-    }
-
-    // Step 5: Bind image to memory
-    result = vkBindImageMemory(device, outResource.vkImage, outResource.vkMemory, 0);
-    if (result != VK_SUCCESS)
-    {
-        LOGE("createVulkanExportableImage: vkBindImageMemory failed with code %d", result);
-        vkFreeMemory(device, outResource.vkMemory, nullptr);
-        vkDestroyImage(device, outResource.vkImage, nullptr);
-        outResource.vkMemory = VK_NULL_HANDLE;
-        outResource.vkImage = VK_NULL_HANDLE;
-        return false;
-    }
-
-    // Step 6: Export AHardwareBuffer from Vulkan memory
-    // Load the extension function dynamically
-    vkGetMemoryAndroidHardwareBufferANDROID_fn vkGetMemoryAndroidHardwareBufferANDROID =
-        (vkGetMemoryAndroidHardwareBufferANDROID_fn)vkGetDeviceProcAddr(device, "vkGetMemoryAndroidHardwareBufferANDROID");
-
-    if (!vkGetMemoryAndroidHardwareBufferANDROID)
-    {
-        LOGE("createVulkanExportableImage: Failed to load vkGetMemoryAndroidHardwareBufferANDROID");
-        vkFreeMemory(device, outResource.vkMemory, nullptr);
-        vkDestroyImage(device, outResource.vkImage, nullptr);
-        outResource.vkMemory = VK_NULL_HANDLE;
-        outResource.vkImage = VK_NULL_HANDLE;
-        return false;
-    }
-
-    VkMemoryGetAndroidHardwareBufferInfoANDROID info{};
-    info.sType = VK_STRUCTURE_TYPE_MEMORY_GET_ANDROID_HARDWARE_BUFFER_INFO_ANDROID;
-    info.pNext = nullptr;
-    info.memory = outResource.vkMemory;
-
-    result = vkGetMemoryAndroidHardwareBufferANDROID(device, &info, &outResource.ahb);
-    if (result != VK_SUCCESS)
-    {
-        LOGE("createVulkanExportableImage: vkGetMemoryAndroidHardwareBufferANDROID failed with code %d", result);
-        vkFreeMemory(device, outResource.vkMemory, nullptr);
-        vkDestroyImage(device, outResource.vkImage, nullptr);
-        outResource.vkMemory = VK_NULL_HANDLE;
-        outResource.vkImage = VK_NULL_HANDLE;
-        return false;
-    }
-
-    LOGI("createVulkanExportableImage: Successfully created exportable image (%ux%u)", width, height);
-    return true;
+    
+    __android_log_print(ANDROID_LOG_INFO, AHB_TAG, "AhbManager initialized - Type: %s", getInteropTypeString());
+    return interop_type_ != AHB_PATH_NONE;
 }
 
-cl_mem AhbManager::importAHBToOpenCL(cl_context context, AHardwareBuffer* ahb,
-                                     const cl_import_properties_arm* properties)
-{
-    if (!mSupported)
-    {
-        LOGE("importAHBToOpenCL: AHardwareBuffer not supported");
-        return nullptr;
+AhbInteropType AhbManager::getInteropType() const {
+    return interop_type_;
+}
+
+const char* AhbManager::getInteropTypeString() const {
+    switch (interop_type_) {
+        case AHB_PATH_ARM:  return "ARM_MALI";
+        case AHB_PATH_QCOM: return "QUALCOMM_ADRENO";
+        case AHB_PATH_NONE: return "NONE";
+        default:            return "UNKNOWN";
     }
+}
 
-    if (ahb == nullptr)
-    {
-        LOGE("importAHBToOpenCL: Invalid AHardwareBuffer (null)");
-        return nullptr;
+GPUVendor AhbManager::detectGpuVendor() {
+    std::string soc = get_system_property("ro.board.platform");
+    std::string hardware = get_system_property("ro.hardware");
+    
+    GPUVendor vendor = resolve_gpu_vendor(soc, hardware);
+    
+    if (vendor == GPU_ADRENO) {
+        __android_log_print(ANDROID_LOG_INFO, AHB_TAG, "Detected GPU: Adreno (Qualcomm) [soc=%s, hw=%s]", soc.c_str(), hardware.c_str());
+    } else if (vendor == GPU_MALI) {
+        __android_log_print(ANDROID_LOG_INFO, AHB_TAG, "Detected GPU: Mali (ARM/Tensor) [soc=%s, hw=%s]", soc.c_str(), hardware.c_str());
+    } else {
+        __android_log_print(ANDROID_LOG_WARN, AHB_TAG, "Unknown GPU vendor [soc=%s, hw=%s]", soc.c_str(), hardware.c_str());
     }
+    
+    return vendor;
+}
 
-    // Load OpenCL library dynamically
-    void* libOpenCL = dlopen("libOpenCL.so", RTLD_NOW | RTLD_LOCAL);
-    if (!libOpenCL)
-    {
-        LOGE("importAHBToOpenCL: Failed to load libOpenCL.so: %s", dlerror());
-        return nullptr;
+bool AhbManager::checkOpenClAhbExtensions() {
+    __android_log_print(ANDROID_LOG_INFO, AHB_TAG, "Checking OpenCL AHB extensions");
+    
+    // Try to load OpenCL library dynamically
+    void* opencl_lib = dlopen("libOpenCL.so", RTLD_NOW | RTLD_LOCAL);
+    if (!opencl_lib) {
+        const char* paths[] = {
+            "/system/vendor/lib64/libOpenCL.so",
+            "/system/lib64/libOpenCL.so",
+            "/vendor/lib64/libOpenCL.so",
+            "/system/vendor/lib/libOpenCL.so",
+            "/system/lib/libOpenCL.so"
+        };
+        
+        for (const char* path : paths) {
+            opencl_lib = dlopen(path, RTLD_NOW | RTLD_LOCAL);
+            if (opencl_lib) {
+                __android_log_print(ANDROID_LOG_INFO, AHB_TAG, "Loaded OpenCL from: %s", path);
+                break;
+            }
+        }
     }
-
-    // Get function pointer for clGetExtensionFunctionAddressForPlatform
-    typedef void* (*clGetExtensionFunctionAddressForPlatform_fn)(cl_platform_id, const char*);
-    clGetExtensionFunctionAddressForPlatform_fn clGetExtensionFunctionAddressForPlatform =
-        (clGetExtensionFunctionAddressForPlatform_fn)dlsym(libOpenCL, "clGetExtensionFunctionAddressForPlatform");
-
-    if (!clGetExtensionFunctionAddressForPlatform)
-    {
-        LOGE("importAHBToOpenCL: Failed to load clGetExtensionFunctionAddressForPlatform");
-        dlclose(libOpenCL);
-        return nullptr;
+    
+    if (!opencl_lib) {
+        __android_log_print(ANDROID_LOG_WARN, AHB_TAG, "OpenCL library not available");
+        return false;
     }
-
-    // Get the platform from the context
-    cl_platform_id platform;
-    cl_int result = clGetContextInfo(context, CL_CONTEXT_PLATFORM, sizeof(cl_platform_id), &platform, nullptr);
-    if (result != CL_SUCCESS)
-    {
-        LOGE("importAHBToOpenCL: Failed to get platform from context, error code: %d", result);
-        dlclose(libOpenCL);
-        return nullptr;
+    
+    // Define OpenCL types (avoid header dependency)
+    typedef int32_t cl_int;
+    typedef uint32_t cl_uint;
+    typedef void* cl_platform_id;
+    
+    #define CL_SUCCESS 0
+    #define CL_PLATFORM_EXTENSIONS 0x0900
+    
+    typedef cl_int (*clGetPlatformIDs_fn)(cl_uint, cl_platform_id*, cl_uint*);
+    typedef cl_int (*clGetPlatformInfo_fn)(cl_platform_id, cl_uint, size_t, void*, size_t*);
+    
+    auto clGetPlatformIDs = (clGetPlatformIDs_fn)dlsym(opencl_lib, "clGetPlatformIDs");
+    auto clGetPlatformInfo = (clGetPlatformInfo_fn)dlsym(opencl_lib, "clGetPlatformInfo");
+    
+    if (!clGetPlatformIDs || !clGetPlatformInfo) {
+        __android_log_print(ANDROID_LOG_ERROR, AHB_TAG, "Failed to load OpenCL functions");
+        dlclose(opencl_lib);
+        return false;
     }
-
-    // Query available extensions to determine vendor path
+    
+    // Query platforms
+    cl_uint num_platforms = 0;
+    cl_int err = clGetPlatformIDs(0, nullptr, &num_platforms);
+    if (err != CL_SUCCESS || num_platforms == 0) {
+        __android_log_print(ANDROID_LOG_WARN, AHB_TAG, "No OpenCL platforms found");
+        dlclose(opencl_lib);
+        return false;
+    }
+    
+    std::vector<cl_platform_id> platforms(num_platforms);
+    clGetPlatformIDs(num_platforms, platforms.data(), nullptr);
+    
+    // Check extensions on first platform
     size_t ext_size = 0;
-    clGetPlatformInfo(platform, CL_PLATFORM_EXTENSIONS, 0, nullptr, &ext_size);
-    std::vector<char> ext_str(ext_size);
-    clGetPlatformInfo(platform, CL_PLATFORM_EXTENSIONS, ext_size, ext_str.data(), nullptr);
-    std::string extensions(ext_str.data());
-
-    cl_mem clMemory = nullptr;
-
-    // Try ARM path first (cl_arm_import_memory)
-    if (extensions.find("cl_arm_import_memory") != std::string::npos)
-    {
-        LOGI("importAHBToOpenCL: Attempting ARM import path (cl_arm_import_memory)");
-        
-        clImportMemoryARM_fn clImportMemoryARM =
-            (clImportMemoryARM_fn)clGetExtensionFunctionAddressForPlatform(platform, "clImportMemoryARM");
-
-        if (clImportMemoryARM)
-        {
-            // Setup import properties if not provided
-            const cl_import_properties_arm defaultProperties[3] = {
-                CL_IMPORT_TYPE_ARM,
-                CL_IMPORT_TYPE_ANDROID_HARDWARE_BUFFER_ARM,
-                0  // Terminate with 0
-            };
-
-            const cl_import_properties_arm* importProperties = properties ? properties : defaultProperties;
-
-            // Import the AHardwareBuffer into OpenCL
-            cl_int importResult = CL_SUCCESS;
-            clMemory = clImportMemoryARM(
-                context,
-                CL_MEM_READ_WRITE,              // Memory access flags
-                importProperties,
-                ahb,                            // AHardwareBuffer from Vulkan
-                CL_IMPORT_MEMORY_WHOLE_ALLOCATION_ARM,
-                &importResult);
-
-            if (importResult == CL_SUCCESS && clMemory != nullptr)
-            {
-                LOGI("importAHBToOpenCL: Successfully imported AHB via ARM path");
-                dlclose(libOpenCL);
-                return clMemory;
-            }
-            else
-            {
-                LOGW("importAHBToOpenCL: ARM import failed with error code: %d", importResult);
-            }
-        }
-        else
-        {
-            LOGW("importAHBToOpenCL: clImportMemoryARM function not found despite extension presence");
-        }
-    }
-
-    // Try QCOM path (cl_qcom_android_hardware_buffer_interop)
-    if (extensions.find("cl_qcom_android_hardware_buffer_interop") != std::string::npos)
-    {
-        LOGI("importAHBToOpenCL: Attempting Qualcomm import path (cl_qcom_android_hardware_buffer_interop)");
-        
-        // Qualcomm extension: Try loading vendor-specific function
-        // Note: QCOM may use clCreateMemObjectFromAHardwareBufferQCOM or similar
-        clCreateMemObjectFromAHardwareBufferQCOM_fn clCreateMemObjectFromAHardwareBufferQCOM =
-            (clCreateMemObjectFromAHardwareBufferQCOM_fn)clGetExtensionFunctionAddressForPlatform(
-                platform, "clCreateMemObjectFromAHardwareBufferQCOM");
-
-        if (clCreateMemObjectFromAHardwareBufferQCOM)
-        {
-            cl_int importResult = CL_SUCCESS;
-            clMemory = clCreateMemObjectFromAHardwareBufferQCOM(
-                context,
-                CL_MEM_READ_WRITE,
-                ahb,
-                &importResult);
-
-            if (importResult == CL_SUCCESS && clMemory != nullptr)
-            {
-                LOGI("importAHBToOpenCL: Successfully imported AHB via QCOM vendor-specific function");
-                dlclose(libOpenCL);
-                return clMemory;
-            }
-            else
-            {
-                LOGW("importAHBToOpenCL: QCOM vendor function failed with error code: %d", importResult);
-            }
-        }
-        else
-        {
-            LOGW("importAHBToOpenCL: QCOM vendor function not found, trying standard OpenCL approach");
-            
-            // Fallback: QCOM may support standard clCreateImage with AHB via properties
-            // This is speculative - QCOM's actual API may differ
-            // Some vendors allow passing AHB as host_ptr with special mem_flags
-            LOGW("importAHBToOpenCL: QCOM standard OpenCL approach not implemented (requires vendor documentation)");
-            LOGE("importAHBToOpenCL: QCOM path incomplete - extension present but no working import method found");
-        }
-    }
-
-    dlclose(libOpenCL);
-
-    if (clMemory == nullptr)
-    {
-        LOGE("importAHBToOpenCL: All import paths failed - no compatible extension found");
-        LOGE("importAHBToOpenCL: Available extensions: %s", extensions.c_str());
-    }
-
-    return clMemory;
+    clGetPlatformInfo(platforms[0], CL_PLATFORM_EXTENSIONS, 0, nullptr, &ext_size);
+    
+    std::vector<char> extensions(ext_size);
+    clGetPlatformInfo(platforms[0], CL_PLATFORM_EXTENSIONS, ext_size, extensions.data(), nullptr);
+    std::string ext_str(extensions.data());
+    
+    __android_log_print(ANDROID_LOG_DEBUG, AHB_TAG, "OpenCL Extensions: %s", ext_str.c_str());
+    
+    // Check vendor-specific extensions
+    bool has_arm_import = ext_str.find("cl_arm_import_memory") != std::string::npos;
+    bool has_arm_ahb = ext_str.find("cl_arm_import_memory_android_hardware_buffer") != std::string::npos;
+    bool has_qcom_ahb = ext_str.find("cl_qcom_android_hardware_buffer_interop") != std::string::npos;
+    
+    __android_log_print(ANDROID_LOG_INFO, AHB_TAG, "ARM Extensions: import=%d, ahb=%d", has_arm_import, has_arm_ahb);
+    __android_log_print(ANDROID_LOG_INFO, AHB_TAG, "QCOM Extension: ahb=%d", has_qcom_ahb);
+    
+    dlclose(opencl_lib);
+    
+    // ARM Mali requires both extensions, Qualcomm requires one
+    bool result = (has_arm_import && has_arm_ahb) || has_qcom_ahb;
+    
+    __android_log_print(ANDROID_LOG_INFO, AHB_TAG, "OpenCL AHB extensions: %s", result ? "AVAILABLE" : "NOT AVAILABLE");
+    return result;
 }
 
-void AhbManager::releaseResource(VkDevice device, SharedResource& resource)
-{
-    // Release OpenCL memory
-    if (resource.clMem)
-    {
-        clReleaseMemObject(resource.clMem);
-        resource.clMem = nullptr;
-        LOGI("releaseResource: Released OpenCL memory");
-    }
-
-    // Release Vulkan resources
-    if (device != VK_NULL_HANDLE)
-    {
-        if (resource.vkImage != VK_NULL_HANDLE)
-        {
-            vkDestroyImage(device, resource.vkImage, nullptr);
-            resource.vkImage = VK_NULL_HANDLE;
-            LOGI("releaseResource: Destroyed Vulkan image");
-        }
-
-        if (resource.vkMemory != VK_NULL_HANDLE)
-        {
-            vkFreeMemory(device, resource.vkMemory, nullptr);
-            resource.vkMemory = VK_NULL_HANDLE;
-            LOGI("releaseResource: Freed Vulkan memory");
-        }
-    }
-
-    // Release AHardwareBuffer (if owned)
-    if (resource.ahb)
-    {
-        AHardwareBuffer_release(resource.ahb);
-        resource.ahb = nullptr;
-        LOGI("releaseResource: Released AHardwareBuffer");
-    }
-
-    resource.width = 0;
-    resource.height = 0;
-    resource.format = 0;
-}
-
-uint32_t AhbManager::findMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties)
-{
-    VkPhysicalDeviceMemoryProperties memProperties{};
-    vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
-
-    for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++)
-    {
-        if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties)
-        {
-            return i;
-        }
-    }
-
-    LOGE("findMemoryType: Failed to find suitable memory type");
-    return 0;  // Fallback to first memory type (may not be suitable)
-}
-
-// ========== Synchronization Helpers (Safe v1 Strategy) ==========
-// These implement conservative blocking waits to ensure all GPU operations
-// complete before accessing shared resources. This is a simple, safe approach
-// that avoids race conditions but may not be optimal for performance.
-// Future versions can implement fine-grained semaphore-based synchronization.
-
-bool AhbManager::waitForOpenCL(cl_command_queue queue)
-{
-    if (queue == nullptr)
-    {
-        LOGE("waitForOpenCL: Invalid command queue (null)");
-        return false;
-    }
-
-    LOGI("waitForOpenCL: Waiting for all OpenCL operations to complete...");
+bool AhbManager::checkVulkanAhbExtension() {
+    // VK_ANDROID_external_memory_android_hardware_buffer is available on API 26+
+    // Since min SDK is 28, assume it's available (optimistic check)
+    // Full verification would require vkEnumerateDeviceExtensionProperties during Vulkan init
     
-    // clFinish blocks until all previously queued OpenCL commands in the queue complete
-    cl_int result = clFinish(queue);
-    
-    if (result != CL_SUCCESS)
-    {
-        LOGE("waitForOpenCL: clFinish failed with error code: %d", result);
-        return false;
-    }
-
-    LOGI("waitForOpenCL: All OpenCL operations completed successfully");
-    return true;
-}
-
-bool AhbManager::waitForVulkan(VkQueue queue)
-{
-    if (queue == VK_NULL_HANDLE)
-    {
-        LOGE("waitForVulkan: Invalid queue (VK_NULL_HANDLE)");
-        return false;
-    }
-
-    LOGI("waitForVulkan: Waiting for all Vulkan operations to complete...");
-    
-    // vkQueueWaitIdle blocks until all command buffers submitted to the queue have completed
-    VkResult result = vkQueueWaitIdle(queue);
-    
-    if (result != VK_SUCCESS)
-    {
-        LOGE("waitForVulkan: vkQueueWaitIdle failed with code %d", result);
-        return false;
-    }
-
-    LOGI("waitForVulkan: All Vulkan operations completed successfully");
+    __android_log_print(ANDROID_LOG_INFO, AHB_TAG, "Vulkan AHB extension: AVAILABLE (assumed for API 28+)");
     return true;
 }
