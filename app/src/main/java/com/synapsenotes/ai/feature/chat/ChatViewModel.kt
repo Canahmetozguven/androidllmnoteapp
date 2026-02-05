@@ -5,8 +5,10 @@ import androidx.lifecycle.viewModelScope
 import com.synapsenotes.ai.core.ai.HardwareInfo
 import com.synapsenotes.ai.core.ai.LlmEngine
 import com.synapsenotes.ai.core.ai.PromptBuilder
+import com.synapsenotes.ai.core.preferences.AppPreferences
 import com.synapsenotes.ai.domain.model.ChatMessage
 import com.synapsenotes.ai.domain.model.Note
+import com.synapsenotes.ai.feature.settings.AVAILABLE_MODELS
 import com.synapsenotes.ai.domain.model.SourceNote
 import com.synapsenotes.ai.domain.repository.ChatRepository
 import com.synapsenotes.ai.domain.repository.ChatSession
@@ -29,7 +31,8 @@ class ChatViewModel @Inject constructor(
     private val llmEngine: LlmEngine,
     private val promptBuilder: PromptBuilder,
     private val chatRepository: ChatRepository,
-    private val noteRepository: NoteRepository
+    private val noteRepository: NoteRepository,
+    private val appPreferences: AppPreferences
 ) : ViewModel() {
 
     private val _currentSessionId = MutableStateFlow<String?>(null)
@@ -117,10 +120,17 @@ class ChatViewModel @Inject constructor(
                 
                 chatRepository.saveMessage(sessionId, userMsg)
 
+                // Determine if RAG is needed based on active model
+                val activeModelId = appPreferences.activeChatModelId
+                val model = AVAILABLE_MODELS.find { it.id == activeModelId }
+                val shouldRag = model?.requiresRag ?: true  // Default to true if model not found
+
                 val relevantNotes = if (_selectedNotes.value.isNotEmpty()) {
                     _selectedNotes.value
-                } else {
+                } else if (shouldRag) {
                     vectorSearchUseCase(text)
+                } else {
+                    emptyList()  // Skip RAG for non-RAG models
                 }
 
                 val sources = relevantNotes.map { note ->

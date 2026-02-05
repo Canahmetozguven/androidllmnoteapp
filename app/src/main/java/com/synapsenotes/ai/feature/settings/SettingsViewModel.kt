@@ -46,7 +46,8 @@ data class ModelInfo(
     val configUrl: String? = null,
     val description: String = "Lightweight",
     val sizeBytes: Long = 0L,
-    val type: ModelType = ModelType.CHAT
+    val type: ModelType = ModelType.CHAT,
+    val requiresRag: Boolean = true
 )
 
 enum class ModelType {
@@ -56,13 +57,14 @@ enum class ModelType {
 val AVAILABLE_MODELS = listOf(
     // Chat Models - Qwen3 Family (Apache 2.0)
     ModelInfo(
-        id = "lfm2-1.2b-rag",
-        name = "LFM2 1.2B RAG",
-        url = "https://huggingface.co/LiquidAI/LFM2-1.2B-RAG-GGUF/resolve/main/LFM2-1.2B-RAG-Q4_K_M.gguf",
-        filename = "LFM2-1.2B-RAG-Q4_K_M.gguf",
-        description = "LiquidAI RAG Specialist",
+        id = "lfm2-1.2b",
+        name = "LFM2 1.2B",
+        url = "https://huggingface.co/LiquidAI/LFM2-1.2B-GGUF/resolve/main/LFM2-1.2B-Q4_K_M.gguf",
+        filename = "LFM2-1.2B-Q4_K_M.gguf",
+        description = "LiquidAI Standard",
         sizeBytes = 730_894_048L,
-        type = ModelType.CHAT
+        type = ModelType.CHAT,
+        requiresRag = false
     ),
     ModelInfo(
         id = "mobilellm-r1-950m",
@@ -71,7 +73,8 @@ val AVAILABLE_MODELS = listOf(
         filename = "facebook.MobileLLM-R1-950M.Q4_K_M.gguf",
         description = "Meta's sub-1B reasoning model",
         sizeBytes = 649_000_000L,
-        type = ModelType.CHAT
+        type = ModelType.CHAT,
+        requiresRag = true
     ),
     ModelInfo(
         id = "qwen3-0.6b",
@@ -80,7 +83,8 @@ val AVAILABLE_MODELS = listOf(
         filename = "Qwen_Qwen3-0.6B-Q4_K_M.gguf",
         description = "Ultra-lightweight (37k+ downloads)",
         sizeBytes = 480_000_000L,
-        type = ModelType.CHAT
+        type = ModelType.CHAT,
+        requiresRag = true
     ),
     ModelInfo(
         id = "smollm2-1.7b",
@@ -89,7 +93,8 @@ val AVAILABLE_MODELS = listOf(
         filename = "smollm2-1.7b-instruct-q4_k_m.gguf",
         description = "State-of-the-art sub-2B",
         sizeBytes = 1_138_000_000L,
-        type = ModelType.CHAT
+        type = ModelType.CHAT,
+        requiresRag = true
     ),
     ModelInfo(
         id = "qwen3-1.7b",
@@ -98,7 +103,8 @@ val AVAILABLE_MODELS = listOf(
         filename = "Qwen_Qwen3-1.7B-Q4_K_M.gguf",
         description = "Balanced quality (7k+ downloads)",
         sizeBytes = 1_200_000_000L,
-        type = ModelType.CHAT
+        type = ModelType.CHAT,
+        requiresRag = true
     ),
     ModelInfo(
         id = "kumru-2b",
@@ -107,7 +113,8 @@ val AVAILABLE_MODELS = listOf(
         filename = "kumru-2b-q4_k_m.gguf",
         description = "Native Turkish Specialist",
         sizeBytes = 1_500_000_000L,
-        type = ModelType.CHAT
+        type = ModelType.CHAT,
+        requiresRag = true
     ),
 
     // Embedding Models
