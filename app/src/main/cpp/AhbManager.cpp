@@ -2,6 +2,27 @@
 #include <sys/system_properties.h>
 #include <cstring>
 #include <vector>
+#include <android/hardware_buffer.h>
+
+// Vulkan external memory structures (minimal declarations to avoid header dependency)
+#define VK_STRUCTURE_TYPE_MEMORY_GET_ANDROID_HARDWARE_BUFFER_INFO_ANDROID 1000129004
+
+typedef uint32_t VkStructureType;
+typedef void* VkDevice;
+typedef void* VkDeviceMemory;
+typedef int32_t VkResult;
+
+struct VkMemoryGetAndroidHardwareBufferInfoANDROID {
+    VkStructureType sType;
+    const void* pNext;
+    VkDeviceMemory memory;
+};
+
+typedef VkResult (*vkGetMemoryAndroidHardwareBufferANDROID_fn)(
+    VkDevice device,
+    const VkMemoryGetAndroidHardwareBufferInfoANDROID* pInfo,
+    AHardwareBuffer** pBuffer
+);
 
 // Helper to get Android system properties
 static std::string get_system_property(const char* key) {
@@ -195,3 +216,175 @@ bool AhbManager::checkVulkanAhbExtension() {
     __android_log_print(ANDROID_LOG_INFO, AHB_TAG, "Vulkan AHB extension: AVAILABLE (assumed for API 28+)");
     return true;
 }
+
+AHardwareBuffer* AhbManager::exportVulkanBuffer(void* vk_device, void* vk_memory, size_t size) {
+    __android_log_print(ANDROID_LOG_INFO, AHB_TAG, "Exporting Vulkan buffer to AHardwareBuffer (size=%zu)", size);
+    
+    // Load Vulkan library dynamically
+    void* vulkan_lib = dlopen("libvulkan.so", RTLD_NOW | RTLD_LOCAL);
+    if (!vulkan_lib) {
+        __android_log_print(ANDROID_LOG_ERROR, AHB_TAG, "Failed to load libvulkan.so");
+        return nullptr;
+    }
+    
+    // Resolve vkGetMemoryAndroidHardwareBufferANDROID function
+    auto vkGetMemoryAndroidHardwareBufferANDROID = 
+        (vkGetMemoryAndroidHardwareBufferANDROID_fn)dlsym(vulkan_lib, "vkGetMemoryAndroidHardwareBufferANDROID");
+    
+    if (!vkGetMemoryAndroidHardwareBufferANDROID) {
+        __android_log_print(ANDROID_LOG_ERROR, AHB_TAG, 
+                           "Failed to resolve vkGetMemoryAndroidHardwareBufferANDROID: %s", dlerror());
+        dlclose(vulkan_lib);
+        return nullptr;
+    }
+    
+    // Prepare Vulkan AHB export structure
+    VkMemoryGetAndroidHardwareBufferInfoANDROID export_info = {};
+    export_info.sType = VK_STRUCTURE_TYPE_MEMORY_GET_ANDROID_HARDWARE_BUFFER_INFO_ANDROID;
+    export_info.pNext = nullptr;
+    export_info.memory = (VkDeviceMemory)vk_memory;
+    
+    AHardwareBuffer* ahb = nullptr;
+    VkResult result = vkGetMemoryAndroidHardwareBufferANDROID((VkDevice)vk_device, &export_info, &ahb);
+    
+    if (result != 0 || ahb == nullptr) {
+        __android_log_print(ANDROID_LOG_ERROR, AHB_TAG, 
+                           "vkGetMemoryAndroidHardwareBufferANDROID failed with result=%d", result);
+        dlclose(vulkan_lib);
+        return nullptr;
+    }
+    
+    __android_log_print(ANDROID_LOG_INFO, AHB_TAG, "Successfully exported Vulkan buffer to AHB");
+    dlclose(vulkan_lib);
+    return ahb;
+}
+
+void* AhbManager::importOpenCLBuffer(void* cl_context, AHardwareBuffer* ahb, size_t size) {
+    __android_log_print(ANDROID_LOG_INFO, AHB_TAG, "Importing AHardwareBuffer to OpenCL (size=%zu)", size);
+    
+    if (ahb == nullptr) {
+        __android_log_print(ANDROID_LOG_ERROR, AHB_TAG, "AHardwareBuffer is null");
+        return nullptr;
+    }
+    
+    // Load OpenCL library dynamically
+    void* opencl_lib = dlopen("libOpenCL.so", RTLD_NOW | RTLD_LOCAL);
+    if (!opencl_lib) {
+        __android_log_print(ANDROID_LOG_ERROR, AHB_TAG, "Failed to load libOpenCL.so");
+        return nullptr;
+    }
+    
+    // OpenCL type definitions (minimal to avoid header dependency)
+    typedef int32_t cl_int;
+    typedef uint32_t cl_uint;
+    typedef void* cl_context_t;
+    typedef void* cl_mem;
+    typedef uint64_t cl_mem_flags;
+    
+    #define CL_SUCCESS 0
+    #define CL_MEM_READ_WRITE (1 << 0)
+    #define CL_IMPORT_TYPE_ANDROID_HARDWARE_BUFFER_ARM 0x41E2
+    
+    // ARM import function signature
+    typedef cl_mem (*clImportMemoryARM_fn)(
+        cl_context_t context,
+        cl_mem_flags flags,
+        const void* properties,
+        void* memory,
+        size_t size,
+        cl_int* errcode_ret
+    );
+    
+    void* import_result = nullptr;
+    
+    // Try ARM path first (well-documented, proven on Mali GPUs)
+    if (interop_type_ == AHB_PATH_ARM) {
+        __android_log_print(ANDROID_LOG_INFO, AHB_TAG, "Using ARM Mali import path (clImportMemoryARM)");
+        
+        auto clImportMemoryARM = (clImportMemoryARM_fn)dlsym(opencl_lib, "clImportMemoryARM");
+        if (!clImportMemoryARM) {
+            __android_log_print(ANDROID_LOG_ERROR, AHB_TAG, 
+                               "Failed to resolve clImportMemoryARM: %s", dlerror());
+            dlclose(opencl_lib);
+            return nullptr;
+        }
+        
+        // ARM import properties
+        cl_uint import_properties[] = {
+            CL_IMPORT_TYPE_ANDROID_HARDWARE_BUFFER_ARM,
+            0  // Terminator
+        };
+        
+        cl_int err = CL_SUCCESS;
+        cl_mem mem = clImportMemoryARM(
+            (cl_context_t)cl_context,
+            CL_MEM_READ_WRITE,
+            import_properties,
+            ahb,
+            size,
+            &err
+        );
+        
+        if (err != CL_SUCCESS || mem == nullptr) {
+            __android_log_print(ANDROID_LOG_ERROR, AHB_TAG, 
+                               "clImportMemoryARM failed with error=%d", err);
+            dlclose(opencl_lib);
+            return nullptr;
+        }
+        
+        __android_log_print(ANDROID_LOG_INFO, AHB_TAG, "Successfully imported AHB via ARM path");
+        import_result = mem;
+        
+    } else if (interop_type_ == AHB_PATH_QCOM) {
+        // Qualcomm Adreno path (placeholder - requires vendor-specific API)
+        __android_log_print(ANDROID_LOG_WARN, AHB_TAG, "QCOM path not fully implemented yet");
+        __android_log_print(ANDROID_LOG_INFO, AHB_TAG, "Attempting QCOM import (speculative)...");
+        
+        // Speculative QCOM function signature (based on extension name)
+        typedef cl_mem (*clCreateMemObjectFromAHardwareBufferQCOM_fn)(
+            cl_context_t context,
+            cl_mem_flags flags,
+            AHardwareBuffer* buffer,
+            cl_int* errcode_ret
+        );
+        
+        auto clCreateMemObjectFromAHardwareBufferQCOM = 
+            (clCreateMemObjectFromAHardwareBufferQCOM_fn)dlsym(opencl_lib, "clCreateMemObjectFromAHardwareBufferQCOM");
+        
+        if (!clCreateMemObjectFromAHardwareBufferQCOM) {
+            __android_log_print(ANDROID_LOG_ERROR, AHB_TAG, 
+                               "Failed to resolve clCreateMemObjectFromAHardwareBufferQCOM: %s", dlerror());
+            __android_log_print(ANDROID_LOG_ERROR, AHB_TAG, 
+                               "QCOM import path requires vendor documentation");
+            dlclose(opencl_lib);
+            return nullptr;
+        }
+        
+        cl_int err = CL_SUCCESS;
+        cl_mem mem = clCreateMemObjectFromAHardwareBufferQCOM(
+            (cl_context_t)cl_context,
+            CL_MEM_READ_WRITE,
+            ahb,
+            &err
+        );
+        
+        if (err != CL_SUCCESS || mem == nullptr) {
+            __android_log_print(ANDROID_LOG_ERROR, AHB_TAG, 
+                               "clCreateMemObjectFromAHardwareBufferQCOM failed with error=%d", err);
+            dlclose(opencl_lib);
+            return nullptr;
+        }
+        
+        __android_log_print(ANDROID_LOG_INFO, AHB_TAG, "Successfully imported AHB via QCOM path (speculative)");
+        import_result = mem;
+        
+    } else {
+        __android_log_print(ANDROID_LOG_ERROR, AHB_TAG, "No valid AHB interop path detected");
+        dlclose(opencl_lib);
+        return nullptr;
+    }
+    
+    dlclose(opencl_lib);
+    return import_result;
+}
+
