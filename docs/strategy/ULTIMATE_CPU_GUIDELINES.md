@@ -64,10 +64,11 @@ Even with a perfect build, misconfiguration can kill performance.
 
 ## 👑 Best Models for Android (Feb 2026)
 
-### 1. The Speed Demon: LFM2-8B (Liquid)
-- **Throughput**: **15-18 tok/s** (SD 8 Elite CPU)
-- **Best For**: Real-time chat, summarization, simple tasks.
+### 1. The Speed Demon: LFM2-1.2B (Standard)
+- **Throughput**: **45-55 tok/s** (SD 8 Elite CPU)
+- **Best For**: Ultra-low latency chat on S25 FE / S22.
 - **Why**: Non-attention architecture bypasses memory bottlenecks.
+- **RAG**: Handled via App Logic (context injection) on the standard model.
 
 ### 2. The Smart Choice: Qwen2.5-7B-Instruct
 - **Throughput**: **14-16 tok/s** (SD 8 Elite CPU)
@@ -95,7 +96,14 @@ For older devices or background tasks, these models fly on CPU.
 - **Why**: Distilled from a 671B model. Beats Llama-3.2-3B in logic while running 2x faster.
 - **Note**: Outputs `<think>` tags. Hide these in UI for cleaner chat.
 
-### 2. The Sweet Spot: Qwen2.5-3B-Instruct
+### 2. The Liquid Standard: LFM2-1.2B (Standard)
+- **Throughput**: **45-55 tok/s**
+- **Best For**: S22 / S25 FE ultra-low latency.
+- **Why**: Fastest overall inference on ARMv8.6+ CPUs. Uses a hybrid architecture (conv + attention) that bypasses many memory bottlenecks.
+- **RAG Status**: **Non-RAG (Bypass)**. This model works best as a generalist. The app's `ChatViewModel` detects this via metadata and bypasses the vector search step to maintain maximum responsiveness.
+- **Note**: Replaces legacy RAG-tuned variants. Use standard weights for the best balance of speed and IQ.
+
+### 3. The Sweet Spot: Qwen2.5-3B-Instruct
 - **Throughput**: **25-30 tok/s**
 - **Best For**: Daily assistant tasks, RAG on low-RAM devices (4-6GB).
 - **IQ**: Punches way above its weight, rivaling older 7B models.

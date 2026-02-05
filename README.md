@@ -7,8 +7,13 @@ A high-performance Android note-taking application featuring on-device Large Lan
 - **Dual-Backend GPU Acceleration**: 
     - **OpenCL**: Optimized for Qualcomm **Adreno** GPUs.
     - **Vulkan**: Primary backend for **Mali** and **Xclipse** GPUs.
-- **RAG (Retrieval-Augmented Generation)**: Chat with your own notes using local vector search.
+- **RAG (Retrieval-Augmented Generation)**: Intelligent context injection from your notes. Supports both RAG-tuned models and standard models via model-metadata driven bypass logic.
 - **Material 3 Design**: Modern, fluid UI with light/dark mode support.
+
+## 🤖 Recommended Models
+- **Liquid LFM2-1.2B (Standard)**: 45-55 tok/s on CPU. Non-RAG variant for maximum speed.
+- **Qwen 2.5 (3B/7B)**: SOTA reasoning for on-device use.
+- **DeepSeek-R1-Distill-Qwen-1.5B**: Logic king for compact devices.
 
 ---
 
@@ -37,19 +42,26 @@ Run the setup script inside WSL:
 Depending on your target device, choose the appropriate build mode:
 
 - **Ultimate CPU Build (Recommended for Flagships)**: 
-  Optimized for Snapdragon 8 Elite, Gen 3, and Dimensity 9400. Uses I8MM instructions to outperform the GPU.
+  Optimized for Snapdragon 8 Elite, Gen 3, and Dimensity 9400.
+  - **Supported Devices**: S25 FE, S22 (Exynos 2200), and Flagships.
+  - **Recommended Model**: lfm2-1.2b (Standard) for smooth CPU inference.
+  - Uses I8MM instructions to outperform the GPU.
   ```bash
   ./build.sh cpu_ultimate
   ```
   *See [ULTIMATE_CPU_GUIDELINES.md](./docs/strategy/ULTIMATE_CPU_GUIDELINES.md) for details.*
 
-- **Standard GPU Build**:
-  Enables Vulkan and OpenCL for broad compatibility.
+- **Standard GPU Build (Static)**:
+  Enables Vulkan and OpenCL with static linking for broad compatibility.
   ```bash
   ./build.sh static
   ```
 
-*Use `dynamic` mode for testing Backend DL (dlopen) capabilities.*
+- **Dynamic Backend Build**:
+  Uses `dlopen` for dynamic backend loading. Ideal for testing backend isolation and runtime backend switching.
+  ```bash
+  ./build.sh dynamic
+  ```
 
 ### 3. Deployment
 APK will be located at `app/build/outputs/apk/release/app-release.apk`. 

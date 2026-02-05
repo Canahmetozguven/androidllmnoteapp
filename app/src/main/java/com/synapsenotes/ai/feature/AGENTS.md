@@ -7,7 +7,8 @@
 Implementation of user-facing screens and state management using Jetpack Compose and Hilt-injected ViewModels.
 
 ## STRUCTURE
-- **chat/**: `ChatScreen` / `ChatViewModel` - On-device LLM interface with RAG support.
+- **chat/**: `ChatScreen` / `ChatViewModel` - On-device LLM interface.
+  - **RAG Bypass Logic**: `ChatViewModel` dynamically determines whether to perform vector search based on `ModelInfo.requiresRag`. For models like Liquid LFM2-1.2B, it skips RAG by default to minimize latency, directly injecting only user-selected context if present.
 - **notes/**: `NoteList` & `NoteDetail` / `ViewModels` - CRUD operations and AI tool integration.
 - **files/**: `FilesScreen` / `FilesViewModel` - Management of local documents and models.
 - **settings/**: `SettingsScreen` / `SettingsViewModel` - App configuration and privacy controls.
