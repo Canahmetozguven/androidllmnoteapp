@@ -6,5 +6,7 @@ sealed class DriveError : Throwable() {
     data class ServiceDisabled(val details: String) : DriveError()
     data class QuotaExceeded(val details: String) : DriveError()
     data class NetworkError(val details: String) : DriveError()
-    data class UnknownError(val details: String, val originalException: Throwable) : DriveError()
+    data class UnknownError(val details: String, val originalException: Throwable) : DriveError() {
+        override val message: String get() = details
+    }
 }
