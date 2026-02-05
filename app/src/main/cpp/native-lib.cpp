@@ -275,6 +275,7 @@ extern "C" {
     JNIEXPORT void JNICALL Java_com_synapsenotes_ai_core_ai_LlamaContext_stopCompletion(JNIEnv* env, jobject);
     JNIEXPORT jboolean JNICALL Java_com_synapsenotes_ai_core_ai_LlamaContext_isGpuEnabled(JNIEnv* env, jobject);
     JNIEXPORT jboolean JNICALL Java_com_synapsenotes_ai_core_ai_LlamaContext_isOpenCLAvailable(JNIEnv* env, jobject);
+    JNIEXPORT jboolean JNICALL Java_com_synapsenotes_ai_core_ai_LlamaContext_isAhbSupported(JNIEnv* env, jobject);
     JNIEXPORT jfloatArray JNICALL Java_com_synapsenotes_ai_core_ai_LlamaContext_embed(JNIEnv* env, jobject, jstring text);
     JNIEXPORT void JNICALL Java_com_synapsenotes_ai_core_ai_LlamaContext_unload(JNIEnv* env, jobject);
     JNIEXPORT void JNICALL Java_com_synapsenotes_ai_core_ai_LlamaContext_unloadChat(JNIEnv* env, jobject);
@@ -314,6 +315,7 @@ JNI_OnLoad(JavaVM* vm, void* reserved) {
             {"stopCompletion", "()V", (void*)Java_com_synapsenotes_ai_core_ai_LlamaContext_stopCompletion},
             {"isGpuEnabled", "()Z", (void*)Java_com_synapsenotes_ai_core_ai_LlamaContext_isGpuEnabled},
             {"isOpenCLAvailable", "()Z", (void*)Java_com_synapsenotes_ai_core_ai_LlamaContext_isOpenCLAvailable},
+            {"isAhbSupported", "()Z", (void*)Java_com_synapsenotes_ai_core_ai_LlamaContext_isAhbSupported},
             {"embed", "(Ljava/lang/String;)[F", (void*)Java_com_synapsenotes_ai_core_ai_LlamaContext_embed},
             {"unload", "()V", (void*)Java_com_synapsenotes_ai_core_ai_LlamaContext_unload},
             {"unloadChat", "()V", (void*)Java_com_synapsenotes_ai_core_ai_LlamaContext_unloadChat},
@@ -865,6 +867,18 @@ Java_com_synapsenotes_ai_core_ai_LlamaContext_isOpenCLAvailable(JNIEnv* env, job
          }
     }
     
+    return JNI_FALSE;
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_synapsenotes_ai_core_ai_LlamaContext_isAhbSupported(JNIEnv* env, jobject) {
+    // Initialize AHB Manager to check support
+    AhbManager ahbManager;
+    if (ahbManager.init(env)) {
+        AhbInteropType type = ahbManager.getInteropType();
+        // AHB is supported if we have either ARM or QCOM path
+        return (type == AHB_PATH_ARM || type == AHB_PATH_QCOM) ? JNI_TRUE : JNI_FALSE;
+    }
     return JNI_FALSE;
 }
 

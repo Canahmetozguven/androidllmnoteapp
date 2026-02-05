@@ -125,4 +125,10 @@ interface HardwareCapabilityProvider {
      * Clear the embedding attempting status.
      */
     fun clearEmbeddingBackendAttempting()
+
+    /**
+     * Check if AHB (Android Hardware Buffer) interop is supported on this device.
+     * Returns true if the device supports vendor-specific AHB extensions for GPU acceleration.
+     */
+    fun isAhbSupported(): Boolean
 }

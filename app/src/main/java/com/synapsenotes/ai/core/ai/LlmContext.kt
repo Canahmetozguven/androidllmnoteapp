@@ -17,6 +17,7 @@ interface LlmContext {
     fun unloadEmbedding()
     fun isGpuEnabled(): Boolean
     fun isOpenCLAvailable(): Boolean
+    fun isAhbSupported(): Boolean
 }
 
 /**
@@ -85,5 +86,10 @@ class DefaultLlmContext @Inject constructor() : LlmContext {
     override fun isOpenCLAvailable(): Boolean {
         if (!isLibraryLoaded()) return false
         return nativeContext.isOpenCLAvailable()
+    }
+
+    override fun isAhbSupported(): Boolean {
+        if (!isLibraryLoaded()) return false
+        return nativeContext.isAhbSupported()
     }
 }

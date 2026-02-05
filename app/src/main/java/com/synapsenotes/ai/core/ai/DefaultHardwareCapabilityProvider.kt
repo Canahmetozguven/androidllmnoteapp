@@ -601,6 +601,10 @@ open class DefaultHardwareCapabilityProvider @Inject constructor(
         return BackendType.CPU
     }
 
+    override fun isAhbSupported(): Boolean {
+        return llmContext.isAhbSupported()
+    }
+
     companion object {
         private const val TAG = "HardwareCapability"
     }
