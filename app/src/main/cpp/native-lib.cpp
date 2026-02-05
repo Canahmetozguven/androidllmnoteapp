@@ -68,6 +68,123 @@ static GPUVendor detect_gpu_vendor() {
     return vendor;
 }
 
+// Check for Vulkan AHB extension support
+static bool check_vulkan_ahb_support() {
+    // VK_ANDROID_external_memory_android_hardware_buffer is available on Android API 26+
+    // Since our min SDK is 28, we can assume it's available if Vulkan is present
+    // A full verification would require vkEnumerateDeviceExtensionProperties during init
+    __android_log_print(ANDROID_LOG_INFO, TAG, "Checking Vulkan AHB support: VK_ANDROID_external_memory_android_hardware_buffer");
+    
+    // Optimistic return - assumes API 28+ has this extension
+    // TODO: Full verification requires Vulkan instance creation
+    bool vulkan_ahb_available = true;
+    
+    if (vulkan_ahb_available) {
+        __android_log_print(ANDROID_LOG_INFO, TAG, "Vulkan AHB extension: AVAILABLE (assumed for API 28+)");
+    } else {
+        __android_log_print(ANDROID_LOG_WARN, TAG, "Vulkan AHB extension: NOT AVAILABLE");
+    }
+    
+    return vulkan_ahb_available;
+}
+
+// Check for OpenCL AHB extension support
+static bool check_opencl_ahb_support() {
+    __android_log_print(ANDROID_LOG_INFO, TAG, "Checking OpenCL AHB support");
+    
+    // Try to load OpenCL library dynamically
+    void* opencl_lib = dlopen("libOpenCL.so", RTLD_NOW | RTLD_LOCAL);
+    if (!opencl_lib) {
+        // Try fallback paths
+        const char* paths[] = {
+            "/system/vendor/lib64/libOpenCL.so",
+            "/system/lib64/libOpenCL.so",
+            "/vendor/lib64/libOpenCL.so",
+            "/system/vendor/lib/libOpenCL.so",
+            "/system/lib/libOpenCL.so"
+        };
+        
+        for (const char* path : paths) {
+            opencl_lib = dlopen(path, RTLD_NOW | RTLD_LOCAL);
+            if (opencl_lib) {
+                __android_log_print(ANDROID_LOG_INFO, TAG, "Loaded OpenCL from: %s", path);
+                break;
+            }
+        }
+    }
+    
+    if (!opencl_lib) {
+        __android_log_print(ANDROID_LOG_WARN, TAG, "OpenCL library not available - AHB extensions not supported");
+        return false;
+    }
+    
+    // Define OpenCL types and function pointers (to avoid header dependency)
+    typedef int32_t cl_int;
+    typedef uint32_t cl_uint;
+    typedef void* cl_platform_id;
+    
+    #define CL_SUCCESS 0
+    #define CL_PLATFORM_EXTENSIONS 0x0900
+    
+    typedef cl_int (*clGetPlatformIDs_fn)(cl_uint, cl_platform_id*, cl_uint*);
+    typedef cl_int (*clGetPlatformInfo_fn)(cl_platform_id, cl_uint, size_t, void*, size_t*);
+    
+    // Load OpenCL functions
+    auto clGetPlatformIDs = (clGetPlatformIDs_fn)dlsym(opencl_lib, "clGetPlatformIDs");
+    auto clGetPlatformInfo = (clGetPlatformInfo_fn)dlsym(opencl_lib, "clGetPlatformInfo");
+    
+    if (!clGetPlatformIDs || !clGetPlatformInfo) {
+        __android_log_print(ANDROID_LOG_ERROR, TAG, "Failed to load OpenCL functions");
+        dlclose(opencl_lib);
+        return false;
+    }
+    
+    // Query platforms
+    cl_uint num_platforms = 0;
+    cl_int err = clGetPlatformIDs(0, nullptr, &num_platforms);
+    if (err != CL_SUCCESS || num_platforms == 0) {
+        __android_log_print(ANDROID_LOG_WARN, TAG, "No OpenCL platforms found");
+        dlclose(opencl_lib);
+        return false;
+    }
+    
+    std::vector<cl_platform_id> platforms(num_platforms);
+    clGetPlatformIDs(num_platforms, platforms.data(), nullptr);
+    
+    // Check extensions on first platform
+    size_t ext_size = 0;
+    clGetPlatformInfo(platforms[0], CL_PLATFORM_EXTENSIONS, 0, nullptr, &ext_size);
+    
+    std::vector<char> extensions(ext_size);
+    clGetPlatformInfo(platforms[0], CL_PLATFORM_EXTENSIONS, ext_size, extensions.data(), nullptr);
+    std::string ext_str(extensions.data());
+    
+    __android_log_print(ANDROID_LOG_INFO, TAG, "OpenCL Platform Extensions: %s", ext_str.c_str());
+    
+    // Check for vendor-specific extensions
+    bool has_arm_import = ext_str.find("cl_arm_import_memory") != std::string::npos;
+    bool has_arm_ahb = ext_str.find("cl_arm_import_memory_android_hardware_buffer") != std::string::npos;
+    bool has_qcom_ahb = ext_str.find("cl_qcom_android_hardware_buffer_interop") != std::string::npos;
+    
+    __android_log_print(ANDROID_LOG_INFO, TAG, "cl_arm_import_memory: %s", has_arm_import ? "YES" : "NO");
+    __android_log_print(ANDROID_LOG_INFO, TAG, "cl_arm_import_memory_android_hardware_buffer: %s", has_arm_ahb ? "YES" : "NO");
+    __android_log_print(ANDROID_LOG_INFO, TAG, "cl_qcom_android_hardware_buffer_interop: %s", has_qcom_ahb ? "YES" : "NO");
+    
+    dlclose(opencl_lib);
+    
+    // ARM Mali requires both extensions
+    // Qualcomm Adreno requires the qcom extension
+    bool opencl_ahb_available = (has_arm_import && has_arm_ahb) || has_qcom_ahb;
+    
+    if (opencl_ahb_available) {
+        __android_log_print(ANDROID_LOG_INFO, TAG, "OpenCL AHB extensions: AVAILABLE");
+    } else {
+        __android_log_print(ANDROID_LOG_WARN, TAG, "OpenCL AHB extensions: NOT AVAILABLE");
+    }
+    
+    return opencl_ahb_available;
+}
+
 // Check if the device has a known problematic Vulkan driver (Extracted for testability)
 static bool check_is_problematic_vulkan(const std::string& soc, const std::string& hardware) {
     // sm8450: Snapdragon 8 Gen 1 (notorious Vulkan bugs)
@@ -177,6 +294,14 @@ extern "C" {
 extern "C" JNIEXPORT jint JNICALL
 JNI_OnLoad(JavaVM* vm, void* reserved) {
     __android_log_print(ANDROID_LOG_INFO, TAG, "JNI_OnLoad: Initializing llama.cpp backend [Build: 2026-01-21 v6 - Hybrid Probe]");
+    
+    // Check AHB capabilities early for diagnostic purposes
+    __android_log_print(ANDROID_LOG_INFO, TAG, "=== AHB Capability Detection ===");
+    bool vulkan_ahb = check_vulkan_ahb_support();
+    bool opencl_ahb = check_opencl_ahb_support();
+    __android_log_print(ANDROID_LOG_INFO, TAG, "AHB Summary: Vulkan=%s, OpenCL=%s", 
+                       vulkan_ahb ? "YES" : "NO", opencl_ahb ? "YES" : "NO");
+    __android_log_print(ANDROID_LOG_INFO, TAG, "=================================");
     
     JNIEnv* env;
     if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) {
