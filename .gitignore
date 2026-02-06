@@ -87,3 +87,8 @@ s22_*.log
 adb_status.txt
 opencode_log.txt
 output.txt
+# Sisyphus (Agentic Workflow)
+.sisyphus/boulder.json
+.sisyphus/drafts/
+.sisyphus/temp/
+# Note: We intentionally track plans and notepads for project history
