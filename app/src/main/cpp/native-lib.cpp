@@ -305,6 +305,14 @@ JNI_OnLoad(JavaVM* vm, void* reserved) {
     }
     __android_log_print(ANDROID_LOG_INFO, TAG, "===================================");
 
+    // Check AHB capability detection (Vulkan + OpenCL extensions)
+    __android_log_print(ANDROID_LOG_INFO, TAG, "=== AHB Capability Detection ===");
+    bool vulkan_ahb = check_vulkan_ahb_support();
+    bool opencl_ahb = check_opencl_ahb_support();
+    __android_log_print(ANDROID_LOG_INFO, TAG, "AHB Summary: Vulkan=%s, OpenCL=%s", 
+                       vulkan_ahb ? "YES" : "NO", opencl_ahb ? "YES" : "NO");
+    __android_log_print(ANDROID_LOG_INFO, TAG, "================================");
+
     // Register LlamaContext natives
     jclass clazz = env->FindClass("com/synapsenotes/ai/core/ai/LlamaContext");
     if (clazz != nullptr) {
