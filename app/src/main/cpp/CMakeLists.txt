@@ -93,6 +93,7 @@ if (ULTIMATE_CPU)
             llm_notes_cpp
             SHARED
             native-lib.cpp
+            AhbManager.cpp
     )
     target_compile_definitions(llm_notes_cpp PRIVATE NO_GPU_INTEROP)
 else()
@@ -100,6 +101,7 @@ else()
             llm_notes_cpp
             SHARED
             native-lib.cpp
+            AhbManager.cpp
     )
 endif()
 

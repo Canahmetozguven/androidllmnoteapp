@@ -6,8 +6,9 @@
 #   ./build.sh static    # Build with static backends (default)
 #   ./build.sh dynamic   # Build with dynamic backend loading (dlopen)
 #   ./build.sh clean     # Clean build artifacts
-#   ./build.sh release   # Clean build + Static build (Production)
-#   ./build.sh cpu_ultimate # Build optimized for High-End CPU (SD 8 Elite)
+#   ./build.sh release   # Clean build + Static build (Hybrid GPU + Standard CPU) - Best for general distribution
+#   ./build.sh cpu_ultimate # Clean build + I8MM + NO GPU (Snapdragon 8 Gen 1+ / Dimensity 9000+ optimized)
+#   ./build.sh cpu_release  # Clean build + Standard CPU + NO GPU (Maximum compatibility, smallest size)
 #
 set -e
 
@@ -247,6 +248,24 @@ case "$BUILD_MODE" in
         copy_artifacts
         
         echo "✅ Ultimate CPU Build Finished"
+        ;;
+    cpu_release)
+        echo "🛡️ Starting STANDARD CPU Build (Clean + Compatible + No GPU)..."
+        clean_build
+        sync_source
+        echo "⚠️  Skipping shader generation (CPU Mode)"
+        bundle_omp
+        
+        echo "⚙️  Compiling Android APK with STANDARD CPU Optimizations (ARMv8.2-a)..."
+        ./gradlew :app:assembleRelease :app:bundleRelease \
+            -Dorg.gradle.java.home="/usr/lib/jvm/java-17-openjdk-amd64" \
+            -PuseVulkan=false \
+            -PuseOpenCL=false \
+            -PcmakeFlags="-DULTIMATE_CPU=OFF -DGGML_OPENCL=OFF -DGGML_VULKAN=OFF" \
+            2>&1 | grep -E "^Building|error|warning|:app:" || true
+            
+        copy_artifacts
+        echo "✅ Standard CPU Build Finished"
         ;;
     static|dynamic)
         build_all "$BUILD_MODE"

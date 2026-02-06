@@ -447,6 +447,7 @@ Java_com_synapsenotes_ai_core_ai_LlamaContext_loadEmbeddingModelNative(JNIEnv* e
             setenv("GGML_VULKAN_DISABLE", "1", 1);
             setenv("GGML_OPENCL_DISABLE", "1", 1);
         } else if (backend_id == 1) { // VULKAN
+#ifdef GGML_VULKAN
             __android_log_print(ANDROID_LOG_INFO, TAG, "Loading embedding model with Vulkan backend");
             model_params.n_gpu_layers = -1;
             unsetenv("GGML_VULKAN_DISABLE");
@@ -459,11 +460,22 @@ Java_com_synapsenotes_ai_core_ai_LlamaContext_loadEmbeddingModelNative(JNIEnv* e
                  setenv("GGML_VK_DISABLE_ASYNC", "1", 1);
                  setenv("GGML_VK_FORCE_MAX_ALLOCATION_SIZE", "536870912", 1); // 512MB
             }
+#else
+            __android_log_print(ANDROID_LOG_WARN, TAG, "Vulkan requested for embeddings but not compiled in! Fallback to CPU.");
+            model_params.n_gpu_layers = 0;
+            // Note: Embedding backend ID isn't tracked for "gpu_enabled" flag currently, 
+            // but good to be consistent in logic.
+#endif
         } else if (backend_id == 2) { // OPENCL
+#ifdef GGML_USE_OPENCL
             __android_log_print(ANDROID_LOG_INFO, TAG, "Loading embedding model with OpenCL backend");
             model_params.n_gpu_layers = -1;
             setenv("GGML_VULKAN_DISABLE", "1", 1);
             unsetenv("GGML_OPENCL_DISABLE");
+#else
+            __android_log_print(ANDROID_LOG_WARN, TAG, "OpenCL requested for embeddings but not compiled in! Fallback to CPU.");
+            model_params.n_gpu_layers = 0;
+#endif
         }
 
         session->model_embed = llama_model_load_from_file(model_path, model_params);
@@ -539,6 +551,7 @@ Java_com_synapsenotes_ai_core_ai_LlamaContext_loadModelNative(JNIEnv* env, jobje
             setenv("GGML_VULKAN_DISABLE", "1", 1);
             setenv("GGML_OPENCL_DISABLE", "1", 1);
         } else if (backend_id == 1) { // VULKAN
+#ifdef GGML_VULKAN
             __android_log_print(ANDROID_LOG_INFO, TAG, "Loading chat model with Vulkan backend");
             model_params.n_gpu_layers = -1;
             unsetenv("GGML_VULKAN_DISABLE");
@@ -553,11 +566,22 @@ Java_com_synapsenotes_ai_core_ai_LlamaContext_loadModelNative(JNIEnv* env, jobje
                  // but 512MB is a safe baseline for S22 driver stability.
                  setenv("GGML_VK_FORCE_MAX_ALLOCATION_SIZE", "536870912", 1); 
             }
+#else
+            __android_log_print(ANDROID_LOG_WARN, TAG, "Vulkan requested but not compiled in! Fallback to CPU.");
+            model_params.n_gpu_layers = 0;
+            backend_id = 0; // Force CPU ID for gpu_enabled check later
+#endif
         } else if (backend_id == 2) { // OPENCL
+#ifdef GGML_USE_OPENCL
             __android_log_print(ANDROID_LOG_INFO, TAG, "Loading chat model with OpenCL backend");
             model_params.n_gpu_layers = -1;
             setenv("GGML_VULKAN_DISABLE", "1", 1);
             unsetenv("GGML_OPENCL_DISABLE");
+#else
+            __android_log_print(ANDROID_LOG_WARN, TAG, "OpenCL requested but not compiled in! Fallback to CPU.");
+            model_params.n_gpu_layers = 0;
+            backend_id = 0; // Force CPU ID for gpu_enabled check later
+#endif
         } else {
             // Fallback for unexpected ID -> Auto-select (legacy behavior, though Java layer should prevent this)
             __android_log_print(ANDROID_LOG_WARN, TAG, "Unknown backend ID %d, defaulting to auto-detect", backend_id);
